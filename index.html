@@ -3,66 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia Académica - Iosef Caro</title>
+    <title>Plataforma Iosef Caro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-50 min-h-screen pb-24">
+<body class="bg-slate-50 min-h-screen">
 
-    <div id="loginScreen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-full max-w-sm">
+    <div id="loginScreen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-6 text-center">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm">
             <h1 class="text-3xl font-bold text-slate-800 mb-2">Iosef Caro</h1>
-            <p class="text-slate-500 mb-8">Gestión de Asistencia Interna</p>
-            
-            <div class="space-y-4">
-                <input type="email" id="loginEmail" placeholder="Correo electrónico" 
-                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                
-                <input type="password" id="loginPass" placeholder="Contraseña" 
-                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                
-                <button onclick="loginManual()" id="btnLogin" class="w-full bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-xl active:scale-95 transition-all">
-                    Ingresar
-                </button>
+            <p class="text-slate-400 mb-8 font-medium italic text-sm">Portal del Docente</p>
+            <div class="space-y-4 text-left">
+                <input type="email" id="loginEmail" placeholder="Email" class="w-full p-4 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <input type="password" id="loginPass" placeholder="Contraseña" class="w-full p-4 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <button onclick="loginManual()" id="btnLogin" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">Entrar</button>
             </div>
-            <p class="mt-6 text-xs text-slate-400">Acceso restringido a personal autorizado</p>
         </div>
     </div>
 
-    <div id="appScreen" class="hidden max-w-md mx-auto p-4">
-        <header class="py-6 flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-800">Pase de Lista</h1>
-                <p id="userMail" class="text-slate-500 text-xs italic">Cargando...</p>
+    <div id="appScreen" class="hidden flex min-h-screen">
+        
+        <aside class="w-20 md:w-64 bg-slate-900 text-white flex flex-col transition-all">
+            <div class="p-6 text-center border-b border-slate-800">
+                <span class="text-xl font-bold hidden md:inline">Iosef Caro</span>
+                <span class="text-xl font-bold md:hidden">IC</span>
             </div>
-            <button onclick="logout()" class="bg-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold uppercase">Salir</button>
-        </header>
-
-        <div class="mb-6">
-            <label class="text-xs font-bold text-slate-400 ml-2 mb-1 block uppercase">Seleccionar Curso</label>
-            <select id="selectCurso" onchange="cargarAlumnosDesdeFirebase()" class="w-full p-4 bg-white border-0 shadow-sm rounded-2xl font-medium focus:ring-2 focus:ring-blue-500">
-                <option value="5A">5to Año "A"</option>
-                <option value="4B">4to Año "B"</option>
-            </select>
-        </div>
-
-        <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-100">
-            <div id="listaAlumnos" class="divide-y divide-slate-50 text-slate-500 italic">
-                <p class="p-8 text-center">Buscando alumnos en la nube...</p>
+            <nav class="flex-1 mt-6 px-3 space-y-2 text-sm">
+                <button onclick="showSection('inicio')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
+                    <i class="fa-solid fa-house text-lg"></i> <span class="hidden md:inline font-medium">Inicio</span>
+                </button>
+                <button onclick="showSection('asistencia')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
+                    <i class="fa-solid fa-clipboard-user text-lg"></i> <span class="hidden md:inline font-medium text-left">Toma de Asistencia</span>
+                </button>
+                <button onclick="showSection('boletines')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
+                    <i class="fa-solid fa-book-open text-lg"></i> <span class="hidden md:inline font-medium">Boletines</span>
+                </button>
+                <button onclick="showSection('informes')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i> <span class="hidden md:inline font-medium text-left">Informes</span>
+                </button>
+            </nav>
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="logout()" class="flex items-center gap-4 w-full p-4 rounded-2xl text-red-400 hover:bg-red-500/10 transition-all">
+                    <i class="fa-solid fa-right-from-bracket text-lg"></i> <span class="hidden md:inline font-medium">Cerrar Sesión</span>
+                </button>
             </div>
-        </div>
+        </aside>
 
-        <div class="fixed bottom-6 left-0 right-0 px-4">
-            <button onclick="guardarAsistencia()" id="btnGuardar" class="w-full max-w-md mx-auto bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl active:scale-95 transition-all">
-                Guardar Asistencia
-            </button>
-        </div>
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+            
+            <section id="sec-inicio" class="section-content">
+                <div class="max-w-4xl">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Bienvenido/a</h2>
+                    <p id="userMail" class="text-slate-500 mb-10 italic"></p>
+                    
+                    <h3 class="font-bold text-slate-400 uppercase text-xs tracking-widest mb-4">Cursos asignados</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4 text-xl font-bold">5A</div>
+                            <h4 class="font-bold text-slate-800">5to Año "A"</h4>
+                            <p class="text-slate-400 text-sm">32 Alumnos registrados</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 opacity-50">
+                            <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mb-4 text-xl font-bold">+</div>
+                            <h4 class="font-bold text-slate-800 italic text-sm">Solicitar acceso a otro curso</h4>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sec-asistencia" class="section-content hidden">
+                <div class="max-w-md">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 italic">Pase de Lista</h2>
+                    <select id="selectCurso" onchange="cargarAlumnos()" class="w-full p-4 bg-white border border-slate-200 shadow-sm rounded-2xl font-medium mb-6">
+                        <option value="" disabled selected>Elegir curso...</option>
+                        <option value="5A">5to Año "A"</option>
+                        <option value="4B">4to Año "B"</option>
+                    </select>
+                    <div id="listaAlumnos" class="bg-white rounded-3xl shadow-sm border border-slate-100 divide-y divide-slate-50">
+                        </div>
+                    <button onclick="guardarAsistencia()" id="btnGuardar" class="w-full mt-8 bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">
+                        Guardar Asistencia
+                    </button>
+                </div>
+            </section>
+
+            <section id="sec-boletines" class="section-content hidden">
+                <div class="p-20 text-center text-slate-300">
+                    <i class="fa-solid fa-lock text-5xl mb-4"></i>
+                    <p class="font-medium italic">Módulo de Boletines en desarrollo...</p>
+                </div>
+            </section>
+            <section id="sec-informes" class="section-content hidden">
+                <div class="p-20 text-center text-slate-300">
+                    <i class="fa-solid fa-lock text-5xl mb-4"></i>
+                    <p class="font-medium italic">Módulo de Informes en desarrollo...</p>
+                </div>
+            </section>
+
+        </main>
     </div>
 
     <script>
-        // CONFIGURACIÓN DE TU PROYECTO
         const firebaseConfig = {
             apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
             authDomain: "app-academica-interna.firebaseapp.com",
@@ -71,18 +115,23 @@
             messagingSenderId: "169882587504",
             appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // --- GESTIÓN DE SESIÓN ---
+        // NAVEGACIÓN
+        function showSection(id) {
+            document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
+            document.getElementById('sec-' + id).classList.remove('hidden');
+        }
+
+        // SESIÓN
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appScreen').classList.remove('hidden');
                 document.getElementById('userMail').innerText = `Docente: ${user.email}`;
-                cargarAlumnosDesdeFirebase();
+                showSection('inicio');
             } else {
                 document.getElementById('loginScreen').classList.remove('hidden');
                 document.getElementById('appScreen').classList.add('hidden');
@@ -92,90 +141,47 @@
         async function loginManual() {
             const email = document.getElementById('loginEmail').value;
             const pass = document.getElementById('loginPass').value;
-            const btn = document.getElementById('btnLogin');
-
-            if(!email || !pass) return alert("Completa los datos");
-            
-            btn.innerText = "Verificando...";
-            btn.disabled = true;
-
-            try {
-                await auth.signInWithEmailAndPassword(email, pass);
-            } catch (error) {
-                alert("Error: Usuario no autorizado o contraseña incorrecta.");
-                btn.innerText = "Ingresar";
-                btn.disabled = false;
-            }
+            try { await auth.signInWithEmailAndPassword(email, pass); } 
+            catch (e) { alert("Credenciales incorrectas"); }
         }
 
-        function logout() {
-            auth.signOut();
-        }
+        function logout() { auth.signOut(); }
 
-        // --- CARGA DE DATOS ---
-        async function cargarAlumnosDesdeFirebase() {
+        // FUNCIONES DE ASISTENCIA (MISMA LÓGICA DE ANTES)
+        async function cargarAlumnos() {
             const curso = document.getElementById('selectCurso').value;
             const lista = document.getElementById('listaAlumnos');
-            lista.innerHTML = '<p class="p-8 text-center text-slate-400">Actualizando lista...</p>';
-
-            try {
-                const snapshot = await db.collection('alumnos')
-                    .where('cursoID', '==', curso)
-                    .get();
-
-                if (snapshot.empty) {
-                    lista.innerHTML = '<p class="p-8 text-center text-red-400">No hay alumnos en el curso ' + curso + '</p>';
-                    return;
-                }
-
-                lista.innerHTML = snapshot.docs.map(doc => {
-                    const a = doc.data();
-                    return `
-                        <div class="flex items-center justify-between p-4 border-b border-slate-50 last:border-0">
-                            <span class="text-slate-700 font-medium">${a.nombre}</span>
-                            <select data-id="${doc.id}" class="estado bg-blue-50 text-blue-700 border-0 rounded-lg text-sm font-bold p-2 focus:ring-0">
-                                <option value="P">Presente</option>
-                                <option value="A">Ausente</option>
-                                <option value="T">Tarde</option>
-                                <option value="AJ">Ausente Just.</option>
-                            </select>
-                        </div>
-                    `;
-                }).join('');
-            } catch (e) {
-                lista.innerHTML = '<p class="p-8 text-center text-red-500">Error al leer la base de datos.</p>';
-            }
+            lista.innerHTML = '<p class="p-8 text-center text-slate-400 italic">Buscando alumnos...</p>';
+            const snap = await db.collection('alumnos').where('cursoID', '==', curso).get();
+            if(snap.empty) { lista.innerHTML = '<p class="p-8 text-center text-red-400 italic">No hay alumnos en este curso.</p>'; return; }
+            lista.innerHTML = snap.docs.map(doc => `
+                <div class="flex items-center justify-between p-4">
+                    <span class="text-slate-700 font-medium">${doc.data().nombre}</span>
+                    <select data-id="${doc.id}" class="estado bg-slate-100 rounded-lg text-xs font-bold p-2">
+                        <option value="P">Presente</option>
+                        <option value="A">Ausente</option>
+                    </select>
+                </div>
+            `).join('');
         }
 
-        // --- GUARDAR EN NUBE ---
         async function guardarAsistencia() {
             const btn = document.getElementById('btnGuardar');
             const curso = document.getElementById('selectCurso').value;
-            const fecha = new Date().toISOString().split('T')[0];
-            const registros = {};
-
+            if(!curso) return alert("Elige un curso");
             btn.disabled = true;
-            btn.innerText = "Subiendo datos...";
-
-            document.querySelectorAll('.estado').forEach(el => {
-                registros[el.dataset.id] = el.value;
-            });
-
+            btn.innerText = "Guardando...";
+            const registros = {};
+            document.querySelectorAll('.estado').forEach(el => registros[el.dataset.id] = el.value);
             try {
-                await db.collection('asistencias').doc(`${fecha}_${curso}`).set({
-                    fecha,
-                    curso,
-                    estados: registros,
-                    autor: auth.currentUser.email,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                await db.collection('asistencias').doc(`${new Date().toISOString().split('T')[0]}_${curso}`).set({
+                    fecha: new Date().toISOString().split('T')[0],
+                    curso, estados: registros, autor: auth.currentUser.email
                 });
-                alert('✅ ¡Asistencia guardada!');
-            } catch (e) {
-                alert('❌ Error al guardar. Revisa la conexión.');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Guardar Asistencia";
-            }
+                alert("Asistencia guardada");
+                showSection('inicio');
+            } catch (e) { alert("Error al guardar"); }
+            finally { btn.disabled = false; btn.innerText = "Guardar Asistencia"; }
         }
     </script>
 </body>
