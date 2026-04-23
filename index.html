@@ -38,11 +38,14 @@
                 <button onclick="showSection('asistencia')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
                     <i class="fa-solid fa-clipboard-user text-lg"></i> <span class="hidden md:inline font-medium text-left">Toma de Asistencia</span>
                 </button>
-                <button onclick="showSection('boletines')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
-                    <i class="fa-solid fa-book-open text-lg"></i> <span class="hidden md:inline font-medium">Boletines</span>
+                <button onclick="showSection('legajos')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
+                    <i class="fa-solid fa-id-card-clip text-lg"></i> <span class="hidden md:inline font-medium text-left">Legajos</span>
                 </button>
                 <button onclick="showSection('informes')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
                     <i class="fa-solid fa-triangle-exclamation text-lg"></i> <span class="hidden md:inline font-medium text-left">Informes</span>
+                </button>
+                <button onclick="showSection('boletines')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all opacity-50">
+                    <i class="fa-solid fa-book-open text-lg"></i> <span class="hidden md:inline font-medium">Boletines</span>
                 </button>
             </nav>
             <div class="p-4 border-t border-slate-800">
@@ -70,7 +73,6 @@
                             <h4 class="text-3xl font-black text-slate-800" id="countAlumnos">--</h4>
                             <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Alumnos en Base</p>
                         </div>
-
                         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-xl">
@@ -80,7 +82,6 @@
                             <h4 class="text-xl font-bold text-slate-800" id="statusAsistencia">Verificando...</h4>
                             <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Estado de Hoy</p>
                         </div>
-
                         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-xl">
@@ -92,8 +93,8 @@
                         </div>
                     </div>
 
-                    <h3 class="font-bold text-slate-400 uppercase text-xs tracking-widest mb-4">Acceso Rápido a Legajos</h3>
-                    <div class="bg-blue-600 p-6 rounded-3xl shadow-xl shadow-blue-100 flex items-center justify-between text-white cursor-pointer hover:bg-blue-700 transition-all" onclick="showSection('informes')">
+                    <h3 class="font-bold text-slate-400 uppercase text-xs tracking-widest mb-4">Acceso Rápido</h3>
+                    <div class="bg-blue-600 p-6 rounded-3xl shadow-xl shadow-blue-100 flex items-center justify-between text-white cursor-pointer hover:bg-blue-700 transition-all" onclick="showSection('legajos')">
                         <div>
                             <h4 class="font-bold text-lg">Buscar ficha de alumno</h4>
                             <p class="text-blue-100 text-sm">Consulta asistencias y sanciones acumuladas.</p>
@@ -111,35 +112,25 @@
                         <option value="5A">5to Año "A"</option>
                         <option value="4B">4to Año "B"</option>
                     </select>
-                    <div id="listaAlumnos" class="bg-white rounded-3xl shadow-sm border border-slate-100 divide-y divide-slate-50">
-                        </div>
+                    <div id="listaAlumnos" class="bg-white rounded-3xl shadow-sm border border-slate-100 divide-y divide-slate-50"></div>
                     <button onclick="guardarAsistencia()" id="btnGuardar" class="w-full mt-8 bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">
                         Guardar Asistencia
                     </button>
                 </div>
             </section>
 
-            <section id="sec-boletines" class="section-content hidden">
-                <div class="p-20 text-center text-slate-300">
-                    <i class="fa-solid fa-lock text-5xl mb-4"></i>
-                    <p class="font-medium italic">Módulo de Boletines en desarrollo...</p>
-                </div>
-            </section>
             <section id="sec-informes" class="section-content hidden">
                 <div class="max-w-2xl">
                     <h2 class="text-3xl font-bold text-slate-800 mb-2">Informes y Sanciones</h2>
                     <p class="text-slate-500 mb-8 italic text-sm">Registrar incidencias en el legajo digital del alumno.</p>
-
                     <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
-                        
                         <div>
                             <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">1. Buscar Alumno</label>
                             <div class="relative">
-                                <input type="text" id="busquedaAlumno" onkeyup="buscarAlumnoInforme()" placeholder="Escribe el apellido..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+                                <input type="text" id="busquedaAlumno" onkeyup="buscarAlumnoInforme()" placeholder="Escribe el nombre..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all">
                                 <div id="sugerencias" class="absolute z-10 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-y-auto border border-slate-100 hidden"></div>
                             </div>
                         </div>
-
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">2. Tipo de Falta</label>
@@ -155,17 +146,62 @@
                                 <input type="number" id="cantInforme" value="1" min="1" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center font-bold">
                             </div>
                         </div>
-
                         <div>
                             <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">4. Observaciones</label>
                             <textarea id="detalleInforme" rows="3" placeholder="Describe lo sucedido..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all"></textarea>
                         </div>
-
-                        <input type="hidden" id="idAlumnoInforme">
                         <button onclick="enviarInforme()" id="btnInforme" class="w-full bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95">
                             Subir al Legajo
                         </button>
                     </div>
+                </div>
+            </section>
+
+            <section id="sec-legajos" class="section-content hidden">
+                <div class="max-w-4xl">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-8">Legajos de Alumnos</h2>
+                    <div class="relative mb-8">
+                        <input type="text" id="busquedaLegajo" onkeyup="buscarParaLegajo()" placeholder="Buscar alumno para ver su ficha completa..." class="w-full p-5 bg-white shadow-xl rounded-3xl outline-none border-none focus:ring-2 focus:ring-blue-500 transition-all">
+                        <div id="sugerenciasLegajo" class="absolute z-20 w-full bg-white shadow-2xl rounded-2xl mt-2 max-h-60 overflow-y-auto hidden border border-slate-100"></div>
+                    </div>
+                    <div id="contenidoLegajo" class="hidden animate-in fade-in duration-500">
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div class="flex items-center gap-6 text-left w-full">
+                                <div class="w-20 h-20 bg-blue-600 text-white rounded-3xl flex items-center justify-center text-3xl font-black" id="avatarAlumno">--</div>
+                                <div>
+                                    <h3 class="text-2xl font-bold text-slate-800" id="legajoNombre">Nombre</h3>
+                                    <p class="text-blue-500 font-bold" id="legajoCurso">Curso</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 w-full md:w-auto">
+                                <div class="flex-1 text-center bg-slate-50 px-6 py-3 rounded-2xl">
+                                    <p class="text-xs font-bold text-slate-400 uppercase">Inasistencias</p>
+                                    <p class="text-xl font-black text-slate-700" id="statAsistencia">0</p>
+                                </div>
+                                <div class="flex-1 text-center bg-slate-50 px-6 py-3 rounded-2xl">
+                                    <p class="text-xs font-bold text-slate-400 uppercase">Sanciones</p>
+                                    <p class="text-xl font-black text-red-500" id="statSanciones">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                                <h4 class="font-bold text-slate-800 mb-4 italic"><i class="fa-solid fa-clock-rotate-left mr-2"></i>Historial de Conducta</h4>
+                                <div id="timelineInformes" class="space-y-4"></div>
+                            </div>
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                                <h4 class="font-bold text-slate-800 mb-4 italic"><i class="fa-solid fa-calendar-day mr-2"></i>Registro de Inasistencias</h4>
+                                <div id="timelineAsistencias" class="space-y-2 text-sm text-slate-500"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sec-boletines" class="section-content hidden">
+                <div class="p-20 text-center text-slate-300">
+                    <i class="fa-solid fa-lock text-5xl mb-4"></i>
+                    <p class="font-medium italic">Módulo de Boletines en desarrollo...</p>
                 </div>
             </section>
 
@@ -185,18 +221,18 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // NAVEGACIÓN
         function showSection(id) {
             document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
             document.getElementById('sec-' + id).classList.remove('hidden');
+            if(id === 'inicio') actualizarDashboard();
         }
 
-        // SESIÓN
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appScreen').classList.remove('hidden');
                 document.getElementById('userMail').innerText = `Docente: ${user.email}`;
+                actualizarDashboard();
                 showSection('inicio');
             } else {
                 document.getElementById('loginScreen').classList.remove('hidden');
@@ -213,13 +249,13 @@
 
         function logout() { auth.signOut(); }
 
-        // FUNCIONES DE ASISTENCIA (MISMA LÓGICA DE ANTES)
+        // --- ASISTENCIA ---
         async function cargarAlumnos() {
             const curso = document.getElementById('selectCurso').value;
             const lista = document.getElementById('listaAlumnos');
-            lista.innerHTML = '<p class="p-8 text-center text-slate-400 italic">Buscando alumnos...</p>';
+            lista.innerHTML = '<p class="p-8 text-center text-slate-400 italic">Cargando...</p>';
             const snap = await db.collection('alumnos').where('cursoID', '==', curso).get();
-            if(snap.empty) { lista.innerHTML = '<p class="p-8 text-center text-red-400 italic">No hay alumnos en este curso.</p>'; return; }
+            if(snap.empty) { lista.innerHTML = '<p class="p-8 text-center text-red-400">Sin alumnos.</p>'; return; }
             lista.innerHTML = snap.docs.map(doc => `
                 <div class="flex items-center justify-between p-4">
                     <span class="text-slate-700 font-medium">${doc.data().nombre}</span>
@@ -235,8 +271,7 @@
             const btn = document.getElementById('btnGuardar');
             const curso = document.getElementById('selectCurso').value;
             if(!curso) return alert("Elige un curso");
-            btn.disabled = true;
-            btn.innerText = "Guardando...";
+            btn.disabled = true; btn.innerText = "Guardando...";
             const registros = {};
             document.querySelectorAll('.estado').forEach(el => registros[el.dataset.id] = el.value);
             try {
@@ -246,31 +281,27 @@
                 });
                 alert("Asistencia guardada");
                 showSection('inicio');
-            } catch (e) { alert("Error al guardar"); }
+            } catch (e) { alert("Error"); }
             finally { btn.disabled = false; btn.innerText = "Guardar Asistencia"; }
         }
-        // --- LÓGICA DE INFORMES ---
-        let idSeleccionado = "";
 
+        // --- INFORMES ---
+        let idSeleccionado = "";
         async function buscarAlumnoInforme() {
             const input = document.getElementById('busquedaAlumno').value.toLowerCase();
-            const sugerencias = document.getElementById('sugerencias');
-            if (input.length < 2) { sugerencias.classList.add('hidden'); return; }
-
+            const sug = document.getElementById('sugerencias');
+            if (input.length < 2) { sug.classList.add('hidden'); return; }
             const snap = await db.collection('alumnos').get();
             const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(input));
-
             if (filtrados.length > 0) {
-                sugerencias.classList.remove('hidden');
-                sugerencias.innerHTML = filtrados.map(d => `
-                    <div onclick="seleccionarParaInforme('${d.id}', '${d.data().nombre}')" class="p-4 hover:bg-orange-50 cursor-pointer border-b border-slate-50 last:border-0 flex justify-between items-center">
+                sug.classList.remove('hidden');
+                sug.innerHTML = filtrados.map(d => `
+                    <div onclick="seleccionarParaInforme('${d.id}', '${d.data().nombre}')" class="p-4 hover:bg-orange-50 cursor-pointer border-b border-slate-50 last:border-0 flex justify-between items-center text-sm">
                         <span class="font-medium text-slate-700">${d.data().nombre}</span>
                         <span class="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500">${d.data().cursoID}</span>
                     </div>
                 `).join('');
-            } else {
-                sugerencias.innerHTML = '<p class="p-4 text-slate-400 italic">No se encontraron alumnos</p>';
-            }
+            } else { sug.innerHTML = '<p class="p-4 text-xs italic">No encontrado</p>'; }
         }
 
         function seleccionarParaInforme(id, nombre) {
@@ -280,76 +311,91 @@
         }
 
         async function enviarInforme() {
-            const tipo = document.getElementById('tipoInforme').value;
-            const cant = document.getElementById('cantInforme').value;
             const det = document.getElementById('detalleInforme').value;
-            const btn = document.getElementById('btnInforme');
-
-            if(!idSeleccionado || !det) return alert("Completa el alumno y el detalle");
-
-            btn.disabled = true; btn.innerText = "Registrando...";
-
+            if(!idSeleccionado || !det) return alert("Completa los datos");
             try {
                 await db.collection('informes').add({
                     alumnoID: idSeleccionado,
                     alumnoNombre: document.getElementById('busquedaAlumno').value,
-                    tipo,
-                    cantidad: parseInt(cant),
+                    tipo: document.getElementById('tipoInforme').value,
+                    cantidad: parseInt(document.getElementById('cantInforme').value),
                     detalle: det,
                     fecha: new Date().toISOString().split('T')[0],
                     autor: auth.currentUser.email,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                alert("✅ Informe guardado correctamente");
-                // Limpiar
+                alert("Informe guardado");
                 document.getElementById('busquedaAlumno').value = "";
                 document.getElementById('detalleInforme').value = "";
                 idSeleccionado = "";
                 showSection('inicio');
-            } catch (e) { alert("Error al subir informe"); }
-            finally { btn.disabled = false; btn.innerText = "Subir al Legajo"; }
+            } catch (e) { alert("Error"); }
         }
-        // --- DINAMISMO DEL DASHBOARD ---
+
+        // --- LEGAJOS ---
+        async function buscarParaLegajo() {
+            const input = document.getElementById('busquedaLegajo').value.toLowerCase();
+            const sug = document.getElementById('sugerenciasLegajo');
+            if (input.length < 2) { sug.classList.add('hidden'); return; }
+            const snap = await db.collection('alumnos').get();
+            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(input));
+            sug.classList.remove('hidden');
+            sug.innerHTML = filtrados.map(d => `
+                <div onclick="verFicha('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-4 hover:bg-blue-50 cursor-pointer border-b border-slate-50 last:border-0 font-medium text-slate-700">
+                    ${d.data().nombre} (${d.data().cursoID})
+                </div>
+            `).join('');
+        }
+
+        async function verFicha(id, nombre, curso) {
+            document.getElementById('sugerenciasLegajo').classList.add('hidden');
+            document.getElementById('contenidoLegajo').classList.remove('hidden');
+            document.getElementById('legajoNombre').innerText = nombre;
+            document.getElementById('legajoCurso').innerText = `Estudiante de ${curso}`;
+            document.getElementById('avatarAlumno').innerText = nombre.charAt(0);
+
+            // Informes
+            const snapInfo = await db.collection('informes').where('alumnoID', '==', id).get();
+            let totalSanciones = 0;
+            const timelineI = document.getElementById('timelineInformes');
+            timelineI.innerHTML = snapInfo.empty ? '<p class="text-slate-400 text-sm">Sin informes.</p>' : snapInfo.docs.map(doc => {
+                const data = doc.data();
+                if(data.tipo.includes('Sanción')) totalSanciones += data.cantidad;
+                return `<div class="p-4 rounded-2xl ${data.tipo.includes('Nota Positiva') ? 'bg-green-50' : 'bg-orange-50'} text-xs">
+                            <div class="font-bold mb-1">${data.fecha} - ${data.tipo}</div>
+                            <p>${data.detalle}</p>
+                        </div>`;
+            }).join('');
+            document.getElementById('statSanciones').innerText = totalSanciones;
+
+            // Asistencias
+            const snapAsist = await db.collection('asistencias').get();
+            let faltas = 0;
+            let listaFaltas = "";
+            snapAsist.forEach(doc => {
+                if(doc.data().estados[id] === 'A') {
+                    faltas++;
+                    listaFaltas += `<div class="flex justify-between border-b border-slate-50 py-1"><span>${doc.data().fecha}</span> <span class="text-red-400 font-bold">Ausente</span></div>`;
+                }
+            });
+            document.getElementById('statAsistencia').innerText = faltas;
+            document.getElementById('timelineAsistencias').innerHTML = listaFaltas || '<p class="text-slate-400">Asistencia perfecta.</p>';
+        }
+
+        // --- DASHBOARD ---
         async function actualizarDashboard() {
             try {
-                // 1. Contar Alumnos
                 const snapAlumnos = await db.collection('alumnos').get();
                 document.getElementById('countAlumnos').innerText = snapAlumnos.size;
-
-                // 2. Contar Informes del mes
                 const snapInformes = await db.collection('informes').get();
                 document.getElementById('countInformes').innerText = snapInformes.size;
-
-                // 3. Verificar Asistencia de hoy
                 const hoy = new Date().toISOString().split('T')[0];
                 const snapHoy = await db.collection('asistencias').where('fecha', '==', hoy).get();
-                
-                const statusBtn = document.getElementById('statusAsistencia');
-                if(!snapHoy.empty) {
-                    statusBtn.innerText = "Completada ✅";
-                    statusBtn.classList.add('text-green-600');
-                } else {
-                    statusBtn.innerText = "Pendiente ⏳";
-                    statusBtn.classList.add('text-orange-600');
-                }
-            } catch (e) {
-                console.error("Error cargando dashboard", e);
-            }
+                const status = document.getElementById('statusAsistencia');
+                status.innerText = !snapHoy.empty ? "Completada ✅" : "Pendiente ⏳";
+                status.className = !snapHoy.empty ? "text-xl font-bold text-green-600" : "text-xl font-bold text-orange-600";
+            } catch (e) {}
         }
-
-        // Modifica el onAuthStateChanged para que llame a esta función
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('appScreen').classList.remove('hidden');
-                document.getElementById('userMail').innerText = `Docente: ${user.email}`;
-                actualizarDashboard(); // <-- Agregamos esto
-                showSection('inicio');
-            } else {
-                document.getElementById('loginScreen').classList.remove('hidden');
-                document.getElementById('appScreen').classList.add('hidden');
-            }
-        });
     </script>
 </body>
 </html>
