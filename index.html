@@ -12,6 +12,10 @@
     <style>
         .section-content { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Estilos para botones de asistencia rápida */
+        .btn-active-P { background-color: #22c55e !important; color: white !important; border-color: #16a34a !important; }
+        .btn-active-A { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
+        .btn-active-T { background-color: #f59e0b !important; color: white !important; border-color: #d97706 !important; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -72,28 +76,21 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                             <div class="flex justify-between items-start mb-4">
-                                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-xl">
-                                    <i class="fa-solid fa-users"></i>
-                                </div>
+                                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-users"></i></div>
                                 <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg">Tus Alumnos</span>
                             </div>
                             <h4 class="text-3xl font-black text-slate-800" id="countAlumnos">--</h4>
-                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">En tus cursos</p>
                         </div>
                         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                             <div class="flex justify-between items-start mb-4">
-                                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-xl">
-                                    <i class="fa-solid fa-calendar-check"></i>
-                                </div>
+                                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-calendar-check"></i></div>
                             </div>
                             <h4 class="text-xl font-bold text-slate-800" id="statusAsistencia">Verificando...</h4>
                             <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Estado de Hoy</p>
                         </div>
                         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                             <div class="flex justify-between items-start mb-4">
-                                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-xl">
-                                    <i class="fa-solid fa-file-invoice"></i>
-                                </div>
+                                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-invoice"></i></div>
                             </div>
                             <h4 class="text-3xl font-black text-slate-800" id="countInformes">--</h4>
                             <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Informes Totales</p>
@@ -101,63 +98,53 @@
                     </div>
 
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-10">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-                            <i class="fa-solid fa-chalkboard-user mr-2 text-blue-500"></i>Mis Cursos Asignados
-                        </h4>
-                        <div id="listaMisCursos" class="flex flex-wrap gap-3">
-                            <p class="text-slate-400 italic text-sm">Cargando cursos...</p>
-                        </div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Mis Cursos Asignados</h4>
+                        <div id="listaMisCursos" class="flex flex-wrap gap-3"></div>
                     </div>
                 </div>
             </section>
 
             <section id="sec-asistencia" class="section-content hidden">
-                <div class="max-w-md">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-6 italic">Pase de Lista</h2>
-                    <select id="selectCurso" onchange="cargarAlumnos()" class="w-full p-4 bg-white border border-slate-200 shadow-sm rounded-2xl font-medium mb-6 outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="" disabled selected>Cargando cursos...</option>
-                    </select>
-                    <div id="listaAlumnos" class="bg-white rounded-3xl shadow-sm border border-slate-100 divide-y divide-slate-50"></div>
-                    <button onclick="guardarAsistencia()" id="btnGuardar" class="w-full mt-8 bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">
-                        Guardar Asistencia
-                    </button>
+                <div class="max-w-xl">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 italic">Control de Asistencia</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 text-center">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Fecha</label>
+                            <input type="date" id="fechaAsistencia" onchange="cargarListaAlumnos()" class="bg-transparent font-bold text-slate-700 outline-none">
+                        </div>
+                        <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 text-center">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Curso</label>
+                            <select id="selectCurso" onchange="cargarListaAlumnos()" class="bg-transparent font-bold text-slate-700 outline-none w-full"></select>
+                        </div>
+                    </div>
+                    <div id="listaAlumnos" class="space-y-3">
+                        <p class="text-center p-10 text-slate-400 italic">Selecciona un curso</p>
+                    </div>
                 </div>
             </section>
 
             <section id="sec-informes" class="section-content hidden">
                 <div class="max-w-2xl">
                     <h2 class="text-3xl font-bold text-slate-800 mb-2">Informes y Sanciones</h2>
-                    <p class="text-slate-500 mb-8 italic text-sm">Registrar incidencias en el legajo digital.</p>
                     <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
                         <div>
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">1. Buscar Alumno</label>
+                            <label class="text-xs font-bold text-slate-400 uppercase mb-2 block">1. Buscar Alumno</label>
                             <div class="relative">
-                                <input type="text" id="busquedaAlumno" onkeyup="buscarAlumnoInforme()" placeholder="Escribe el nombre..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+                                <input type="text" id="busquedaAlumno" onkeyup="buscarAlumnoInforme()" placeholder="Escribe el nombre..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500">
                                 <div id="sugerencias" class="absolute z-10 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-y-auto border border-slate-100 hidden"></div>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">2. Tipo de Falta</label>
-                                <select id="tipoInforme" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none">
-                                    <option value="Sanción Disciplinaria">Sanción Disciplinaria</option>
-                                    <option value="Falta de Atención">Falta de Atención</option>
-                                    <option value="Uniforme / Material">Uniforme / Material</option>
-                                    <option value="Nota Positiva">Nota Positiva</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">3. Cantidad / Puntos</label>
-                                <input type="number" id="cantInforme" value="1" min="1" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center font-bold">
-                            </div>
+                            <select id="tipoInforme" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                <option value="Sanción Disciplinaria">Sanción Disciplinaria</option>
+                                <option value="Falta de Atención">Falta de Atención</option>
+                                <option value="Uniforme / Material">Uniforme / Material</option>
+                                <option value="Nota Positiva">Nota Positiva</option>
+                            </select>
+                            <input type="number" id="cantInforme" value="1" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center font-bold">
                         </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">4. Observaciones</label>
-                            <textarea id="detalleInforme" rows="3" placeholder="Describe lo sucedido..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all"></textarea>
-                        </div>
-                        <button onclick="enviarInforme()" id="btnInforme" class="w-full bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95">
-                            Subir al Legajo
-                        </button>
+                        <textarea id="detalleInforme" rows="3" placeholder="Describe lo sucedido..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500"></textarea>
+                        <button onclick="enviarInforme()" class="w-full bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-orange-600 transition-all">Subir al Legajo</button>
                     </div>
                 </div>
             </section>
@@ -166,37 +153,27 @@
                 <div class="max-w-4xl">
                     <h2 class="text-3xl font-bold text-slate-800 mb-8">Legajos de Alumnos</h2>
                     <div class="relative mb-8">
-                        <input type="text" id="busquedaLegajo" onkeyup="buscarParaLegajo()" placeholder="Buscar alumno para ver ficha..." class="w-full p-5 bg-white shadow-xl rounded-3xl outline-none border-none focus:ring-2 focus:ring-blue-500 transition-all">
+                        <input type="text" id="busquedaLegajo" onkeyup="buscarParaLegajo()" placeholder="Buscar alumno..." class="w-full p-5 bg-white shadow-xl rounded-3xl outline-none">
                         <div id="sugerenciasLegajo" class="absolute z-20 w-full bg-white shadow-2xl rounded-2xl mt-2 max-h-60 overflow-y-auto hidden border border-slate-100"></div>
                     </div>
                     <div id="contenidoLegajo" class="hidden">
                         <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div class="flex items-center gap-6 text-left w-full">
+                            <div class="flex items-center gap-6 w-full">
                                 <div class="w-20 h-20 bg-blue-600 text-white rounded-3xl flex items-center justify-center text-3xl font-black" id="avatarAlumno">--</div>
                                 <div>
                                     <h3 class="text-2xl font-bold text-slate-800" id="legajoNombre">Nombre</h3>
                                     <p class="text-blue-500 font-bold" id="legajoCurso">Curso</p>
                                 </div>
                             </div>
-                            <div class="flex gap-4 w-full md:w-auto">
-                                <div class="flex-1 text-center bg-slate-50 px-6 py-3 rounded-2xl">
-                                    <p class="text-xs font-bold text-slate-400 uppercase">Inasistencias</p>
-                                    <p class="text-xl font-black text-slate-700" id="statAsistencia">0</p>
-                                </div>
-                                <div class="flex-1 text-center bg-slate-50 px-6 py-3 rounded-2xl">
-                                    <p class="text-xs font-bold text-slate-400 uppercase">Sanciones</p>
-                                    <p class="text-xl font-black text-red-500" id="statSanciones">0</p>
-                                </div>
-                            </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                                 <h4 class="font-bold text-slate-800 mb-4 italic">Historial de Conducta</h4>
-                                <div id="timelineInformes" class="space-y-4"></div>
+                                <div id="timelineInformes" class="space-y-4 text-sm"></div>
                             </div>
                             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                                <h4 class="font-bold text-slate-800 mb-4 italic">Registro de Inasistencias</h4>
-                                <div id="timelineAsistencias" class="space-y-2 text-sm text-slate-500"></div>
+                                <h4 class="font-bold text-slate-800 mb-4 italic">Últimas Asistencias</h4>
+                                <div id="timelineAsistencias" class="space-y-2 text-sm"></div>
                             </div>
                         </div>
                     </div>
@@ -209,6 +186,7 @@
                     <p class="font-medium italic">Módulo de Boletines en desarrollo...</p>
                 </div>
             </section>
+
         </main>
     </div>
 
@@ -227,6 +205,7 @@
         const auth = firebase.auth();
 
         let cursosPermitidosDocente = [];
+        document.getElementById('fechaAsistencia').valueAsDate = new Date();
 
         // NAVEGACIÓN
         function showSection(id) {
@@ -235,7 +214,7 @@
             if(id === 'inicio') actualizarDashboard();
         }
 
-        // ESTADO DE AUTH
+        // SESIÓN
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -249,169 +228,166 @@
             }
         });
 
-        // CARGAR PERMISOS DEL DOCENTE
         async function inicializarCursosDocente() {
             const select = document.getElementById('selectCurso');
-            if (!auth.currentUser) return;
             const email = auth.currentUser.email.toLowerCase();
-
-            try {
-                const userDoc = await db.collection('usuarios').doc(email).get();
-                if (!userDoc.exists) {
-                    select.innerHTML = '<option value="">Perfil no configurado</option>';
-                    return; 
-                }
+            const userDoc = await db.collection('usuarios').doc(email).get();
+            if (userDoc.exists) {
                 cursosPermitidosDocente = userDoc.data().cursosPermitidos || [];
-                
                 let options = '<option value="" disabled selected>Elegir curso...</option>';
-                const docsCursos = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
-
-                docsCursos.forEach(doc => {
-                    if (doc.exists) options += `<option value="${doc.id}">${doc.data().nombre}</option>`;
-                });
+                const docs = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
+                docs.forEach(doc => { if (doc.exists) options += `<option value="${doc.id}">${doc.data().nombre}</option>`; });
                 select.innerHTML = options;
-            } catch (e) {
-                console.error(e);
             }
         }
 
-        // LOGIN / LOGOUT
-        async function loginManual() {
-            const email = document.getElementById('loginEmail').value;
-            const pass = document.getElementById('loginPass').value;
-            try { await auth.signInWithEmailAndPassword(email, pass); } 
-            catch (e) { alert("Email o Contraseña incorrectos"); }
-        }
-        function logout() { auth.signOut(); }
+        // LÓGICA DE ASISTENCIA ATÓMICA
+        async function cargarListaAlumnos() {
+            const cursoID = document.getElementById('selectCurso').value;
+            const fecha = document.getElementById('fechaAsistencia').value;
+            const contenedor = document.getElementById('listaAlumnos');
+            if (!cursoID || !fecha) return;
 
-        // CAMBIO DE CONTRASEÑA
-        async function cambiarPass() {
-            const email = auth.currentUser.email;
-            if(confirm("Te enviaremos un email para que elijas tu nueva contraseña. ¿Continuar?")) {
-                try {
-                    await auth.sendPasswordResetEmail(email);
-                    alert("¡Email enviado! Revisá tu casilla de correo.");
-                } catch (e) { alert("Error: " + e.message); }
-            }
-        }
+            contenedor.innerHTML = '<p class="text-center p-10 text-slate-400 italic">Cargando lista...</p>';
 
-        // ASISTENCIA
-        async function cargarAlumnos() {
-            const curso = document.getElementById('selectCurso').value;
-            const lista = document.getElementById('listaAlumnos');
-            lista.innerHTML = '<p class="p-8 text-center text-slate-400 italic">Cargando...</p>';
-            const snap = await db.collection('alumnos').where('cursoID', '==', curso).get();
-            lista.innerHTML = snap.docs.map(doc => `
-                <div class="flex items-center justify-between p-4">
-                    <span class="text-slate-700 font-medium">${doc.data().nombre}</span>
-                    <select data-id="${doc.id}" class="estado bg-slate-100 rounded-lg text-xs font-bold p-2 outline-none">
-                        <option value="P">Presente</option>
-                        <option value="A">Ausente</option>
-                    </select>
-                </div>
-            `).join('');
+            const [snapAlumnos, snapAsis] = await Promise.all([
+                db.collection('alumnos').where('cursoID', '==', cursoID).get(),
+                db.collection('asistencias').where('cursoID', '==', cursoID).where('fecha', '==', fecha).get()
+            ]);
+
+            const historial = {};
+            snapAsis.forEach(doc => historial[doc.data().alumnoID] = doc.data().estado);
+
+            contenedor.innerHTML = snapAlumnos.docs.map(doc => {
+                const id = doc.id;
+                const estado = historial[id] || '';
+                return `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <span class="font-bold text-slate-700 text-sm">${doc.data().nombre}</span>
+                        <div class="flex bg-slate-100 p-1 rounded-xl gap-1">
+                            <button onclick="marcar('${id}', 'P')" id="btn-${id}-P" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${estado === 'P' ? 'btn-active-P' : 'text-slate-400'}">P</button>
+                            <button onclick="marcar('${id}', 'A')" id="btn-${id}-A" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${estado === 'A' ? 'btn-active-A' : 'text-slate-400'}">A</button>
+                            <button onclick="marcar('${id}', 'T')" id="btn-${id}-T" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${estado === 'T' ? 'btn-active-T' : 'text-slate-400'}">T</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        async function guardarAsistencia() {
-            const btn = document.getElementById('btnGuardar');
-            const curso = document.getElementById('selectCurso').value;
-            if(!curso) return alert("Elige un curso");
-            
-            btn.disabled = true; btn.innerText = "Guardando...";
-            const registros = {};
-            document.querySelectorAll('.estado').forEach(el => registros[el.dataset.id] = el.value);
-            
-            try {
-                await db.collection('asistencias').doc(`${new Date().toISOString().split('T')[0]}_${curso}`).set({
-                    fecha: new Date().toISOString().split('T')[0],
-                    curso, estados: registros, autor: auth.currentUser.email
-                });
-                alert("¡Asistencia guardada con éxito!");
-                showSection('inicio');
-            } catch (e) { alert("Error al guardar"); }
-            finally { btn.disabled = false; btn.innerText = "Guardar Asistencia"; }
+        async function marcar(alumnoID, estado) {
+            const fecha = document.getElementById('fechaAsistencia').value;
+            const cursoID = document.getElementById('selectCurso').value;
+            const docID = `${fecha}_${alumnoID}`;
+
+            // Cambio visual rápido
+            [`P`, `A`, `T`].forEach(e => document.getElementById(`btn-${alumnoID}-${e}`).className = "px-4 py-2 rounded-lg text-xs font-black transition-all text-slate-400");
+            document.getElementById(`btn-${alumnoID}-${estado}`).classList.add(`btn-active-${estado}`);
+            document.getElementById(`btn-${alumnoID}-${estado}`).classList.remove('text-slate-400');
+
+            await db.collection('asistencias').doc(docID).set({
+                alumnoID, cursoID, fecha, estado,
+                autor: auth.currentUser.email,
+                actualizado: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
         }
 
         // DASHBOARD
         async function actualizarDashboard() {
-            try {
-                const snapAlumnos = await db.collection('alumnos').get();
-                const misAlumnos = snapAlumnos.docs.filter(d => cursosPermitidosDocente.includes(d.data().cursoID));
-                document.getElementById('countAlumnos').innerText = misAlumnos.length || 0;
+            const snapAlumnos = await db.collection('alumnos').get();
+            const misAlumnos = snapAlumnos.docs.filter(d => cursosPermitidosDocente.includes(d.data().cursoID));
+            document.getElementById('countAlumnos').innerText = misAlumnos.length;
 
-                const snapInformes = await db.collection('informes').get();
-                document.getElementById('countInformes').innerText = snapInformes.size;
-                
-                const hoy = new Date().toISOString().split('T')[0];
-                const snapHoy = await db.collection('asistencias').where('fecha', '==', hoy).get();
-                const completada = snapHoy.docs.some(doc => cursosPermitidosDocente.includes(doc.data().curso));
-                
-                const status = document.getElementById('statusAsistencia');
-                status.innerText = completada ? "Completada ✅" : "Pendiente ⏳";
-                status.className = completada ? "text-xl font-bold text-green-600" : "text-xl font-bold text-orange-600";
+            const snapInf = await db.collection('informes').get();
+            document.getElementById('countInformes').innerText = snapInf.size;
 
-                // Badges de cursos
-                const listaCursosHTML = document.getElementById('listaMisCursos');
-                let badges = "";
-                const docsCursos = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
-                docsCursos.forEach(doc => {
-                    if(doc.exists) badges += `<span class="bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl border border-blue-100 text-sm font-bold shadow-sm">${doc.data().nombre}</span>`;
-                });
-                listaCursosHTML.innerHTML = badges || '<p class="text-slate-400">Sin cursos</p>';
-            } catch (e) { console.log(e); }
+            const hoy = new Date().toISOString().split('T')[0];
+            const snapHoy = await db.collection('asistencias').where('fecha', '==', hoy).get();
+            const ya = snapHoy.docs.some(doc => cursosPermitidosDocente.includes(doc.data().cursoID));
+            const status = document.getElementById('statusAsistencia');
+            status.innerText = ya ? "Completada ✅" : "Pendiente ⏳";
+            status.className = ya ? "text-xl font-bold text-green-600" : "text-xl font-bold text-orange-600";
+
+            const listaCursosHTML = document.getElementById('listaMisCursos');
+            let badges = "";
+            const docs = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
+            docs.forEach(doc => { if(doc.exists) badges += `<span class="bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl border border-blue-100 text-sm font-bold shadow-sm">${doc.data().nombre}</span>`; });
+            listaCursosHTML.innerHTML = badges || '<p class="text-slate-400">Sin cursos</p>';
         }
 
-        // LÓGICA DE INFORMES Y LEGAJOS (Simplificada para el ejemplo)
-        let idSeleccionado = "";
+        // INFORMES
+        let idSel = "";
         async function buscarAlumnoInforme() {
-            const input = document.getElementById('busquedaAlumno').value.toLowerCase();
+            const q = document.getElementById('busquedaAlumno').value.toLowerCase();
             const sug = document.getElementById('sugerencias');
-            if (input.length < 2) { sug.classList.add('hidden'); return; }
+            if (q.length < 2) { sug.classList.add('hidden'); return; }
             const snap = await db.collection('alumnos').get();
-            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(input) && cursosPermitidosDocente.includes(d.data().cursoID));
+            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(q) && cursosPermitidosDocente.includes(d.data().cursoID));
             sug.classList.remove('hidden');
-            sug.innerHTML = filtrados.map(d => `<div onclick="seleccionarParaInforme('${d.id}', '${d.data().nombre}')" class="p-4 hover:bg-slate-50 cursor-pointer border-b text-sm font-medium">${d.data().nombre}</div>`).join('');
+            sug.innerHTML = filtrados.map(d => `<div onclick="selInf('${d.id}', '${d.data().nombre}')" class="p-4 hover:bg-slate-50 cursor-pointer border-b text-sm font-medium text-slate-700">${d.data().nombre}</div>`).join('');
         }
 
-        function seleccionarParaInforme(id, nombre) {
-            idSeleccionado = id;
-            document.getElementById('busquedaAlumno').value = nombre;
-            document.getElementById('sugerencias').classList.add('hidden');
+        function selInf(id, n) { 
+            idSel = id; document.getElementById('busquedaAlumno').value = n; 
+            document.getElementById('sugerencias').classList.add('hidden'); 
         }
 
         async function enviarInforme() {
             const det = document.getElementById('detalleInforme').value;
-            if(!idSeleccionado || !det) return alert("Completa los campos");
+            if(!idSel || !det) return alert("Completa los campos");
             await db.collection('informes').add({
-                alumnoID: idSeleccionado,
+                alumnoID: idSel,
                 tipo: document.getElementById('tipoInforme').value,
                 cantidad: parseInt(document.getElementById('cantInforme').value),
-                detalle: det,
-                fecha: new Date().toISOString().split('T')[0],
-                autor: auth.currentUser.email
+                detalle: det, fecha: new Date().toISOString().split('T')[0],
+                autor: auth.currentUser.email, timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
-            alert("Informe cargado");
-            showSection('inicio');
+            alert("Enviado"); showSection('inicio');
         }
 
+        // LEGAJOS
         async function buscarParaLegajo() {
-            const input = document.getElementById('busquedaLegajo').value.toLowerCase();
+            const q = document.getElementById('busquedaLegajo').value.toLowerCase();
             const sug = document.getElementById('sugerenciasLegajo');
-            if (input.length < 2) { sug.classList.add('hidden'); return; }
+            if (q.length < 2) { sug.classList.add('hidden'); return; }
             const snap = await db.collection('alumnos').get();
-            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(input) && cursosPermitidosDocente.includes(d.data().cursoID));
+            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(q) && cursosPermitidosDocente.includes(d.data().cursoID));
             sug.classList.remove('hidden');
-            sug.innerHTML = filtrados.map(d => `<div onclick="verFicha('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-4 hover:bg-blue-50 cursor-pointer border-b font-medium">${d.data().nombre}</div>`).join('');
+            sug.innerHTML = filtrados.map(d => `<div onclick="verFicha('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-4 hover:bg-blue-50 cursor-pointer border-b font-medium text-slate-700">${d.data().nombre}</div>`).join('');
         }
 
-        async function verFicha(id, nombre, curso) {
+        async function verFicha(id, n, c) {
             document.getElementById('sugerenciasLegajo').classList.add('hidden');
             document.getElementById('contenidoLegajo').classList.remove('hidden');
-            document.getElementById('legajoNombre').innerText = nombre;
-            document.getElementById('legajoCurso').innerText = curso;
-            document.getElementById('avatarAlumno').innerText = nombre[0];
-            
-            // Aquí irían las consultas de timeline que ya tenías...
+            document.getElementById('legajoNombre').innerText = n;
+            document.getElementById('legajoCurso').innerText = c;
+            document.getElementById('avatarAlumno').innerText = n[0];
+
+            const [snapInf, snapAsis] = await Promise.all([
+                db.collection('informes').where('alumnoID', '==', id).orderBy('timestamp', 'desc').get(),
+                db.collection('asistencias').where('alumnoID', '==', id).orderBy('fecha', 'desc').limit(10).get()
+            ]);
+
+            document.getElementById('timelineInformes').innerHTML = snapInf.docs.map(doc => `
+                <div class="p-3 bg-slate-50 rounded-xl border-l-4 border-orange-400 mb-2">
+                    <p class="font-bold text-slate-500 text-[10px] uppercase">${doc.data().fecha} - ${doc.data().tipo}</p>
+                    <p class="text-slate-700">${doc.data().detalle}</p>
+                </div>
+            `).join('') || 'Sin informes.';
+
+            document.getElementById('timelineAsistencias').innerHTML = snapAsis.docs.map(doc => `
+                <div class="flex justify-between border-b py-1"><span>${doc.data().fecha}</span><span class="font-bold">${doc.data().estado}</span></div>
+            `).join('') || 'Sin registros.';
+        }
+
+        async function loginManual() {
+            const e = document.getElementById('loginEmail').value;
+            const p = document.getElementById('loginPass').value;
+            try { await auth.signInWithEmailAndPassword(e, p); } catch { alert("Error"); }
+        }
+        function logout() { auth.signOut(); }
+        async function cambiarPass() {
+            const e = auth.currentUser.email;
+            if(confirm("¿Enviar link de restauración?")) { await auth.sendPasswordResetEmail(e); alert("Enviado"); }
         }
     </script>
 </body>
