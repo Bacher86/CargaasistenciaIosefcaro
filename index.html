@@ -97,9 +97,46 @@
                 </div>
             </section>
             <section id="sec-informes" class="section-content hidden">
-                <div class="p-20 text-center text-slate-300">
-                    <i class="fa-solid fa-lock text-5xl mb-4"></i>
-                    <p class="font-medium italic">Módulo de Informes en desarrollo...</p>
+                <div class="max-w-2xl">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Informes y Sanciones</h2>
+                    <p class="text-slate-500 mb-8 italic text-sm">Registrar incidencias en el legajo digital del alumno.</p>
+
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                        
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">1. Buscar Alumno</label>
+                            <div class="relative">
+                                <input type="text" id="busquedaAlumno" onkeyup="buscarAlumnoInforme()" placeholder="Escribe el apellido..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+                                <div id="sugerencias" class="absolute z-10 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-y-auto border border-slate-100 hidden"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">2. Tipo de Falta</label>
+                                <select id="tipoInforme" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none">
+                                    <option value="Sanción Disciplinaria">Sanción Disciplinaria</option>
+                                    <option value="Falta de Atención">Falta de Atención</option>
+                                    <option value="Uniforme / Material">Uniforme / Material</option>
+                                    <option value="Nota Positiva">Nota Positiva</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">3. Cantidad / Puntos</label>
+                                <input type="number" id="cantInforme" value="1" min="1" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center font-bold">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">4. Observaciones</label>
+                            <textarea id="detalleInforme" rows="3" placeholder="Describe lo sucedido..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all"></textarea>
+                        </div>
+
+                        <input type="hidden" id="idAlumnoInforme">
+                        <button onclick="enviarInforme()" id="btnInforme" class="w-full bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95">
+                            Subir al Legajo
+                        </button>
+                    </div>
                 </div>
             </section>
 
@@ -182,6 +219,66 @@
                 showSection('inicio');
             } catch (e) { alert("Error al guardar"); }
             finally { btn.disabled = false; btn.innerText = "Guardar Asistencia"; }
+        }
+        // --- LÓGICA DE INFORMES ---
+        let idSeleccionado = "";
+
+        async function buscarAlumnoInforme() {
+            const input = document.getElementById('busquedaAlumno').value.toLowerCase();
+            const sugerencias = document.getElementById('sugerencias');
+            if (input.length < 2) { sugerencias.classList.add('hidden'); return; }
+
+            const snap = await db.collection('alumnos').get();
+            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(input));
+
+            if (filtrados.length > 0) {
+                sugerencias.classList.remove('hidden');
+                sugerencias.innerHTML = filtrados.map(d => `
+                    <div onclick="seleccionarParaInforme('${d.id}', '${d.data().nombre}')" class="p-4 hover:bg-orange-50 cursor-pointer border-b border-slate-50 last:border-0 flex justify-between items-center">
+                        <span class="font-medium text-slate-700">${d.data().nombre}</span>
+                        <span class="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500">${d.data().cursoID}</span>
+                    </div>
+                `).join('');
+            } else {
+                sugerencias.innerHTML = '<p class="p-4 text-slate-400 italic">No se encontraron alumnos</p>';
+            }
+        }
+
+        function seleccionarParaInforme(id, nombre) {
+            idSeleccionado = id;
+            document.getElementById('busquedaAlumno').value = nombre;
+            document.getElementById('sugerencias').classList.add('hidden');
+        }
+
+        async function enviarInforme() {
+            const tipo = document.getElementById('tipoInforme').value;
+            const cant = document.getElementById('cantInforme').value;
+            const det = document.getElementById('detalleInforme').value;
+            const btn = document.getElementById('btnInforme');
+
+            if(!idSeleccionado || !det) return alert("Completa el alumno y el detalle");
+
+            btn.disabled = true; btn.innerText = "Registrando...";
+
+            try {
+                await db.collection('informes').add({
+                    alumnoID: idSeleccionado,
+                    alumnoNombre: document.getElementById('busquedaAlumno').value,
+                    tipo,
+                    cantidad: parseInt(cant),
+                    detalle: det,
+                    fecha: new Date().toISOString().split('T')[0],
+                    autor: auth.currentUser.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("✅ Informe guardado correctamente");
+                // Limpiar
+                document.getElementById('busquedaAlumno').value = "";
+                document.getElementById('detalleInforme').value = "";
+                idSeleccionado = "";
+                showSection('inicio');
+            } catch (e) { alert("Error al subir informe"); }
+            finally { btn.disabled = false; btn.innerText = "Subir al Legajo"; }
         }
     </script>
 </body>
