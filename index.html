@@ -25,7 +25,6 @@
     </div>
 
     <div id="appScreen" class="hidden flex min-h-screen">
-        
         <aside class="w-20 md:w-64 bg-slate-900 text-white flex flex-col transition-all">
             <div class="p-6 text-center border-b border-slate-800">
                 <span class="text-xl font-bold hidden md:inline">Iosef Caro</span>
@@ -56,12 +55,10 @@
         </aside>
 
         <main class="flex-1 p-6 md:p-10 overflow-y-auto">
-            
             <section id="sec-inicio" class="section-content">
                 <div class="max-w-4xl">
                     <h2 class="text-3xl font-bold text-slate-800 mb-2">Panel General</h2>
                     <p id="userMail" class="text-slate-500 mb-10 italic text-sm font-medium"></p>
-                    
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                             <div class="flex justify-between items-start mb-4">
@@ -92,7 +89,6 @@
                             <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Informes Totales</p>
                         </div>
                     </div>
-
                     <h3 class="font-bold text-slate-400 uppercase text-xs tracking-widest mb-4">Acceso Rápido</h3>
                     <div class="bg-blue-600 p-6 rounded-3xl shadow-xl shadow-blue-100 flex items-center justify-between text-white cursor-pointer hover:bg-blue-700 transition-all" onclick="showSection('legajos')">
                         <div>
@@ -202,7 +198,6 @@
                     <p class="font-medium italic">Módulo de Boletines en desarrollo...</p>
                 </div>
             </section>
-
         </main>
     </div>
 
@@ -219,7 +214,6 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // --- ESTADO GLOBAL ---
         let cursosPermitidosDocente = [];
 
         function showSection(id) {
@@ -234,7 +228,6 @@
                 document.getElementById('appScreen').classList.remove('hidden');
                 document.getElementById('userMail').innerText = `Docente: ${user.email}`;
                 
-                // Primero cargamos los cursos permitidos, luego el dashboard
                 inicializarCursosDocente().then(() => {
                     actualizarDashboard();
                 });
@@ -246,38 +239,43 @@
             }
         });
 
-        // --- NUEVA FUNCIÓN: CARGAR CURSOS POR DOCENTE ---
         async function inicializarCursosDocente() {
             const select = document.getElementById('selectCurso');
+            if (!auth.currentUser) return;
             const email = auth.currentUser.email.toLowerCase();
 
             try {
                 const userDoc = await db.collection('usuarios').doc(email).get();
                 
                 if (!userDoc.exists) {
-                    select.innerHTML = '<option value="">Sin cursos asignados</option>';
-                    cursosPermitidosDocente = [];
-                    return;
+                    console.warn("Docente no registrado en Firestore");
+                    select.innerHTML = '<option value="">Perfil no configurado</option>';
+                    return; 
                 }
 
                 cursosPermitidosDocente = userDoc.data().cursosPermitidos || [];
 
+                if (cursosPermitidosDocente.length === 0) {
+                    select.innerHTML = '<option value="">Sin cursos asignados</option>';
+                    return;
+                }
+
                 let options = '<option value="" disabled selected>Elegir curso...</option>';
-                
-                // Buscamos los nombres de esos IDs
                 const promesas = cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get());
                 const resultados = await Promise.all(promesas);
 
                 resultados.forEach(doc => {
                     if (doc.exists) {
                         options += `<option value="${doc.id}">${doc.data().nombre}</option>`;
+                    } else {
+                        options += `<option value="${doc.id}">${doc.id} (ID no encontrado)</option>`;
                     }
                 });
 
                 select.innerHTML = options;
             } catch (e) {
                 console.error("Error cargando permisos:", e);
-                select.innerHTML = '<option value="">Error de permisos</option>';
+                select.innerHTML = '<option value="">Error de carga</option>';
             }
         }
 
@@ -290,7 +288,6 @@
 
         function logout() { auth.signOut(); }
 
-        // --- ASISTENCIA ---
         async function cargarAlumnos() {
             const curso = document.getElementById('selectCurso').value;
             const lista = document.getElementById('listaAlumnos');
@@ -326,20 +323,16 @@
             finally { btn.disabled = false; btn.innerText = "Guardar Asistencia"; }
         }
 
-        // --- INFORMES ---
         let idSeleccionado = "";
         async function buscarAlumnoInforme() {
             const input = document.getElementById('busquedaAlumno').value.toLowerCase();
             const sug = document.getElementById('sugerencias');
             if (input.length < 2) { sug.classList.add('hidden'); return; }
-            
-            // Solo buscamos alumnos de los cursos permitidos para el docente
             const snap = await db.collection('alumnos').get();
             const filtrados = snap.docs.filter(d => 
                 d.data().nombre.toLowerCase().includes(input) && 
                 cursosPermitidosDocente.includes(d.data().cursoID)
             );
-
             if (filtrados.length > 0) {
                 sug.classList.remove('hidden');
                 sug.innerHTML = filtrados.map(d => `
@@ -379,18 +372,15 @@
             } catch (e) { alert("Error"); }
         }
 
-        // --- LEGAJOS ---
         async function buscarParaLegajo() {
             const input = document.getElementById('busquedaLegajo').value.toLowerCase();
             const sug = document.getElementById('sugerenciasLegajo');
             if (input.length < 2) { sug.classList.add('hidden'); return; }
-            
             const snap = await db.collection('alumnos').get();
             const filtrados = snap.docs.filter(d => 
                 d.data().nombre.toLowerCase().includes(input) &&
                 cursosPermitidosDocente.includes(d.data().cursoID)
             );
-
             sug.classList.remove('hidden');
             sug.innerHTML = filtrados.map(d => `
                 <div onclick="verFicha('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-4 hover:bg-blue-50 cursor-pointer border-b border-slate-50 last:border-0 font-medium text-slate-700">
@@ -423,6 +413,33 @@
             let faltas = 0;
             let listaFaltas = "";
             snapAsist.forEach(doc => {
-                if(doc.data().estados[id] === 'A') {
+                if(doc.data().estados && doc.data().estados[id] === 'A') {
                     faltas++;
-                    listaFaltas += `<div class="flex justify-between border-b border-slate-50 py-1"><span>${doc.data().fecha}</span> <span class="text-red-400 font-
+                    listaFaltas += `<div class="flex justify-between border-b border-slate-50 py-1"><span>${doc.data().fecha}</span> <span class="text-red-400 font-bold">Ausente</span></div>`;
+                }
+            });
+            document.getElementById('statAsistencia').innerText = faltas;
+            document.getElementById('timelineAsistencias').innerHTML = listaFaltas || "Sin inasistencias registradas.";
+        }
+
+        async function actualizarDashboard() {
+            try {
+                const snapAlumnos = await db.collection('alumnos').get();
+                const misAlumnos = snapAlumnos.docs.filter(d => cursosPermitidosDocente.includes(d.data().cursoID));
+                document.getElementById('countAlumnos').innerText = misAlumnos.length || 0;
+
+                const snapInformes = await db.collection('informes').get();
+                document.getElementById('countInformes').innerText = snapInformes.size;
+                
+                const hoy = new Date().toISOString().split('T')[0];
+                const snapHoy = await db.collection('asistencias').where('fecha', '==', hoy).get();
+                const completada = snapHoy.docs.some(doc => cursosPermitidosDocente.includes(doc.data().curso));
+                
+                const status = document.getElementById('statusAsistencia');
+                status.innerText = completada ? "Completada ✅" : "Pendiente ⏳";
+                status.className = completada ? "text-xl font-bold text-green-600" : "text-xl font-bold text-orange-600";
+            } catch (e) { console.log(e); }
+        }
+    </script>
+</body>
+</html>
