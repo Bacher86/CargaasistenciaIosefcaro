@@ -7,17 +7,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen pb-24">
 
-    <div class="max-w-md mx-auto p-4">
-        <header class="py-6">
-            <h1 class="text-2xl font-bold text-slate-800">Pase de Lista</h1>
-            <p class="text-slate-500 text-sm">Registro diario de alumnos</p>
+    <div id="loginScreen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center">
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">Iosef Caro</h1>
+        <p class="text-slate-500 mb-8">Gestión de Asistencia Interna</p>
+        <button onclick="loginConGoogle()" class="flex items-center gap-3 bg-white border border-slate-300 px-6 py-3 rounded-2xl shadow-sm hover:bg-slate-50 transition-all font-medium text-slate-700">
+            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-6" alt="Google">
+            Ingresar con Google
+        </button>
+    </div>
+
+    <div id="appScreen" class="hidden max-w-md mx-auto p-4">
+        <header class="py-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">Pase de Lista</h1>
+                <p id="userMail" class="text-slate-500 text-xs">Cargando usuario...</p>
+            </div>
+            <button onclick="logout()" class="text-xs text-red-500 font-bold uppercase tracking-wider">Salir</button>
         </header>
 
         <div class="mb-6">
-            <select id="selectCurso" class="w-full p-4 bg-white border-0 shadow-sm rounded-2xl font-medium focus:ring-2 focus:ring-blue-500">
+            <select id="selectCurso" onchange="cargarAlumnosDesdeFirebase()" class="w-full p-4 bg-white border-0 shadow-sm rounded-2xl font-medium focus:ring-2 focus:ring-blue-500">
                 <option value="5A">5to Año "A"</option>
                 <option value="4B">4to Año "B"</option>
             </select>
@@ -25,7 +38,8 @@
 
         <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-100">
             <div id="listaAlumnos" class="divide-y divide-slate-50">
-                </div>
+                <p class="p-8 text-center text-slate-400 italic">Selecciona un curso para ver alumnos</p>
+            </div>
         </div>
 
         <div class="fixed bottom-6 left-0 right-0 px-4">
@@ -36,7 +50,6 @@
     </div>
 
     <script>
-        // TUS CREDENCIALES REALES
         const firebaseConfig = {
             apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
             authDomain: "app-academica-interna.firebaseapp.com",
@@ -46,33 +59,69 @@
             appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
         };
 
-        // Inicializar
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        // Alumnos de prueba (Esto luego vendrá de tu base de datos)
-        const alumnosPrueba = [
-            { id: '1', nombre: 'Alvarez, Juan' },
-            { id: '2', nombre: 'García, María' },
-            { id: '3', nombre: 'Katz, Luana Mijal' },
-            { id: '4', nombre: 'López, Pedro' }
-        ];
+        // --- GESTIÓN DE USUARIO ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('appScreen').classList.remove('hidden');
+                document.getElementById('userMail').innerText = `Docente: ${user.email}`;
+                cargarAlumnosDesdeFirebase();
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('appScreen').classList.add('hidden');
+            }
+        });
 
-        function render() {
-            const lista = document.getElementById('listaAlumnos');
-            lista.innerHTML = alumnosPrueba.map(a => `
-                <div class="flex items-center justify-between p-4">
-                    <span class="text-slate-700 font-medium">${a.nombre}</span>
-                    <select data-id="${a.id}" class="estado bg-slate-100 border-0 rounded-lg text-sm font-bold p-2 focus:ring-0">
-                        <option value="P">Presente</option>
-                        <option value="A">Ausente</option>
-                        <option value="T">Tarde</option>
-                        <option value="AJ">Ausente Just.</option>
-                    </select>
-                </div>
-            `).join('');
+        function loginConGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider);
         }
 
+        function logout() {
+            auth.signOut();
+        }
+
+        // --- CARGA REAL DE ALUMNOS ---
+        async function cargarAlumnosDesdeFirebase() {
+            const curso = document.getElementById('selectCurso').value;
+            const lista = document.getElementById('listaAlumnos');
+            lista.innerHTML = '<p class="p-8 text-center text-slate-400">Buscando alumnos...</p>';
+
+            try {
+                const snapshot = await db.collection('alumnos')
+                    .where('cursoID', '==', curso)
+                    .get();
+
+                if (snapshot.empty) {
+                    lista.innerHTML = '<p class="p-8 text-center text-red-400">No hay alumnos en este curso.</p>';
+                    return;
+                }
+
+                lista.innerHTML = snapshot.docs.map(doc => {
+                    const a = doc.data();
+                    return `
+                        <div class="flex items-center justify-between p-4">
+                            <span class="text-slate-700 font-medium">${a.nombre}</span>
+                            <select data-id="${doc.id}" class="estado bg-slate-100 border-0 rounded-lg text-sm font-bold p-2 focus:ring-0">
+                                <option value="P">Presente</option>
+                                <option value="A">Ausente</option>
+                                <option value="T">Tarde</option>
+                                <option value="AJ">Ausente Just.</option>
+                            </select>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+                lista.innerHTML = '<p class="p-8 text-center text-red-500">Error de conexión.</p>';
+            }
+        }
+
+        // --- GUARDAR ASISTENCIA ---
         async function guardarAsistencia() {
             const btn = document.getElementById('btnGuardar');
             const curso = document.getElementById('selectCurso').value;
@@ -91,19 +140,17 @@
                     fecha,
                     curso,
                     estados: registros,
+                    autor: auth.currentUser.email,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                alert('¡Asistencia guardada!');
+                alert('¡Asistencia guardada con éxito!');
             } catch (e) {
-                console.error(e);
-                alert('Error al guardar. Verifica si activaste Firestore en modo prueba.');
+                alert('Error al guardar. Verifica los permisos.');
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Guardar Asistencia";
             }
         }
-
-        render();
     </script>
 </body>
 </html>
