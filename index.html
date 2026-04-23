@@ -369,70 +369,89 @@
             sug.innerHTML = filtrados.map(d => `<div onclick="verFicha('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-4 hover:bg-blue-50 cursor-pointer border-b font-medium text-slate-700">${d.data().nombre}</div>`).join('');
         }
 
-        async function verFicha(id, n, c) {
+       async function verFicha(id, n, c) {
             document.getElementById('sugerenciasLegajo').classList.add('hidden');
             document.getElementById('contenidoLegajo').classList.remove('hidden');
             document.getElementById('legajoNombre').innerText = n;
             document.getElementById('avatarAlumno').innerText = n[0];
             
+            // Buscar nombre del curso
             const cursoDoc = await db.collection('cursos').doc(c).get();
             document.getElementById('legajoCurso').innerText = cursoDoc.exists ? cursoDoc.data().nombre : c;
 
-            // 1. Obtener Asistencias
-            const snapAsis = await db.collection('asistencias')
-                .where('alumnoID', '==', id)
-                .orderBy('fecha', 'desc')
-                .limit(15)
-                .get();
-
+            // --- 1. CARGAR ASISTENCIAS ---
             const listaAsis = document.getElementById('timelineAsistencias');
-            if (snapAsis.empty) {
-                listaAsis.innerHTML = '<p class="text-slate-400 italic text-xs p-4 text-center">Sin registros de asistencia.</p>';
-            } else {
-                listaAsis.innerHTML = snapAsis.docs.map(doc => {
-                    const data = doc.data();
-                    const config = {
-                        'P': { color: 'text-green-600', bg: 'bg-green-50', etiqueta: 'Presente' },
-                        'A': { color: 'text-red-600', bg: 'bg-red-50', etiqueta: 'Ausente' },
-                        'T': { color: 'text-orange-600', bg: 'bg-orange-50', etiqueta: 'Tarde' }
-                    };
-                    const estilo = config[data.estado] || { color: 'text-slate-500', bg: 'bg-slate-50', etiqueta: data.estado };
-                    return `
-                        <div class="flex justify-between items-center p-3 mb-1 rounded-xl ${estilo.bg} border border-transparent transition-all">
-                            <div class="flex flex-col">
-                                <span class="text-[10px] font-black text-slate-400 uppercase">${data.fecha}</span>
-                                <span class="text-xs font-bold ${estilo.color}">${estilo.etiqueta}</span>
+            listaAsis.innerHTML = '<p class="text-slate-400 text-xs p-4">Cargando...</p>';
+
+            try {
+                // Quitamos el orderBy temporalmente para evitar el error de índice de Firebase
+                const snapAsis = await db.collection('asistencias')
+                    .where('alumnoID', '==', id)
+                    .get();
+
+                if (snapAsis.empty) {
+                    listaAsis.innerHTML = '<p class="text-slate-400 italic text-xs p-4 text-center">Sin registros de asistencia.</p>';
+                } else {
+                    // Ordenamos por fecha manualmente por si no tenés el índice creado
+                    const docsOrdenados = snapAsis.docs.sort((a, b) => b.data().fecha.localeCompare(a.data().fecha)).slice(0, 15);
+                    
+                    listaAsis.innerHTML = docsOrdenados.map(doc => {
+                        const data = doc.data();
+                        const config = {
+                            'P': { color: 'text-green-600', bg: 'bg-green-50', etiqueta: 'Presente' },
+                            'A': { color: 'text-red-600', bg: 'bg-red-50', etiqueta: 'Ausente' },
+                            'T': { color: 'text-orange-600', bg: 'bg-orange-50', etiqueta: 'Tarde' }
+                        };
+                        const estilo = config[data.estado] || { color: 'text-slate-500', bg: 'bg-slate-50', etiqueta: data.estado };
+                        return `
+                            <div class="flex justify-between items-center p-3 mb-1 rounded-xl ${estilo.bg} border border-transparent">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase">${data.fecha}</span>
+                                    <span class="text-xs font-bold ${estilo.color}">${estilo.etiqueta}</span>
+                                </div>
+                                <i class="fa-solid ${data.estado === 'A' ? 'fa-circle-xmark' : 'fa-circle-check'} ${estilo.color} opacity-30"></i>
                             </div>
-                            <i class="fa-solid ${data.estado === 'A' ? 'fa-circle-xmark' : 'fa-circle-check'} ${estilo.color} opacity-30"></i>
-                        </div>
-                    `;
-                }).join('');
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.error("Error asistencias:", e);
+                listaAsis.innerHTML = '<p class="text-red-400 text-xs p-4">Error al cargar datos.</p>';
             }
 
-            // 2. Obtener Informes de Conducta
-            const snapInf = await db.collection('informes')
-                .where('alumnoID', '==', id)
-                .orderBy('timestamp', 'desc')
-                .get();
-
+            // --- 2. CARGAR INFORMES ---
             const listaInf = document.getElementById('timelineInformes');
-            if (snapInf.empty) {
-                listaInf.innerHTML = '<p class="text-slate-400 italic p-4 text-center">No hay informes de conducta.</p>';
-            } else {
-                listaInf.innerHTML = snapInf.docs.map(doc => {
-                    const d = doc.data();
-                    const isPositivo = d.tipo === "Nota Positiva";
-                    return `
-                        <div class="p-4 rounded-2xl ${isPositivo ? 'bg-green-50' : 'bg-slate-50'} border border-slate-100">
-                            <div class="flex justify-between mb-1">
-                                <span class="text-[10px] font-bold uppercase ${isPositivo ? 'text-green-600' : 'text-slate-400'}">${d.tipo}</span>
-                                <span class="text-[10px] text-slate-400">${d.fecha}</span>
+            listaInf.innerHTML = '<p class="text-slate-400 text-xs p-4">Cargando...</p>';
+
+            try {
+                const snapInf = await db.collection('informes')
+                    .where('alumnoID', '==', id)
+                    .get();
+
+                if (snapInf.empty) {
+                    listaInf.innerHTML = '<p class="text-slate-400 italic p-4 text-center">No hay informes de conducta.</p>';
+                } else {
+                    // Ordenamos manualmente por fecha/timestamp
+                    const informesOrdenados = snapInf.docs.sort((a, b) => b.data().fecha.localeCompare(a.data().fecha));
+
+                    listaInf.innerHTML = informesOrdenados.map(doc => {
+                        const d = doc.data();
+                        const isPositivo = d.tipo === "Nota Positiva";
+                        return `
+                            <div class="p-4 rounded-2xl ${isPositivo ? 'bg-green-50' : 'bg-slate-50'} border border-slate-100 mb-3">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-[10px] font-bold uppercase ${isPositivo ? 'text-green-600' : 'text-slate-400'}">${d.tipo}</span>
+                                    <span class="text-[10px] text-slate-400">${d.fecha}</span>
+                                </div>
+                                <p class="text-slate-700 leading-relaxed font-medium">${d.detalle}</p>
+                                <p class="text-[9px] mt-2 text-slate-400 italic text-right">Autor: ${d.autor || 'Docente'}</p>
                             </div>
-                            <p class="text-slate-700 leading-relaxed font-medium">${d.detalle}</p>
-                            <p class="text-[9px] mt-2 text-slate-400 italic">Por: ${d.autor}</p>
-                        </div>
-                    `;
-                }).join('');
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.error("Error informes:", e);
+                listaInf.innerHTML = '<p class="text-red-400 text-xs p-4">Error al cargar informes.</p>';
             }
         }
 
