@@ -12,21 +12,25 @@
 <body class="bg-slate-100 min-h-screen flex">
 
     <aside class="w-64 bg-slate-900 text-white p-6 hidden md:block">
-        <h1 class="text-xl font-bold mb-8 text-blue-400">Panel Central</h1>
-        <nav class="space-y-4">
-            <button onclick="tab('alumnos')" class="block w-full text-left p-3 hover:bg-slate-800 rounded-xl transition-all">
-                <i class="fa-solid fa-graduation-cap mr-2"></i> Alumnos
+        <div class="mb-8">
+            <h1 class="text-xl font-bold text-blue-400">Control Central</h1>
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest">Gestión Escolar</p>
+        </div>
+        <nav class="space-y-2">
+            <button onclick="tab('alumnos')" class="flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
+                <i class="fa-solid fa-graduation-cap mr-3 text-blue-400"></i> Alumnos
             </button>
-            <button onclick="tab('cursos')" class="block w-full text-left p-3 hover:bg-slate-800 rounded-xl transition-all">
-                <i class="fa-solid fa-chalkboard mr-2"></i> Cursos
+            <button onclick="tab('cursos')" class="flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
+                <i class="fa-solid fa-chalkboard mr-3 text-green-400"></i> Cursos
             </button>
-            <button onclick="tab('docentes')" class="block w-full text-left p-3 hover:bg-slate-800 rounded-xl transition-all opacity-50">
-                <i class="fa-solid fa-user-tie mr-2"></i> Docentes (Próx)
+            <button onclick="tab('docentes')" class="flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
+                <i class="fa-solid fa-user-tie mr-3 text-purple-400"></i> Docentes
             </button>
         </nav>
     </aside>
 
     <main class="flex-1 p-8">
+        
         <section id="tab-alumnos" class="admin-tab">
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Gestión de Alumnos</h2>
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
@@ -46,18 +50,36 @@
         <section id="tab-cursos" class="admin-tab hidden">
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Configuración de Cursos</h2>
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8 max-w-md">
-                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Nuevo Curso (Ej: 1A, 2B)</label>
+                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Nuevo Curso (Ej: 1A, 2B)</label>
                 <div class="flex gap-2">
                     <input type="text" id="nuevoCursoID" placeholder="ID (5A)" class="w-24 p-3 bg-slate-50 border rounded-xl outline-none">
-                    <input type="text" id="nuevoCursoNombre" placeholder="Nombre Largo" class="flex-1 p-3 bg-slate-50 border rounded-xl outline-none">
-                    <button onclick="crearCurso()" class="bg-green-500 text-white px-6 rounded-xl font-bold hover:bg-green-600 transition-all">
-                        +
-                    </button>
+                    <input type="text" id="nuevoCursoNombre" placeholder="Ej: 5to Año 'A'" class="flex-1 p-3 bg-slate-50 border rounded-xl outline-none">
+                    <button onclick="crearCurso()" class="bg-green-500 text-white px-6 rounded-xl font-bold"> + </button>
                 </div>
             </div>
             <div id="listaCursosAdmin" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 </div>
         </section>
+
+        <section id="tab-docentes" class="admin-tab hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Asignación de Docentes</h2>
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-xl">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Email del Docente (debe estar registrado)</label>
+                        <input type="email" id="emailDocenteAdmin" placeholder="profe@escuela.com" class="w-full p-3 bg-slate-50 border rounded-xl outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Cursos Asignados (Separar por comas: 5A, 4B)</label>
+                        <input type="text" id="cursosAsignarAdmin" placeholder="5A, 4B" class="w-full p-3 bg-slate-50 border rounded-xl outline-none">
+                    </div>
+                    <button onclick="asignarCursos()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-all">
+                        Guardar Permisos de Acceso
+                    </button>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <script>
@@ -72,18 +94,19 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // Navegación
         function tab(id) {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
             document.getElementById('tab-' + id).classList.remove('hidden');
         }
 
-        // --- LÓGICA DE CURSOS ---
+        // --- GESTIÓN DE CURSOS ---
         async function cargarCursos() {
             const snap = await db.collection('cursos').get();
             const select = document.getElementById('cursoAlumno');
             const lista = document.getElementById('listaCursosAdmin');
             
-            let options = '<option value="">Seleccionar curso...</option>';
+            let options = '<option value="">Elegir curso...</option>';
             let cards = '';
 
             snap.forEach(doc => {
@@ -104,29 +127,23 @@
         }
 
         async function crearCurso() {
-            const id = document.getElementById('nuevoCursoID').value.toUpperCase();
-            const nombre = document.getElementById('nuevoCursoNombre').value;
-            if(!id || !nombre) return alert("Completa los datos");
-            
+            const id = document.getElementById('nuevoCursoID').value.toUpperCase().trim();
+            const nombre = document.getElementById('nuevoCursoNombre').value.trim();
+            if(!id || !nombre) return alert("Faltan datos");
             await db.collection('cursos').doc(id).set({ nombre });
-            alert("Curso creado");
             location.reload();
         }
 
-        // --- LÓGICA DE ALUMNOS ---
-        async function crearAlumno() {
-            const nombre = document.getElementById('nombreAlumno').value;
-            const cursoID = document.getElementById('cursoAlumno').value;
-            if(!nombre || !cursoID) return alert("Faltan datos");
-
-            await db.collection('alumnos').add({ nombre, cursoID });
-            alert("Alumno registrado");
-            document.getElementById('nombreAlumno').value = "";
-            cargarAlumnos();
+        async function eliminarCurso(id) {
+            if(confirm("¿Eliminar curso " + id + "?")) {
+                await db.collection('cursos').doc(id).delete();
+                location.reload();
+            }
         }
 
+        // --- GESTIÓN DE ALUMNOS ---
         async function cargarAlumnos() {
-            const snap = await db.collection('alumnos').get();
+            const snap = await db.collection('alumnos').orderBy('nombre').get();
             const tabla = document.getElementById('tablaAlumnos');
             tabla.innerHTML = snap.docs.map(doc => `
                 <div class="flex justify-between items-center p-4 border-b last:border-0 hover:bg-slate-50 transition-all">
@@ -139,7 +156,47 @@
             `).join('');
         }
 
-        // Inicio
+        async function crearAlumno() {
+            const nombre = document.getElementById('nombreAlumno').value.trim();
+            const cursoID = document.getElementById('cursoAlumno').value;
+            if(!nombre || !cursoID) return alert("Completa los campos");
+            await db.collection('alumnos').add({ nombre, cursoID });
+            document.getElementById('nombreAlumno').value = "";
+            cargarAlumnos();
+        }
+
+        async function eliminarAlumno(id) {
+            if(confirm("¿Eliminar este alumno?")) {
+                await db.collection('alumnos').doc(id).delete();
+                cargarAlumnos();
+            }
+        }
+
+        // --- GESTIÓN DE DOCENTES (PERMISOS) ---
+        async function asignarCursos() {
+            const email = document.getElementById('emailDocenteAdmin').value.trim().toLowerCase();
+            const cursosRaw = document.getElementById('cursosAsignarAdmin').value;
+            
+            if(!email || !cursosRaw) return alert("Completa los datos");
+
+            const listaCursos = cursosRaw.split(',').map(c => c.trim().toUpperCase());
+
+            try {
+                // Guardamos en la colección 'usuarios' usando el mail como ID
+                await db.collection('usuarios').doc(email).set({
+                    cursosPermitidos: listaCursos
+                }, { merge: true });
+                
+                alert("¡Permisos actualizados para " + email + "!");
+                document.getElementById('emailDocenteAdmin').value = "";
+                document.getElementById('cursosAsignarAdmin').value = "";
+            } catch (e) {
+                console.error(e);
+                alert("Error al guardar");
+            }
+        }
+
+        // Carga inicial
         cargarCursos();
         cargarAlumnos();
     </script>
