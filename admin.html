@@ -3,78 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - Iosef Caro</title>
+    <title>Admin - Iosef Caro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-100 font-sans pb-20">
+<body class="bg-slate-100 min-h-screen flex">
 
-    <div class="max-w-4xl mx-auto p-6">
-        <h1 class="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-slate-200 pb-2">Panel de Administración</h1>
-
-        <div class="bg-white p-6 rounded-2xl shadow-sm mb-6 border-l-4 border-blue-500">
-            <h2 class="text-xl font-bold mb-4 text-blue-600">Agregar Nuevo Alumno</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input type="text" id="nuevoNombre" placeholder="Apellido y Nombre" class="p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                <select id="nuevoCurso" class="p-3 border rounded-xl">
-                    <option value="5A">5to Año A</option>
-                    <option value="4A">4to Año A</option>
-                    <option value="4B">4to Año B</option>
-                </select>
-                <button onclick="crearAlumno()" class="bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition-all">
-                    Cargar Alumno
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-sm mb-6 border-l-4 border-orange-500">
-            <h2 class="text-xl font-bold mb-4 text-orange-600">Registrar Informe / Sanción</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">1. Buscar Alumno</label>
-                    <input type="text" id="busquedaAlumno" onkeyup="buscarParaInforme()" placeholder="Escribe el nombre..." class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500">
-                    <div id="sugerenciasAlumnos" class="bg-slate-50 rounded-xl mt-1 max-h-40 overflow-y-auto shadow-inner"></div>
-                </div>
-
-                <div>
-                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">2. Tipo de reporte</label>
-                    <select id="tipoInforme" class="w-full p-3 border rounded-xl">
-                        <option value="Sanción Disciplinaria">Sanción Disciplinaria</option>
-                        <option value="Falta de Atención">Falta de Atención</option>
-                        <option value="Uniforme / Material">Incumplimiento Uniforme/Material</option>
-                        <option value="Nota Positiva">Nota Positiva / Felicitación</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <div class="md:col-span-1">
-                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">3. Cantidad</label>
-                    <input type="number" id="cantInforme" value="1" min="1" class="w-full p-3 border rounded-xl font-bold text-center">
-                </div>
-                <div class="md:col-span-3">
-                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">4. Detalle de la observación</label>
-                    <input type="text" id="detalleInforme" placeholder="Ej: No trajo la carpeta..." class="w-full p-3 border rounded-xl">
-                </div>
-            </div>
-
-            <input type="hidden" id="idAlumnoSeleccionado">
-            <button onclick="guardarInforme()" id="btnInforme" class="w-full bg-orange-500 text-white p-4 rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-md">
-                Registrar en Legajo Digital
+    <aside class="w-64 bg-slate-900 text-white p-6 hidden md:block">
+        <h1 class="text-xl font-bold mb-8 text-blue-400">Panel Central</h1>
+        <nav class="space-y-4">
+            <button onclick="tab('alumnos')" class="block w-full text-left p-3 hover:bg-slate-800 rounded-xl transition-all">
+                <i class="fa-solid fa-graduation-cap mr-2"></i> Alumnos
             </button>
-        </div>
+            <button onclick="tab('cursos')" class="block w-full text-left p-3 hover:bg-slate-800 rounded-xl transition-all">
+                <i class="fa-solid fa-chalkboard mr-2"></i> Cursos
+            </button>
+            <button onclick="tab('docentes')" class="block w-full text-left p-3 hover:bg-slate-800 rounded-xl transition-all opacity-50">
+                <i class="fa-solid fa-user-tie mr-2"></i> Docentes (Próx)
+            </button>
+        </nav>
+    </aside>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-slate-700">
-            <h2 class="text-xl font-bold mb-4 text-slate-700">Consultar Historial de Hoy</h2>
-            <div class="flex gap-4 mb-6">
-                <input type="date" id="fechaFiltro" class="p-3 border rounded-xl">
-                <button onclick="consultarFecha()" class="bg-slate-800 text-white px-8 rounded-xl font-bold hover:bg-black">Ver Registros</button>
+    <main class="flex-1 p-8">
+        <section id="tab-alumnos" class="admin-tab">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Gestión de Alumnos</h2>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="nombreAlumno" placeholder="Nombre Completo" class="p-3 bg-slate-50 border rounded-xl outline-none">
+                    <select id="cursoAlumno" class="p-3 bg-slate-50 border rounded-xl outline-none">
+                        </select>
+                    <button onclick="crearAlumno()" class="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">
+                        Registrar Alumno
+                    </button>
+                </div>
             </div>
-            <div id="resultadoHistorial" class="space-y-4"></div>
-        </div>
-    </div>
+            <div id="tablaAlumnos" class="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-200">
+                </div>
+        </section>
+
+        <section id="tab-cursos" class="admin-tab hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Configuración de Cursos</h2>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8 max-w-md">
+                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Nuevo Curso (Ej: 1A, 2B)</label>
+                <div class="flex gap-2">
+                    <input type="text" id="nuevoCursoID" placeholder="ID (5A)" class="w-24 p-3 bg-slate-50 border rounded-xl outline-none">
+                    <input type="text" id="nuevoCursoNombre" placeholder="Nombre Largo" class="flex-1 p-3 bg-slate-50 border rounded-xl outline-none">
+                    <button onclick="crearCurso()" class="bg-green-500 text-white px-6 rounded-xl font-bold hover:bg-green-600 transition-all">
+                        +
+                    </button>
+                </div>
+            </div>
+            <div id="listaCursosAdmin" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                </div>
+        </section>
+    </main>
 
     <script>
         const firebaseConfig = {
@@ -88,99 +72,76 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // --- GESTIÓN DE ALUMNOS ---
-        async function crearAlumno() {
-            const nombre = document.getElementById('nuevoNombre').value;
-            const cursoID = document.getElementById('nuevoCurso').value;
-            if(!nombre) return alert("Pon un nombre");
-            try {
-                await db.collection('alumnos').add({ nombre, cursoID });
-                alert("Alumno cargado");
-                document.getElementById('nuevoNombre').value = "";
-            } catch(e) { alert("Error"); }
+        function tab(id) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + id).classList.remove('hidden');
         }
 
-        // --- BUSCADOR E INFORMES ---
-        let seleccionadoID = "";
+        // --- LÓGICA DE CURSOS ---
+        async function cargarCursos() {
+            const snap = await db.collection('cursos').get();
+            const select = document.getElementById('cursoAlumno');
+            const lista = document.getElementById('listaCursosAdmin');
+            
+            let options = '<option value="">Seleccionar curso...</option>';
+            let cards = '';
 
-        async function buscarParaInforme() {
-            const txt = document.getElementById('busquedaAlumno').value.toLowerCase();
-            const sug = document.getElementById('sugerenciasAlumnos');
-            if (txt.length < 2) { sug.innerHTML = ""; return; }
+            snap.forEach(doc => {
+                const c = doc.data();
+                options += `<option value="${doc.id}">${c.nombre}</option>`;
+                cards += `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-slate-800">${doc.id}</p>
+                            <p class="text-xs text-slate-400">${c.nombre}</p>
+                        </div>
+                        <button onclick="eliminarCurso('${doc.id}')" class="text-red-300 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+            select.innerHTML = options;
+            lista.innerHTML = cards;
+        }
+
+        async function crearCurso() {
+            const id = document.getElementById('nuevoCursoID').value.toUpperCase();
+            const nombre = document.getElementById('nuevoCursoNombre').value;
+            if(!id || !nombre) return alert("Completa los datos");
+            
+            await db.collection('cursos').doc(id).set({ nombre });
+            alert("Curso creado");
+            location.reload();
+        }
+
+        // --- LÓGICA DE ALUMNOS ---
+        async function crearAlumno() {
+            const nombre = document.getElementById('nombreAlumno').value;
+            const cursoID = document.getElementById('cursoAlumno').value;
+            if(!nombre || !cursoID) return alert("Faltan datos");
+
+            await db.collection('alumnos').add({ nombre, cursoID });
+            alert("Alumno registrado");
+            document.getElementById('nombreAlumno').value = "";
+            cargarAlumnos();
+        }
+
+        async function cargarAlumnos() {
             const snap = await db.collection('alumnos').get();
-            const filtered = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(txt));
-            sug.innerHTML = filtered.map(d => `
-                <div onclick="setAlumno('${d.id}', '${d.data().nombre}')" class="p-3 hover:bg-blue-50 cursor-pointer border-b border-white text-sm">
-                    ${d.data().nombre} <span class="text-blue-500 font-bold">[${d.data().cursoID}]</span>
+            const tabla = document.getElementById('tablaAlumnos');
+            tabla.innerHTML = snap.docs.map(doc => `
+                <div class="flex justify-between items-center p-4 border-b last:border-0 hover:bg-slate-50 transition-all">
+                    <div>
+                        <p class="font-bold text-slate-700">${doc.data().nombre}</p>
+                        <p class="text-xs text-blue-500 font-bold">${doc.data().cursoID}</p>
+                    </div>
+                    <button onclick="eliminarAlumno('${doc.id}')" class="text-slate-300 hover:text-red-500 px-4"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `).join('');
         }
 
-        function setAlumno(id, nombre) {
-            seleccionadoID = id;
-            document.getElementById('busquedaAlumno').value = nombre;
-            document.getElementById('sugerenciasAlumnos').innerHTML = "";
-        }
-
-        async function guardarInforme() {
-            const tipo = document.getElementById('tipoInforme').value;
-            const cant = document.getElementById('cantInforme').value;
-            const det = document.getElementById('detalleInforme').value;
-            if(!seleccionadoID || !det) return alert("Selecciona alumno y escribe el detalle");
-            
-            try {
-                await db.collection('informes').add({
-                    alumnoID: seleccionadoID,
-                    alumnoNombre: document.getElementById('busquedaAlumno').value,
-                    tipo,
-                    cantidad: parseInt(cant),
-                    detalle: det,
-                    fecha: new Date().toISOString().split('T')[0],
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                alert("Informe guardado.");
-                document.getElementById('detalleInforme').value = "";
-                document.getElementById('busquedaAlumno').value = "";
-                seleccionadoID = "";
-            } catch(e) { alert("Error al guardar"); }
-        }
-
-        // --- HISTORIAL ---
-        async function consultarFecha() {
-            const fecha = document.getElementById('fechaFiltro').value;
-            const res = document.getElementById('resultadoHistorial');
-            if(!fecha) return;
-            res.innerHTML = "Buscando...";
-
-            const snapAsist = await db.collection('asistencias').where('fecha', '==', fecha).get();
-            const snapInfo = await db.collection('informes').where('fecha', '==', fecha).get();
-
-            let html = '<h3 class="text-lg font-bold text-slate-800">Resumen del Día:</h3>';
-
-            if(snapAsist.empty && snapInfo.empty) {
-                res.innerHTML = "No hay datos para esta fecha.";
-                return;
-            }
-
-            // Mostrar Asistencias
-            snapAsist.forEach(doc => {
-                const data = doc.data();
-                html += `<div class="bg-white p-4 rounded-xl border mb-2 text-sm shadow-sm">
-                            <span class="font-bold text-blue-600">ASISTENCIA ${data.curso}:</span> Registro guardado.
-                         </div>`;
-            });
-
-            // Mostrar Informes/Sanciones
-            snapInfo.forEach(doc => {
-                const data = doc.data();
-                html += `<div class="bg-orange-50 p-4 rounded-xl border-l-4 border-orange-500 text-sm shadow-sm">
-                            <span class="font-bold text-orange-700">${data.alumnoNombre}</span><br>
-                            <b>${data.tipo} (${data.cantidad}):</b> ${data.detalle}
-                         </div>`;
-            });
-
-            res.innerHTML = html;
-        }
+        // Inicio
+        cargarCursos();
+        cargarAlumnos();
     </script>
 </body>
 </html>
