@@ -275,21 +275,39 @@
         }
 
         async function marcar(alumnoID, estado) {
-            const fecha = document.getElementById('fechaAsistencia').value;
-            const cursoID = document.getElementById('selectCurso').value;
-            const docID = `${fecha}_${alumnoID}`;
+    const fecha = document.getElementById('fechaAsistencia').value;
+    const cursoID = document.getElementById('selectCurso').value;
+    
+    // 1. ID único por día y alumno para evitar duplicados
+    const docID = `${fecha}_${alumnoID}`;
 
-            // Cambio visual rápido
-            [`P`, `A`, `T`].forEach(e => document.getElementById(`btn-${alumnoID}-${e}`).className = "px-4 py-2 rounded-lg text-xs font-black transition-all text-slate-400");
-            document.getElementById(`btn-${alumnoID}-${estado}`).classList.add(`btn-active-${estado}`);
-            document.getElementById(`btn-${alumnoID}-${estado}`).classList.remove('text-slate-400');
+    // 2. Feedback visual instantáneo
+    const botones = [`P`, `A`, `T`];
+    botones.forEach(e => {
+        const btn = document.getElementById(`btn-${alumnoID}-${e}`);
+        btn.className = "px-4 py-2 rounded-lg text-xs font-black transition-all text-slate-400 bg-slate-100";
+    });
+    
+    const btnActivo = document.getElementById(`btn-${alumnoID}-${estado}`);
+    btnActivo.classList.remove('text-slate-400', 'bg-slate-100');
+    btnActivo.classList.add(`btn-active-${estado}`);
 
-            await db.collection('asistencias').doc(docID).set({
-                alumnoID, cursoID, fecha, estado,
-                autor: auth.currentUser.email,
-                actualizado: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-        }
+    // 3. Guardado en Firebase
+    try {
+        await db.collection('asistencias').doc(docID).set({
+            alumnoID: alumnoID,
+            cursoID: cursoID,
+            fecha: fecha,
+            estado: estado,
+            autor: auth.currentUser.email,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        console.log("Asistencia guardada para:", alumnoID);
+    } catch (error) {
+        console.error("Error al guardar asistencia:", error);
+        alert("Error de conexión al guardar");
+    }
+}
 
         // DASHBOARD
         async function actualizarDashboard() {
@@ -355,29 +373,41 @@
             sug.innerHTML = filtrados.map(d => `<div onclick="verFicha('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-4 hover:bg-blue-50 cursor-pointer border-b font-medium text-slate-700">${d.data().nombre}</div>`).join('');
         }
 
-        async function verFicha(id, n, c) {
-            document.getElementById('sugerenciasLegajo').classList.add('hidden');
-            document.getElementById('contenidoLegajo').classList.remove('hidden');
-            document.getElementById('legajoNombre').innerText = n;
-            document.getElementById('legajoCurso').innerText = c;
-            document.getElementById('avatarAlumno').innerText = n[0];
+      async function verFicha(id, n, c) {
+    document.getElementById('sugerenciasLegajo').classList.add('hidden');
+    document.getElementById('contenidoLegajo').classList.remove('hidden');
+    document.getElementById('legajoNombre').innerText = n;
+    document.getElementById('legajoCurso').innerText = c;
+    document.getElementById('avatarAlumno').innerText = n[0];
 
-            const [snapInf, snapAsis] = await Promise.all([
-                db.collection('informes').where('alumnoID', '==', id).orderBy('timestamp', 'desc').get(),
-                db.collection('asistencias').where('alumnoID', '==', id).orderBy('fecha', 'desc').limit(10).get()
-            ]);
+    // Traemos asistencias filtrando por el ID del alumno
+    const snapAsis = await db.collection('asistencias')
+                             .where('alumnoID', '==', id)
+                             .orderBy('fecha', 'desc')
+                             .limit(15)
+                             .get();
 
-            document.getElementById('timelineInformes').innerHTML = snapInf.docs.map(doc => `
-                <div class="p-3 bg-slate-50 rounded-xl border-l-4 border-orange-400 mb-2">
-                    <p class="font-bold text-slate-500 text-[10px] uppercase">${doc.data().fecha} - ${doc.data().tipo}</p>
-                    <p class="text-slate-700">${doc.data().detalle}</p>
+    const listaAsis = document.getElementById('timelineAsistencias');
+    
+    if (snapAsis.empty) {
+        listaAsis.innerHTML = '<p class="text-slate-400 italic">Sin registros de asistencia.</p>';
+    } else {
+        listaAsis.innerHTML = snapAsis.docs.map(doc => {
+            const data = doc.data();
+            let color = data.estado === 'P' ? 'text-green-600' : (data.estado === 'A' ? 'text-red-600' : 'text-orange-600');
+            let etiqueta = data.estado === 'P' ? 'Presente' : (data.estado === 'A' ? 'Ausente' : 'Tarde');
+            
+            return `
+                <div class="flex justify-between items-center border-b border-slate-50 py-2">
+                    <span class="text-slate-600 font-medium">${data.fecha}</span>
+                    <span class="font-bold ${color}">${etiqueta}</span>
                 </div>
-            `).join('') || 'Sin informes.';
-
-            document.getElementById('timelineAsistencias').innerHTML = snapAsis.docs.map(doc => `
-                <div class="flex justify-between border-b py-1"><span>${doc.data().fecha}</span><span class="font-bold">${doc.data().estado}</span></div>
-            `).join('') || 'Sin registros.';
-        }
+            `;
+        }).join('');
+    }
+    
+    // (Aquí podés mantener tu lógica de snapInf para los informes de conducta)
+}
 
         async function loginManual() {
             const e = document.getElementById('loginEmail').value;
