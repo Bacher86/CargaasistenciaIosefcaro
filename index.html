@@ -59,7 +59,8 @@
                 <div class="max-w-4xl">
                     <h2 class="text-3xl font-bold text-slate-800 mb-2">Panel General</h2>
                     <p id="userMail" class="text-slate-500 mb-10 italic text-sm font-medium"></p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-xl">
@@ -89,6 +90,16 @@
                             <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Informes Totales</p>
                         </div>
                     </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-10">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+                            <i class="fa-solid fa-chalkboard-user mr-2 text-blue-500"></i>Mis Cursos Asignados
+                        </h4>
+                        <div id="listaMisCursos" class="flex flex-wrap gap-3">
+                            <p class="text-slate-400 italic text-sm">Cargando cursos...</p>
+                        </div>
+                    </div>
+
                     <h3 class="font-bold text-slate-400 uppercase text-xs tracking-widest mb-4">Acceso Rápido</h3>
                     <div class="bg-blue-600 p-6 rounded-3xl shadow-xl shadow-blue-100 flex items-center justify-between text-white cursor-pointer hover:bg-blue-700 transition-all" onclick="showSection('legajos')">
                         <div>
@@ -424,13 +435,16 @@
 
         async function actualizarDashboard() {
             try {
+                // 1. Alumnos del docente
                 const snapAlumnos = await db.collection('alumnos').get();
                 const misAlumnos = snapAlumnos.docs.filter(d => cursosPermitidosDocente.includes(d.data().cursoID));
                 document.getElementById('countAlumnos').innerText = misAlumnos.length || 0;
 
+                // 2. Informes totales (en general o podrías filtrarlos por tus alumnos)
                 const snapInformes = await db.collection('informes').get();
                 document.getElementById('countInformes').innerText = snapInformes.size;
                 
+                // 3. Asistencia de hoy
                 const hoy = new Date().toISOString().split('T')[0];
                 const snapHoy = await db.collection('asistencias').where('fecha', '==', hoy).get();
                 const completada = snapHoy.docs.some(doc => cursosPermitidosDocente.includes(doc.data().curso));
@@ -438,7 +452,27 @@
                 const status = document.getElementById('statusAsistencia');
                 status.innerText = completada ? "Completada ✅" : "Pendiente ⏳";
                 status.className = completada ? "text-xl font-bold text-green-600" : "text-xl font-bold text-orange-600";
-            } catch (e) { console.log(e); }
+
+                // 4. NUEVO: Lista de cursos en el perfil
+                const listaCursosHTML = document.getElementById('listaMisCursos');
+                if (cursosPermitidosDocente.length === 0) {
+                    listaCursosHTML.innerHTML = '<p class="text-red-400 text-sm italic">No tienes cursos asignados aún.</p>';
+                } else {
+                    let badges = "";
+                    const promesas = cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get());
+                    const docsCursos = await Promise.all(promesas);
+                    
+                    docsCursos.forEach(doc => {
+                        const nombre = doc.exists ? doc.data().nombre : doc.id;
+                        badges += `
+                            <span class="bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl border border-blue-100 text-sm font-bold shadow-sm">
+                                <i class="fa-solid fa-graduation-cap mr-2"></i>${nombre}
+                            </span>`;
+                    });
+                    listaCursosHTML.innerHTML = badges;
+                }
+
+            } catch (e) { console.log("Error en Dashboard:", e); }
         }
     </script>
 </body>
