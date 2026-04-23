@@ -68,10 +68,10 @@
                                 <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-xl">
                                     <i class="fa-solid fa-users"></i>
                                 </div>
-                                <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg">Activos</span>
+                                <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg">Tus Alumnos</span>
                             </div>
                             <h4 class="text-3xl font-black text-slate-800" id="countAlumnos">--</h4>
-                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Alumnos en Base</p>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">En tus cursos</p>
                         </div>
                         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                             <div class="flex justify-between items-start mb-4">
@@ -89,7 +89,7 @@
                                 </div>
                             </div>
                             <h4 class="text-3xl font-black text-slate-800" id="countInformes">--</h4>
-                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Informes Cargados</p>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Informes Totales</p>
                         </div>
                     </div>
 
@@ -108,9 +108,7 @@
                 <div class="max-w-md">
                     <h2 class="text-2xl font-bold text-slate-800 mb-6 italic">Pase de Lista</h2>
                     <select id="selectCurso" onchange="cargarAlumnos()" class="w-full p-4 bg-white border border-slate-200 shadow-sm rounded-2xl font-medium mb-6">
-                        <option value="" disabled selected>Elegir curso...</option>
-                        <option value="5A">5to Año "A"</option>
-                        <option value="4B">4to Año "B"</option>
+                        <option value="" disabled selected>Cargando cursos...</option>
                     </select>
                     <div id="listaAlumnos" class="bg-white rounded-3xl shadow-sm border border-slate-100 divide-y divide-slate-50"></div>
                     <button onclick="guardarAsistencia()" id="btnGuardar" class="w-full mt-8 bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">
@@ -221,6 +219,9 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
+        // --- ESTADO GLOBAL ---
+        let cursosPermitidosDocente = [];
+
         function showSection(id) {
             document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
             document.getElementById('sec-' + id).classList.remove('hidden');
@@ -232,13 +233,53 @@
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appScreen').classList.remove('hidden');
                 document.getElementById('userMail').innerText = `Docente: ${user.email}`;
-                actualizarDashboard();
+                
+                // Primero cargamos los cursos permitidos, luego el dashboard
+                inicializarCursosDocente().then(() => {
+                    actualizarDashboard();
+                });
+                
                 showSection('inicio');
             } else {
                 document.getElementById('loginScreen').classList.remove('hidden');
                 document.getElementById('appScreen').classList.add('hidden');
             }
         });
+
+        // --- NUEVA FUNCIÓN: CARGAR CURSOS POR DOCENTE ---
+        async function inicializarCursosDocente() {
+            const select = document.getElementById('selectCurso');
+            const email = auth.currentUser.email.toLowerCase();
+
+            try {
+                const userDoc = await db.collection('usuarios').doc(email).get();
+                
+                if (!userDoc.exists) {
+                    select.innerHTML = '<option value="">Sin cursos asignados</option>';
+                    cursosPermitidosDocente = [];
+                    return;
+                }
+
+                cursosPermitidosDocente = userDoc.data().cursosPermitidos || [];
+
+                let options = '<option value="" disabled selected>Elegir curso...</option>';
+                
+                // Buscamos los nombres de esos IDs
+                const promesas = cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get());
+                const resultados = await Promise.all(promesas);
+
+                resultados.forEach(doc => {
+                    if (doc.exists) {
+                        options += `<option value="${doc.id}">${doc.data().nombre}</option>`;
+                    }
+                });
+
+                select.innerHTML = options;
+            } catch (e) {
+                console.error("Error cargando permisos:", e);
+                select.innerHTML = '<option value="">Error de permisos</option>';
+            }
+        }
 
         async function loginManual() {
             const email = document.getElementById('loginEmail').value;
@@ -291,8 +332,14 @@
             const input = document.getElementById('busquedaAlumno').value.toLowerCase();
             const sug = document.getElementById('sugerencias');
             if (input.length < 2) { sug.classList.add('hidden'); return; }
+            
+            // Solo buscamos alumnos de los cursos permitidos para el docente
             const snap = await db.collection('alumnos').get();
-            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(input));
+            const filtrados = snap.docs.filter(d => 
+                d.data().nombre.toLowerCase().includes(input) && 
+                cursosPermitidosDocente.includes(d.data().cursoID)
+            );
+
             if (filtrados.length > 0) {
                 sug.classList.remove('hidden');
                 sug.innerHTML = filtrados.map(d => `
@@ -301,7 +348,7 @@
                         <span class="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500">${d.data().cursoID}</span>
                     </div>
                 `).join('');
-            } else { sug.innerHTML = '<p class="p-4 text-xs italic">No encontrado</p>'; }
+            } else { sug.innerHTML = '<p class="p-4 text-xs italic">No encontrado o fuera de tu curso</p>'; }
         }
 
         function seleccionarParaInforme(id, nombre) {
@@ -337,8 +384,13 @@
             const input = document.getElementById('busquedaLegajo').value.toLowerCase();
             const sug = document.getElementById('sugerenciasLegajo');
             if (input.length < 2) { sug.classList.add('hidden'); return; }
+            
             const snap = await db.collection('alumnos').get();
-            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(input));
+            const filtrados = snap.docs.filter(d => 
+                d.data().nombre.toLowerCase().includes(input) &&
+                cursosPermitidosDocente.includes(d.data().cursoID)
+            );
+
             sug.classList.remove('hidden');
             sug.innerHTML = filtrados.map(d => `
                 <div onclick="verFicha('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-4 hover:bg-blue-50 cursor-pointer border-b border-slate-50 last:border-0 font-medium text-slate-700">
@@ -354,7 +406,6 @@
             document.getElementById('legajoCurso').innerText = `Estudiante de ${curso}`;
             document.getElementById('avatarAlumno').innerText = nombre.charAt(0);
 
-            // Informes
             const snapInfo = await db.collection('informes').where('alumnoID', '==', id).get();
             let totalSanciones = 0;
             const timelineI = document.getElementById('timelineInformes');
@@ -368,34 +419,10 @@
             }).join('');
             document.getElementById('statSanciones').innerText = totalSanciones;
 
-            // Asistencias
             const snapAsist = await db.collection('asistencias').get();
             let faltas = 0;
             let listaFaltas = "";
             snapAsist.forEach(doc => {
                 if(doc.data().estados[id] === 'A') {
                     faltas++;
-                    listaFaltas += `<div class="flex justify-between border-b border-slate-50 py-1"><span>${doc.data().fecha}</span> <span class="text-red-400 font-bold">Ausente</span></div>`;
-                }
-            });
-            document.getElementById('statAsistencia').innerText = faltas;
-            document.getElementById('timelineAsistencias').innerHTML = listaFaltas || '<p class="text-slate-400">Asistencia perfecta.</p>';
-        }
-
-        // --- DASHBOARD ---
-        async function actualizarDashboard() {
-            try {
-                const snapAlumnos = await db.collection('alumnos').get();
-                document.getElementById('countAlumnos').innerText = snapAlumnos.size;
-                const snapInformes = await db.collection('informes').get();
-                document.getElementById('countInformes').innerText = snapInformes.size;
-                const hoy = new Date().toISOString().split('T')[0];
-                const snapHoy = await db.collection('asistencias').where('fecha', '==', hoy).get();
-                const status = document.getElementById('statusAsistencia');
-                status.innerText = !snapHoy.empty ? "Completada ✅" : "Pendiente ⏳";
-                status.className = !snapHoy.empty ? "text-xl font-bold text-green-600" : "text-xl font-bold text-orange-600";
-            } catch (e) {}
-        }
-    </script>
-</body>
-</html>
+                    listaFaltas += `<div class="flex justify-between border-b border-slate-50 py-1"><span>${doc.data().fecha}</span> <span class="text-red-400 font-
