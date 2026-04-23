@@ -1,20 +1,27 @@
+Aquí tienes el código completo y unificado del panel de administración. He integrado las mejoras de **actualización en tiempo real** (para que no tengas que recargar la página al hacer cambios) y una limpieza en la lógica de los formularios.
+
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Iosef Caro</title>
+    <title>Admin - Panel de Control Escolar</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex">
 
     <aside class="w-64 bg-slate-900 text-white p-6 hidden md:block">
         <div class="mb-8">
             <h1 class="text-xl font-bold text-blue-400">Control Central</h1>
-            <p class="text-[10px] text-slate-500 uppercase tracking-widest">Gestión Escolar</p>
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest">Gestión de Asistencia</p>
         </div>
         <nav class="space-y-2">
             <button onclick="tab('alumnos')" class="flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
@@ -35,9 +42,10 @@
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Gestión de Alumnos</h2>
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="nombreAlumno" placeholder="Nombre Completo" class="p-3 bg-slate-50 border rounded-xl outline-none">
-                    <select id="cursoAlumno" class="p-3 bg-slate-50 border rounded-xl outline-none">
-                        </select>
+                    <input type="text" id="nombreAlumno" placeholder="Nombre Completo" class="p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="cursoAlumno" class="p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Cargando cursos...</option>
+                    </select>
                     <button onclick="crearAlumno()" class="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">
                         Registrar Alumno
                     </button>
@@ -54,7 +62,7 @@
                 <div class="flex gap-2">
                     <input type="text" id="nuevoCursoID" placeholder="ID (5A)" class="w-24 p-3 bg-slate-50 border rounded-xl outline-none">
                     <input type="text" id="nuevoCursoNombre" placeholder="Ej: 5to Año 'A'" class="flex-1 p-3 bg-slate-50 border rounded-xl outline-none">
-                    <button onclick="crearCurso()" class="bg-green-500 text-white px-6 rounded-xl font-bold"> + </button>
+                    <button onclick="crearCurso()" class="bg-green-500 text-white px-6 rounded-xl font-bold hover:bg-green-600 transition-all"> + </button>
                 </div>
             </div>
             <div id="listaCursosAdmin" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -66,12 +74,12 @@
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-xl">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Email del Docente (debe estar registrado)</label>
-                        <input type="email" id="emailDocenteAdmin" placeholder="profe@escuela.com" class="w-full p-3 bg-slate-50 border rounded-xl outline-none">
+                        <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Email del Docente</label>
+                        <input type="email" id="emailDocenteAdmin" placeholder="profe@escuela.com" class="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Cursos Asignados (Separar por comas: 5A, 4B)</label>
-                        <input type="text" id="cursosAsignarAdmin" placeholder="5A, 4B" class="w-full p-3 bg-slate-50 border rounded-xl outline-none">
+                        <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Cursos Permitidos (Separar por comas: 5A, 4B)</label>
+                        <input type="text" id="cursosAsignarAdmin" placeholder="5A, 4B" class="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <button onclick="asignarCursos()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-all">
                         Guardar Permisos de Acceso
@@ -83,6 +91,7 @@
     </main>
 
     <script>
+        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
             authDomain: "app-academica-interna.firebaseapp.com",
@@ -94,111 +103,130 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Navegación
+        // --- NAVEGACIÓN ---
         function tab(id) {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
             document.getElementById('tab-' + id).classList.remove('hidden');
         }
 
-        // --- GESTIÓN DE CURSOS ---
-        async function cargarCursos() {
-            const snap = await db.collection('cursos').get();
-            const select = document.getElementById('cursoAlumno');
-            const lista = document.getElementById('listaCursosAdmin');
-            
-            let options = '<option value="">Elegir curso...</option>';
-            let cards = '';
+        // --- GESTIÓN DE CURSOS (TIEMPO REAL) ---
+        function escucharCursos() {
+            db.collection('cursos').onSnapshot(snap => {
+                const select = document.getElementById('cursoAlumno');
+                const lista = document.getElementById('listaCursosAdmin');
+                
+                let options = '<option value="">Elegir curso...</option>';
+                let cards = '';
 
-            snap.forEach(doc => {
-                const c = doc.data();
-                options += `<option value="${doc.id}">${c.nombre}</option>`;
-                cards += `
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-slate-800">${doc.id}</p>
-                            <p class="text-xs text-slate-400">${c.nombre}</p>
+                snap.forEach(doc => {
+                    const c = doc.data();
+                    options += `<option value="${doc.id}">${c.nombre || doc.id}</option>`;
+                    cards += `
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
+                            <div>
+                                <p class="font-bold text-slate-800">${doc.id}</p>
+                                <p class="text-xs text-slate-400">${c.nombre || ''}</p>
+                            </div>
+                            <button onclick="eliminarCurso('${doc.id}')" class="text-red-300 hover:text-red-500 transition-colors">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </div>
-                        <button onclick="eliminarCurso('${doc.id}')" class="text-red-300 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `;
+                    `;
+                });
+                select.innerHTML = options;
+                lista.innerHTML = cards;
             });
-            select.innerHTML = options;
-            lista.innerHTML = cards;
         }
 
         async function crearCurso() {
             const id = document.getElementById('nuevoCursoID').value.toUpperCase().trim();
             const nombre = document.getElementById('nuevoCursoNombre').value.trim();
-            if(!id || !nombre) return alert("Faltan datos");
-            await db.collection('cursos').doc(id).set({ nombre });
-            location.reload();
+            if(!id || !nombre) return alert("Faltan datos del curso");
+            
+            try {
+                await db.collection('cursos').doc(id).set({ nombre });
+                document.getElementById('nuevoCursoID').value = "";
+                document.getElementById('nuevoCursoNombre').value = "";
+            } catch (e) { alert("Error al crear curso"); }
         }
 
         async function eliminarCurso(id) {
-            if(confirm("¿Eliminar curso " + id + "?")) {
+            if(confirm(`¿Eliminar curso ${id}? Se perderá la vinculación con los alumnos.`)) {
                 await db.collection('cursos').doc(id).delete();
-                location.reload();
             }
         }
 
-        // --- GESTIÓN DE ALUMNOS ---
-        async function cargarAlumnos() {
-            const snap = await db.collection('alumnos').orderBy('nombre').get();
-            const tabla = document.getElementById('tablaAlumnos');
-            tabla.innerHTML = snap.docs.map(doc => `
-                <div class="flex justify-between items-center p-4 border-b last:border-0 hover:bg-slate-50 transition-all">
-                    <div>
-                        <p class="font-bold text-slate-700">${doc.data().nombre}</p>
-                        <p class="text-xs text-blue-500 font-bold">${doc.data().cursoID}</p>
+        // --- GESTIÓN DE ALUMNOS (TIEMPO REAL) ---
+        function escucharAlumnos() {
+            db.collection('alumnos').orderBy('nombre').onSnapshot(snap => {
+                const tabla = document.getElementById('tablaAlumnos');
+                if(snap.empty) {
+                    tabla.innerHTML = '<p class="p-8 text-center text-slate-400">No hay alumnos registrados</p>';
+                    return;
+                }
+                tabla.innerHTML = snap.docs.map(doc => `
+                    <div class="flex justify-between items-center p-4 border-b last:border-0 hover:bg-slate-50 transition-all">
+                        <div>
+                            <p class="font-bold text-slate-700">${doc.data().nombre}</p>
+                            <p class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full inline-block font-bold mt-1">
+                                ${doc.data().cursoID}
+                            </p>
+                        </div>
+                        <button onclick="eliminarAlumno('${doc.id}')" class="text-slate-300 hover:text-red-500 px-4 transition-colors">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
                     </div>
-                    <button onclick="eliminarAlumno('${doc.id}')" class="text-slate-300 hover:text-red-500 px-4"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            `).join('');
+                `).join('');
+            });
         }
 
         async function crearAlumno() {
             const nombre = document.getElementById('nombreAlumno').value.trim();
             const cursoID = document.getElementById('cursoAlumno').value;
-            if(!nombre || !cursoID) return alert("Completa los campos");
-            await db.collection('alumnos').add({ nombre, cursoID });
-            document.getElementById('nombreAlumno').value = "";
-            cargarAlumnos();
+            if(!nombre || !cursoID) return alert("Completa nombre y curso");
+            
+            try {
+                await db.collection('alumnos').add({ nombre, cursoID });
+                document.getElementById('nombreAlumno').value = "";
+            } catch (e) { alert("Error al registrar alumno"); }
         }
 
         async function eliminarAlumno(id) {
-            if(confirm("¿Eliminar este alumno?")) {
+            if(confirm("¿Eliminar este alumno de la base de datos?")) {
                 await db.collection('alumnos').doc(id).delete();
-                cargarAlumnos();
             }
         }
 
-        // --- GESTIÓN DE DOCENTES (PERMISOS) ---
+        // --- GESTIÓN DE DOCENTES ---
         async function asignarCursos() {
             const email = document.getElementById('emailDocenteAdmin').value.trim().toLowerCase();
             const cursosRaw = document.getElementById('cursosAsignarAdmin').value;
             
-            if(!email || !cursosRaw) return alert("Completa los datos");
+            if(!email || !cursosRaw) return alert("Completa el email y los cursos");
 
-            const listaCursos = cursosRaw.split(',').map(c => c.trim().toUpperCase());
+            const listaCursos = cursosRaw.split(',')
+                                         .map(c => c.trim().toUpperCase())
+                                         .filter(c => c !== "");
 
             try {
-                // Guardamos en la colección 'usuarios' usando el mail como ID
                 await db.collection('usuarios').doc(email).set({
-                    cursosPermitidos: listaCursos
+                    cursosPermitidos: listaCursos,
+                    rol: 'docente'
                 }, { merge: true });
                 
-                alert("¡Permisos actualizados para " + email + "!");
+                alert(`¡Accesos actualizados para ${email}!`);
                 document.getElementById('emailDocenteAdmin').value = "";
                 document.getElementById('cursosAsignarAdmin').value = "";
             } catch (e) {
                 console.error(e);
-                alert("Error al guardar");
+                alert("Error al guardar permisos");
             }
         }
 
-        // Carga inicial
-        cargarCursos();
-        cargarAlumnos();
+        // Inicialización
+        escucharCursos();
+        escucharAlumnos();
     </script>
 </body>
 </html>
+```
