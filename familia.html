@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comunidad Familia v2.0 - Sistema Integrado</title>
+    <title>Comunidad Familia v2.0 - Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         .nav-active { color: #db2777 !important; transform: scale(1.1); }
         .nav-active i { background: #fdf2f8; padding: 10px; border-radius: 15px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .card-news { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-left: 5px solid #ec4899; }
+        .card-news:active { transform: scale(0.97); }
         .ios-scroll::-webkit-scrollbar { display: none; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-open { animation: slideUp 0.3s ease-out; }
+        .modal-open { animation: slideUp 0.4s ease-out; }
     </style>
 </head>
 <body class="bg-[#F8FAFC] min-h-screen text-slate-900">
@@ -26,19 +28,22 @@
             <div class="absolute inset-0 border-4 border-pink-100 rounded-full"></div>
             <div class="absolute inset-0 border-4 border-pink-500 rounded-full border-t-transparent animate-spin"></div>
         </div>
-        <p class="mt-4 font-bold text-pink-500 animate-pulse uppercase text-[10px] tracking-widest">Sincronizando Sistema...</p>
+        <p class="mt-4 font-bold text-pink-500 animate-pulse uppercase text-[10px] tracking-widest">Sincronizando...</p>
     </div>
 
-    <div id="loginScreen" class="fixed inset-0 z-[110] bg-white flex flex-col items-center justify-center px-8 transition-opacity duration-500">
+    <div id="loginScreen" class="fixed inset-0 z-[110] bg-white flex flex-col items-center justify-center px-8">
         <div class="w-full max-w-sm text-center">
-            <div class="w-20 h-20 bg-gradient-to-tr from-slate-900 to-slate-700 rounded-[2rem] shadow-2xl flex items-center justify-center text-white text-3xl mb-8 rotate-3 mx-auto">
+            <div class="w-24 h-24 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-[2.5rem] shadow-2xl flex items-center justify-center text-white text-4xl mb-10 rotate-6 mx-auto">
                 <i class="fa-solid fa-shield-heart"></i>
             </div>
-            <h1 class="text-3xl font-black text-slate-900 mb-2">Bienvenido.</h1>
-            <p class="text-slate-400 font-medium mb-10 text-sm">Acceso exclusivo para Familias.</p>
-            <div class="space-y-4">
-                <input type="email" id="emailAcceso" placeholder="correo@ejemplo.com" class="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl p-5 outline-none focus:border-pink-500 transition-all font-semibold">
-                <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white font-black py-5 rounded-3xl shadow-xl active:scale-95 transition-all">INGRESAR</button>
+            <h1 class="text-4xl font-black text-slate-900 mb-2 tracking-tight">Hola de nuevo.</h1>
+            <p class="text-slate-400 font-medium mb-10 text-sm">Ingresá para ver el progreso de tus hijos.</p>
+            <div class="space-y-4 text-left">
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                    <input type="email" id="emailAcceso" placeholder="correo@ejemplo.com" class="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl p-5 pl-12 outline-none focus:border-pink-500 transition-all font-semibold">
+                </div>
+                <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white font-black py-5 rounded-3xl shadow-xl hover:bg-pink-600 active:scale-95 transition-all">ACCEDER AHORA</button>
             </div>
         </div>
     </div>
@@ -46,42 +51,50 @@
     <div id="mainPanel" class="hidden">
         <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600"><i class="fa-solid fa-user-tie"></i></div>
+                <div class="w-10 h-10 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600">
+                    <i class="fa-solid fa-user-tie"></i>
+                </div>
                 <div>
-                    <p id="nombreTutor" class="font-black text-slate-800 text-sm tracking-tight">Cargando...</p>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Familia</p>
+                    <p id="nombreTutor" class="font-black text-slate-800 text-sm tracking-tight">...</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Panel Familia</p>
                 </div>
             </div>
-            <button onclick="cerrarSesion()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400"><i class="fa-solid fa-power-off"></i></button>
+            <button onclick="cerrarSesion()" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
         </header>
 
         <main class="max-w-md mx-auto px-6 py-6 pb-40">
             <div id="selectorHijosContainer" class="mb-8 hidden">
                 <div class="bg-white p-2 rounded-[2rem] shadow-sm border border-slate-100 flex items-center">
-                    <div class="bg-pink-500 text-white px-4 py-2 rounded-2xl font-black text-[10px] uppercase">Hijo/a</div>
-                    <select id="selectorHijos" onchange="cargarDatosHijo(this.value)" class="flex-1 bg-transparent px-4 font-bold text-slate-700 outline-none appearance-none cursor-pointer"></select>
+                    <div class="bg-indigo-500 text-white px-4 py-2 rounded-2xl font-black text-[10px] uppercase">Hijo</div>
+                    <select id="selectorHijos" onchange="cargarDatosHijo(this.value)" class="flex-1 bg-transparent px-4 font-bold text-slate-700 outline-none appearance-none"></select>
                 </div>
             </div>
 
             <div id="section-home" class="view-section">
-                <h3 class="font-black text-2xl text-slate-800 mb-6 tracking-tight">Novedades</h3>
+                <div class="flex justify-between items-end mb-6">
+                    <h3 class="font-black text-2xl text-slate-800 tracking-tighter">Noticias</h3>
+                    <div class="flex bg-slate-200/50 p-1 rounded-xl text-[10px] font-bold">
+                        <button onclick="renderizarNoticias('todas')" id="filter-todas" class="px-3 py-1 bg-white rounded-lg shadow-sm">TODAS</button>
+                        <button onclick="renderizarNoticias('nuevas')" id="filter-nuevas" class="px-3 py-1 rounded-lg text-slate-500">NUEVAS</button>
+                    </div>
+                </div>
                 <div id="feedFamilias" class="space-y-6"></div>
             </div>
 
             <div id="section-calendar" class="view-section hidden">
-                <h3 class="font-black text-2xl text-slate-800 mb-6 tracking-tight">Calendario</h3>
+                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Calendario Escolar</h3>
                 <div id="calendarFeed" class="space-y-4"></div>
             </div>
 
             <div id="section-boletin" class="view-section hidden">
-                <h3 class="font-black text-2xl text-slate-800 mb-6 tracking-tight">Boletín Digital</h3>
-                <div class="grid grid-cols-2 gap-4 mb-8 text-center">
-                    <div class="bg-slate-900 p-5 rounded-[2.5rem] text-white shadow-xl">
-                        <p class="text-[9px] font-bold opacity-60 uppercase tracking-widest">Asistencia</p>
+                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Rendimiento</h3>
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-indigo-600 p-5 rounded-[2.5rem] text-white shadow-lg shadow-indigo-100">
+                        <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest">Asistencia</p>
                         <p id="b-asist" class="text-3xl font-black">0%</p>
                     </div>
                     <div class="bg-white p-5 rounded-[2.5rem] border border-slate-100">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Faltas</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Faltas</p>
                         <p id="b-inasist" class="text-3xl font-black text-slate-800">0</p>
                     </div>
                 </div>
@@ -89,48 +102,49 @@
             </div>
 
             <div id="section-chat" class="view-section hidden">
-                <h3 class="font-black text-2xl text-slate-800 mb-6 tracking-tight">Comunicación</h3>
-                <div id="contactList" class="flex gap-4 overflow-x-auto ios-scroll pb-4"></div>
-                <div id="chatBox" class="bg-white border rounded-[2.5rem] h-64 p-6 shadow-inner flex flex-col justify-center items-center text-slate-300 text-[10px] font-bold uppercase tracking-widest">
-                    <i class="fa-solid fa-comments text-4xl mb-4 opacity-20"></i>
-                    Próximamente Canal Directo
+                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Mensajes</h3>
+                <div id="contactList" class="flex gap-4 overflow-x-auto ios-scroll mb-8 pb-2"></div>
+                <div id="chatBox" class="bg-white border border-slate-100 rounded-[2.5rem] h-80 p-6 overflow-y-auto mb-4 flex flex-col gap-4 shadow-inner">
+                    <div class="flex flex-col items-center justify-center h-full text-slate-300 text-center">
+                        <i class="fa-solid fa-comments text-4xl mb-4 opacity-20"></i>
+                        <p class="text-[10px] font-bold uppercase tracking-widest">Seleccioná un contacto para iniciar</p>
+                    </div>
                 </div>
             </div>
         </main>
 
-        <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-sm glass rounded-[2.5rem] shadow-2xl h-20 flex items-center justify-around px-4 z-50">
-            <button onclick="switchTab('home')" class="nav-btn nav-active" id="btn-home"><i class="fa-solid fa-house-chimney text-xl"></i></button>
-            <button onclick="switchTab('calendar')" class="nav-btn text-slate-300" id="btn-calendar"><i class="fa-solid fa-calendar-check text-xl"></i></button>
-            <button onclick="switchTab('boletin')" class="nav-btn text-slate-300" id="btn-boletin"><i class="fa-solid fa-graduation-cap text-xl"></i></button>
-            <button onclick="switchTab('chat')" class="nav-btn text-slate-300" id="btn-chat"><i class="fa-solid fa-paper-plane text-xl"></i></button>
+        <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm glass rounded-[2.5rem] shadow-2xl h-20 flex items-center justify-around px-4 z-50 border-t border-white/50">
+            <button onclick="switchTab('home')" class="nav-btn nav-active" id="btn-home"><i class="fa-solid fa-house text-xl"></i></button>
+            <button onclick="switchTab('calendar')" class="nav-btn text-slate-400" id="btn-calendar"><i class="fa-solid fa-calendar-alt text-xl"></i></button>
+            <button onclick="switchTab('boletin')" class="nav-btn text-slate-400" id="btn-boletin"><i class="fa-solid fa-chart-line text-xl"></i></button>
+            <button onclick="switchTab('chat')" class="nav-btn text-slate-400" id="btn-chat"><i class="fa-solid fa-comment-dots text-xl"></i></button>
         </nav>
 
-        <div id="btn-iosi" onclick="toggleIosi()" class="fixed bottom-32 right-6 w-14 h-14 bg-slate-900 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[100] active:scale-90 border-4 border-white rotate-3 transition-transform">
+        <div id="btn-iosi" onclick="toggleIosi()" class="fixed bottom-32 right-8 w-14 h-14 bg-slate-900 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[100] active:scale-90 transition-all border-4 border-white rotate-3">
             <i class="fa-solid fa-bolt-lightning text-yellow-400"></i>
         </div>
 
-        <div id="window-iosi" class="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-md hidden flex items-end justify-center p-4">
+        <div id="window-iosi" class="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-md hidden flex items-end justify-center p-4">
             <div class="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden modal-open">
                 <div class="bg-gradient-to-r from-slate-900 to-indigo-900 p-6 text-white flex justify-between items-center">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-slate-900 shadow-inner"><i class="fa-solid fa-bolt"></i></div>
-                        <p class="font-black text-xs uppercase tracking-widest">Iosi AI v4.0</p>
+                        <div class="w-8 h-8 bg-yellow-400 rounded-xl flex items-center justify-center text-slate-900 shadow-lg"><i class="fa-solid fa-bolt"></i></div>
+                        <div><p class="font-black text-sm uppercase tracking-tight">Iosi AI v4.0</p></div>
                     </div>
-                    <button onclick="toggleIosi()"><i class="fa-solid fa-circle-xmark text-xl opacity-50 hover:opacity-100"></i></button>
+                    <button onclick="toggleIosi()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div id="iosiContent" class="h-80 overflow-y-auto p-6 space-y-4 bg-slate-50 ios-scroll">
-                    <div class="flex justify-start"><div class="bg-white border p-4 rounded-2xl rounded-tl-none text-[11px] font-medium text-slate-600 shadow-sm leading-relaxed">Hola, soy Iosi. Consultame lo que necesites sobre notas, faltas o noticias del colegio.</div></div>
+                    <div class="flex justify-start"><div class="bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none text-xs font-medium text-slate-600 shadow-sm">Hola. Soy Iosi. Preguntame por "notas", "faltas" o las "últimas noticias".</div></div>
                 </div>
                 <div class="p-4 bg-white border-t flex gap-2">
-                    <input type="text" id="preguntaIosi" placeholder="Preguntar algo..." class="flex-1 bg-slate-100 rounded-2xl px-5 py-3 text-sm outline-none font-medium">
-                    <button onclick="analisisRapidoIosi()" class="bg-indigo-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center active:scale-95 transition-all shadow-lg shadow-indigo-100"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                    <input type="text" id="preguntaIosi" placeholder="Preguntame algo..." class="flex-1 bg-slate-100 rounded-2xl px-5 py-3 text-sm outline-none font-medium">
+                    <button onclick="analisisRapidoIosi()" class="bg-indigo-600 text-white px-5 rounded-2xl active:scale-95 transition-all"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
 <script>
-    // --- 1. FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
         authDomain: "app-academica-interna.firebaseapp.com",
@@ -145,28 +159,18 @@
     let hijoActivo = null;
     let noticiasGlobal = [];
 
-    // Cierre forzado del loader por seguridad
-    setTimeout(() => { document.getElementById('loadingOverlay').classList.add('hidden'); }, 6000);
-
-    // --- 2. ACCESO ---
+    // --- ACCESO ---
     async function validarAcceso() {
         const email = document.getElementById('emailAcceso').value.trim().toLowerCase();
         if(!email) return;
         document.getElementById('loadingOverlay').classList.remove('hidden');
-        
         try {
             const doc = await db.collection('usuarios').doc(email).get();
             if(doc.exists && doc.data().rol === 'familia') {
                 localStorage.setItem('familiaEmail', email);
                 iniciarApp(doc.data());
-            } else {
-                alert("Correo no registrado o sin permisos de Familia.");
-                document.getElementById('loadingOverlay').classList.add('hidden');
-            }
-        } catch(e) {
-            console.error(e);
-            document.getElementById('loadingOverlay').classList.add('hidden');
-        }
+            } else { alert("Acceso inválido"); document.getElementById('loadingOverlay').classList.add('hidden'); }
+        } catch(e) { document.getElementById('loadingOverlay').classList.add('hidden'); }
     }
 
     async function iniciarApp(data) {
@@ -174,18 +178,17 @@
         document.getElementById('mainPanel').classList.remove('hidden');
         document.getElementById('nombreTutor').innerText = data.nombre;
 
-        const hijosIds = Array.isArray(data.hijoID) ? data.hijoID : [data.hijoID];
-        if(hijosIds.length > 1) {
+        const hijos = Array.isArray(data.hijoID) ? data.hijoID : [data.hijoID];
+        if(hijos.length > 1) {
             document.getElementById('selectorHijosContainer').classList.remove('hidden');
             const select = document.getElementById('selectorHijos');
             select.innerHTML = "";
-            for(let id of hijosIds) {
+            for(let id of hijos) {
                 const h = await db.collection('alumnos').doc(id).get();
                 if(h.exists) select.innerHTML += `<option value="${id}">${h.data().nombre}</option>`;
             }
         }
-        
-        cargarDatosHijo(hijosIds[0]);
+        cargarDatosHijo(hijos[0]);
         cargarContactos();
         document.getElementById('loadingOverlay').classList.add('hidden');
     }
@@ -200,42 +203,31 @@
         }
     }
 
-    // --- 3. BOLETÍN Y DATOS ---
-    function vincularBoletin(id) {
-        db.collection('calificaciones').doc(id).onSnapshot(doc => {
-            if(doc.exists) {
-                const d = doc.data();
-                document.getElementById('b-inasist').innerText = d.inasistencias || 0;
-                const asis = Math.max(0, 100 - ((d.inasistencias || 0) * 100 / 180)).toFixed(1);
-                document.getElementById('b-asist').innerText = asis + "%";
-                const tabla = document.getElementById('tabla-notas');
-                tabla.innerHTML = "";
-                Object.entries(d.notas || {}).forEach(([m,v]) => {
-                    tabla.innerHTML += `<div class="flex justify-between items-center bg-white p-5 rounded-3xl border border-slate-50 shadow-sm">
-                        <span class="font-bold text-slate-500 text-[10px] uppercase tracking-wider">${m}</span>
-                        <span class="font-black text-slate-800 text-xl">${v}</span>
-                    </div>`;
-                });
-            }
-        });
-    }
-
+    // --- FEED & CALENDARIO ---
     function escucharFeed(curso) {
         db.collection('comunicados').onSnapshot(snap => {
-            const container = document.getElementById('feedFamilias');
-            container.innerHTML = "";
             noticiasGlobal = [];
             snap.forEach(doc => {
                 const p = doc.data();
-                if(p.tag === "TODOS" || p.tag === curso) {
-                    noticiasGlobal.push(p);
-                    container.innerHTML += `<div class="bg-white p-7 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-2 h-full bg-pink-500"></div>
-                        <h4 class="font-black text-slate-800 text-lg leading-tight mb-2">${p.titulo}</h4>
-                        <p class="text-xs text-slate-400 font-medium">${p.texto}</p>
-                    </div>`;
-                }
+                if(p.tag === "TODOS" || p.tag === curso) noticiasGlobal.push({id: doc.id, ...p});
             });
+            renderizarNoticias('todas');
+        });
+    }
+
+    function renderizarNoticias(filtro) {
+        const container = document.getElementById('feedFamilias');
+        container.innerHTML = "";
+        
+        let noticiasAMostrar = (filtro === 'nuevas') ? noticiasGlobal.slice(0, 3) : noticiasGlobal;
+
+        noticiasAMostrar.forEach(n => {
+            container.innerHTML += `
+                <div class="card-news bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                    <span class="text-[9px] font-black bg-pink-50 text-pink-500 px-3 py-1 rounded-lg uppercase mb-2 inline-block">${n.tag}</span>
+                    <h4 class="font-black text-slate-800 text-lg leading-tight mb-2">${n.titulo}</h4>
+                    <p class="text-xs text-slate-400 font-medium">${n.texto}</p>
+                </div>`;
         });
     }
 
@@ -246,58 +238,73 @@
             snap.forEach(doc => {
                 const e = doc.data();
                 if(e.cursoID === "TODOS" || e.cursoID === curso) {
-                    container.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-slate-50 flex items-center gap-4 shadow-sm">
-                        <div class="bg-indigo-50 p-3 rounded-2xl text-indigo-600"><i class="fa-solid fa-calendar-day"></i></div>
-                        <div><p class="font-black text-slate-800 text-sm">${e.titulo}</p><p class="text-[10px] text-slate-400 font-bold uppercase">${e.fecha}</p></div>
-                    </div>`;
+                    container.innerHTML += `
+                        <div class="bg-white p-5 rounded-3xl border border-slate-50 flex items-center gap-4 shadow-sm">
+                            <div class="bg-indigo-50 p-3 rounded-2xl text-indigo-600"><i class="fa-solid fa-calendar-day text-lg"></i></div>
+                            <div>
+                                <p class="font-black text-slate-800 text-sm">${e.titulo}</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">${e.fecha}</p>
+                            </div>
+                        </div>`;
                 }
             });
         });
     }
 
-    // --- 4. IOSI PRO BRAIN (Segura y Completa) ---
+    // --- BOLETÍN ---
+    function vincularBoletin(id) {
+        db.collection('calificaciones').doc(id).onSnapshot(doc => {
+            if(doc.exists) {
+                const d = doc.data();
+                document.getElementById('b-inasist').innerText = d.inasistencias || 0;
+                const asistenciaPerc = Math.max(0, 100 - ((d.inasistencias || 0) * 100 / 180)).toFixed(1);
+                document.getElementById('b-asist').innerText = asistenciaPerc + "%";
+                
+                const tabla = document.getElementById('tabla-notas');
+                tabla.innerHTML = "";
+                const notas = d.notas || {};
+                Object.keys(notas).forEach(m => {
+                    tabla.innerHTML += `
+                        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <span class="font-bold text-slate-600 text-xs uppercase">${m}</span>
+                            <span class="font-black text-indigo-600 text-lg">${notas[m]}</span>
+                        </div>`;
+                });
+            }
+        });
+    }
+
+    // --- IOSI AI CEREBRO ---
     async function obtenerRespuestaIosi(mensaje) {
         const p = mensaje.toLowerCase();
-        if (!hijoActivo) return "Aún no cargué los datos del alumno.";
-
+        if (!hijoActivo) return "No tengo datos cargados.";
         try {
             const docRef = await db.collection('calificaciones').doc(hijoActivo.id).get();
             const data = docRef.exists ? docRef.data() : {};
             const notas = data.notas || {};
 
-            // Notas
-            if (p.includes("nota") || p.includes("sacó") || p.includes("calificación")) {
-                let mat = Object.keys(notas).find(m => p.includes(m.toLowerCase()));
-                if (mat) return `${hijoActivo.nombre} tiene un **${notas[mat]}** en ${mat}.`;
-                let r = "Estas son las notas actuales:<br>";
-                Object.entries(notas).forEach(([m,v]) => r += `• ${m}: **${v}**<br>`);
+            if (p.includes("nota") || p.includes("sacó")) {
+                let mFound = Object.keys(notas).find(m => p.includes(m.toLowerCase()));
+                if (mFound) return `${hijoActivo.nombre} tiene un **${notas[mFound]}** en ${mFound}.`;
+                let r = "Estas son las notas:<br>";
+                Object.entries(notas).forEach(([m, v]) => r += `• ${m}: **${v}**<br>`);
                 return r;
             }
 
-            // Inasistencias
-            if (p.includes("falta") || p.includes("inasistencia") || p.includes("tarde") || p.includes("faltó")) {
-                if (p.includes("cuándo") || p.includes("día") || p.includes("fecha")) {
-                    const snap = await db.collection('asistencias').where('alumnoID', '==', hijoActivo.id).limit(8).get();
-                    if (snap.empty) return "No tengo registros detallados de fechas.";
-                    let lista = [];
-                    snap.forEach(d => lista.push(d.data()));
-                    lista.sort((a,b) => b.fecha.localeCompare(a.fecha)); // Orden manual seguro
-                    let res = "Registros de inasistencias:<br>";
-                    lista.slice(0, 5).forEach(i => res += `• **${i.fecha}**: ${i.estado === 'A' ? 'Ausente' : 'Tarde'}<br>`);
-                    return res;
-                }
-                return `${hijoActivo.nombre} tiene un total de **${data.inasistencias || 0}** faltas.`;
+            if (p.includes("falta") || p.includes("día") || p.includes("faltó")) {
+                const snap = await db.collection('asistencias').where('alumnoID', '==', hijoActivo.id).limit(5).get();
+                if (snap.empty) return `${hijoActivo.nombre} no tiene faltas registradas.`;
+                let list = "Últimas fechas registradas:<br>";
+                snap.forEach(d => list += `• **${d.data().fecha}**: ${d.data().estado === 'A' ? 'Ausente' : 'Tarde'}<br>`);
+                return list;
             }
 
-            // Noticias
-            if (p.includes("noticia") || p.includes("novedad") || p.includes("comunicado")) {
-                if (noticiasGlobal.length === 0) return "No hay novedades recientes.";
-                return `Lo último: **${noticiasGlobal[0].titulo}**. Revisalo en la sección de Noticias.`;
+            if (p.includes("novedad") || p.includes("noticia") || p.includes("comunicado")) {
+                if (noticiasGlobal.length === 0) return "No hay novedades por ahora.";
+                return `Lo último publicado es: **${noticiasGlobal[0].titulo}**.`;
             }
-
-        } catch (e) { return "Perdón, tuve un error consultando la base de datos."; }
-        
-        return "Podés preguntarme sobre las notas, los días que faltó o las últimas novedades del colegio.";
+        } catch(e) { return "Perdón, no pude consultar la base de datos."; }
+        return "Podés preguntarme por las notas, las faltas o las noticias.";
     }
 
     async function analisisRapidoIosi() {
@@ -305,36 +312,29 @@
         const box = document.getElementById('iosiContent');
         const txt = input.value.trim();
         if(!txt) return;
-        box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none text-[11px] shadow-lg">${txt}</div></div>`;
+        box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-xl text-xs">${txt}</div></div>`;
         input.value = "";
-        box.scrollTop = box.scrollHeight;
-        const resp = await obtenerRespuestaIosi(txt);
+        const r = await obtenerRespuestaIosi(txt);
         setTimeout(() => {
-            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border p-3 rounded-2xl rounded-tl-none text-[11px] text-slate-600 shadow-sm leading-relaxed">${resp}</div></div>`;
+            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border p-3 rounded-xl text-xs text-slate-600">${r}</div></div>`;
             box.scrollTop = box.scrollHeight;
         }, 600);
     }
 
-    // --- 5. INTERFAZ ---
+    // --- INTERFAZ ---
     function switchTab(id) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
         document.getElementById('section-' + id).classList.remove('hidden');
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
         document.getElementById('btn-' + id).classList.add('nav-active');
     }
-
     function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
-
     function cargarContactos() {
-        const list = document.getElementById('contactList');
         const c = [{n:'Administración', i:'fa-file-invoice-dollar'}, {n:'Dirección', i:'fa-user-tie'}, {n:'Secretaría', i:'fa-building-columns'}];
-        list.innerHTML = c.map(x => `<div class="flex-shrink-0 flex flex-col items-center gap-3">
-            <div class="w-16 h-16 bg-white border border-slate-50 rounded-3xl flex items-center justify-center text-slate-400 shadow-sm hover:text-pink-500 transition-colors"><i class="fa-solid ${x.i} text-xl"></i></div>
-            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${x.n}</span>
-        </div>`).join('');
+        document.getElementById('contactList').innerHTML = c.map(x => `<div class="flex-shrink-0 flex flex-col items-center gap-2"><div class="w-16 h-16 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shadow-sm"><i class="fa-solid ${x.i} text-xl"></i></div><span class="text-[9px] font-bold text-slate-400 uppercase">${x.n}</span></div>`).join('');
     }
-
     function cerrarSesion() { localStorage.clear(); location.reload(); }
+    setTimeout(() => { document.getElementById('loadingOverlay').classList.add('hidden'); }, 4000);
 </script>
 </body>
 </html>
