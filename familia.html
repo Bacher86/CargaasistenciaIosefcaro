@@ -137,285 +137,232 @@
         </div>
     </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
-            authDomain: "app-academica-interna.firebaseapp.com",
-            projectId: "app-academica-interna",
-            storageBucket: "app-academica-interna.firebasestorage.app",
-            messagingSenderId: "169882587504",
-            appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+   <script>
+    // 1. CONFIGURACIÓN DE FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
+        authDomain: "app-academica-interna.firebaseapp.com",
+        projectId: "app-academica-interna",
+        storageBucket: "app-academica-interna.firebasestorage.app",
+        messagingSenderId: "169882587504",
+        appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        let tutorData = null;
-        let hijoActivo = null;
-        let unsubChat = null;
-        let unsubFeed = null;
-        let unsubCal = null;
+    let tutorData = null;
+    let hijoActivo = null;
+    let unsubChat = null;
+    let unsubFeed = null;
+    let unsubCal = null;
 
-        // 1. GESTIÓN DE ACCESO
-        async function validarAcceso() {
-            const email = document.getElementById('emailAcceso').value.trim().toLowerCase();
-            if(!email) return alert("Ingresá tu email.");
-            try {
-                const doc = await db.collection('usuarios').doc(email).get();
-                if(doc.exists && doc.data().rol === 'familia') {
-                    localStorage.setItem('familiaEmail', email);
-                    iniciarApp(doc.data());
-                } else { alert("Email no habilitado."); }
-            } catch(e) { alert("Error: " + e.message); }
-        }
+    // 2. ACCESO Y SELECTOR DE HIJOS
+    async function validarAcceso() {
+        const email = document.getElementById('emailAcceso').value.trim().toLowerCase();
+        if(!email) return alert("Por favor, ingresá tu email.");
+        try {
+            const doc = await db.collection('usuarios').doc(email).get();
+            if(doc.exists && doc.data().rol === 'familia') {
+                localStorage.setItem('familiaEmail', email);
+                iniciarApp(doc.data());
+            } else { alert("Email no registrado o sin permisos."); }
+        } catch(e) { alert("Error de conexión: " + e.message); }
+    }
 
-        async function iniciarApp(data) {
-            tutorData = data;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainPanel').classList.remove('hidden');
-            document.getElementById('nombreTutor').innerText = data.nombre;
+    async function iniciarApp(data) {
+        tutorData = data;
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainPanel').classList.remove('hidden');
+        document.getElementById('nombreTutor').innerText = data.nombre;
 
-            const hijosArray = Array.isArray(data.hijoID) ? data.hijoID : [data.hijoID];
-            const select = document.getElementById('selectorHijos');
-            select.innerHTML = "";
+        const hijosArray = Array.isArray(data.hijoID) ? data.hijoID : [data.hijoID];
+        const select = document.getElementById('selectorHijos');
+        select.innerHTML = "";
 
-            if(hijosArray.length > 1) {
-                document.getElementById('selectorHijosContainer').classList.remove('hidden');
-                for(let id of hijosArray) {
-                    const hDoc = await db.collection('alumnos').doc(id).get();
-                    if(hDoc.exists) select.innerHTML += `<option value="${id}">${hDoc.data().nombre}</option>`;
+        if(hijosArray.length > 1) {
+            document.getElementById('selectorHijosContainer').classList.remove('hidden');
+            for(let id of hijosArray) {
+                const hDoc = await db.collection('alumnos').doc(id).get();
+                if(hDoc.exists) {
+                    select.innerHTML += `<option value="${id}">${hDoc.data().nombre}</option>`;
                 }
             }
-            seleccionarHijo(hijosArray[0]);
         }
+        seleccionarHijo(hijosArray[0]);
+    }
 
-        async function seleccionarHijo(id) {
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-            
-            // Limpieza de datos previos
-            document.getElementById('feedFamilias').innerHTML = "";
-            document.getElementById('calendarFeed').innerHTML = "";
-            document.getElementById('tabla-notas').innerHTML = "";
-            document.getElementById('lista-informes').innerHTML = "";
+    async function seleccionarHijo(id) {
+        if(!id) return;
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+        
+        const hDoc = await db.collection('alumnos').doc(id).get();
+        if(!hDoc.exists) return;
+        
+        hijoActivo = { id: hDoc.id, ...hDoc.data() };
+        document.getElementById('nombreHijoDisplay').innerText = hijoActivo.nombre;
+        document.getElementById('cursoHijoDisplay').innerText = hijoActivo.cursoID;
+        
+        // Actualizar todos los módulos para el hijo seleccionado
+        escucharFeed(hijoActivo.cursoID);
+        escucharCalendario(hijoActivo.cursoID);
+        cargarAcademico(hijoActivo.id); // Notas e Inasistencias
+        cargarInformes(hijoActivo.id);
+        
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
 
-            const hDoc = await db.collection('alumnos').doc(id).get();
-            if(!hDoc.exists) return;
+    // 3. MÓDULO ACADÉMICO (Notas e Inasistencias)
+    function cargarAcademico(alumnoID) {
+        db.collection('calificaciones').where('alumnoID', '==', alumnoID).onSnapshot(snap => {
+            const tabla = document.getElementById('tabla-notas');
+            if(snap.empty) {
+                document.getElementById('b-asist').innerText = "0";
+                document.getElementById('b-inasist').innerText = "0";
+                tabla.innerHTML = "<p class='text-xs text-center text-slate-400'>Sin datos cargados.</p>";
+                return;
+            }
+            const d = snap.docs[0].data();
+            document.getElementById('b-asist').innerText = d.asistencias || 0;
+            document.getElementById('b-inasist').innerText = d.inasistencias || 0;
             
-            hijoActivo = { id: hDoc.id, ...hDoc.data() };
-            document.getElementById('nombreHijoDisplay').innerText = hijoActivo.nombre;
-            document.getElementById('cursoHijoDisplay').innerText = hijoActivo.cursoID;
-            
-            escucharFeed(hijoActivo.cursoID);
-            escucharCalendario(hijoActivo.cursoID);
-            cargarNotas(hijoActivo.id);
-            cargarInformes(hijoActivo.id);
-            
-            document.getElementById('loadingOverlay').classList.add('hidden');
-        }
-
-        // 2. LISTENERS
-        function escucharFeed(curso) {
-            if(unsubFeed) unsubFeed();
-            unsubFeed = db.collection('comunicados').orderBy('fechaPublicacion', 'desc').onSnapshot(snap => {
-                let html = "";
-                snap.forEach(doc => {
-                    const p = doc.data();
-                    if(p.tag === "TODOS" || p.tag === curso) {
-                        const liked = localStorage.getItem(`like_${doc.id}`);
-                        html += `<div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm">
-                            <span class="text-[8px] font-black bg-pink-100 text-pink-600 px-2 py-1 rounded-md uppercase">${p.tag}</span>
-                            <h4 class="font-bold text-slate-800 my-2">${p.titulo}</h4>
-                            <p class="text-xs text-slate-500 leading-relaxed mb-4">${p.texto}</p>
-                            <button onclick="darLike('${doc.id}')" id="btnLike_${doc.id}" class="text-xs font-bold ${liked ? 'text-pink-500' : 'text-slate-300'} transition-all flex items-center gap-1">
-                                <i class="fa-${liked ? 'solid' : 'regular'} fa-heart"></i> Me gusta
-                            </button>
-                        </div>`;
-                    }
+            let html = "";
+            if(d.notas) {
+                Object.entries(d.notas).forEach(([materia, nota]) => {
+                    html += `
+                    <div class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                        <span class="text-xs font-bold text-slate-600 capitalize">${materia}</span>
+                        <span class="font-black ${nota >= 6 ? 'text-blue-600' : 'text-red-500'}">${nota}</span>
+                    </div>`;
                 });
-                document.getElementById('feedFamilias').innerHTML = html || "<p class='text-center text-xs text-slate-400'>No hay comunicados.</p>";
-            });
-        }
+            }
+            tabla.innerHTML = html;
+        });
+    }
 
-        function darLike(docID) {
-            if(localStorage.getItem(`like_${docID}`)) return;
-            localStorage.setItem(`like_${docID}`, "true");
-            document.getElementById(`btnLike_${docID}`).classList.replace('text-slate-300', 'text-pink-500');
-            document.getElementById(`btnLike_${docID}`).innerHTML = `<i class="fa-solid fa-heart"></i> Me gusta`;
-        }
+    // 4. CALENDARIO
+    function escucharCalendario(curso) {
+        if(unsubCal) unsubCal();
+        unsubCal = db.collection('eventos')
+            .where('curso', 'in', ['TODOS', curso])
+            .onSnapshot(snap => {
+                let eventos = [];
+                snap.forEach(doc => eventos.push(doc.data()));
+                eventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-        function escucharCalendario(curso) {
-            if(unsubCal) unsubCal();
-            unsubCal = db.collection('eventos').where('curso', 'in', ['TODOS', curso]).orderBy('fecha', 'asc').onSnapshot(snap => {
                 let html = "";
-                snap.forEach(doc => {
-                    const e = doc.data();
+                eventos.forEach(e => {
                     const fecha = new Date(e.fecha + "T00:00:00");
-                    html += `<div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex gap-4 items-center">
+                    html += `
+                    <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex gap-4 items-center mb-3">
                         <div class="bg-slate-900 text-white w-12 h-12 rounded-2xl flex flex-col items-center justify-center">
                             <span class="text-lg font-black leading-none">${fecha.getDate()}</span>
                             <span class="text-[7px] font-bold opacity-60 uppercase">${fecha.toLocaleString('es-ES', { month: 'short' })}</span>
                         </div>
-                        <div class="flex-1">
+                        <div>
                             <p class="text-sm font-bold text-slate-800">${e.titulo}</p>
-                            <p class="text-[9px] text-slate-400 italic">${e.tipo || 'Evento'}</p>
+                            <p class="text-[9px] text-slate-400 italic">${e.tipo || 'Evento escolar'}</p>
                         </div>
                     </div>`;
                 });
-                document.getElementById('calendarFeed').innerHTML = html || "<p class='text-center text-xs text-slate-400'>Sin eventos.</p>";
+                document.getElementById('calendarFeed').innerHTML = html || "<p class='text-center text-xs text-slate-400'>No hay eventos próximos.</p>";
             });
-        }
+    }
 
-        function cargarNotas(alumnoID) {
-            db.collection('calificaciones').where('alumnoID', '==', alumnoID).onSnapshot(snap => {
-                const tabla = document.getElementById('tabla-notas');
-                if(snap.empty) {
-                    document.getElementById('b-asist').innerText = "0";
-                    document.getElementById('b-inasist').innerText = "0";
-                    return tabla.innerHTML = "<p class='text-xs text-center text-slate-400'>Sin notas publicadas.</p>";
-                }
-                const d = snap.docs[0].data();
-                document.getElementById('b-asist').innerText = d.asistencias || 0;
-                document.getElementById('b-inasist').innerText = d.inasistencias || 0;
-                let html = "";
-                for(let m in d.notas) {
-                    html += `<div class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                        <span class="text-xs font-bold text-slate-600 capitalize">${m}</span>
-                        <span class="font-black ${d.notas[m] >= 6 ? 'text-blue-600' : 'text-red-500'}">${d.notas[m]}</span>
-                    </div>`;
-                }
-                tabla.innerHTML = html;
-            });
-        }
-
-        function cargarInformes(alumnoID) {
-            db.collection('informes').where('alumnoID', '==', alumnoID).orderBy('fecha', 'desc').onSnapshot(snap => {
-                let html = "";
-                snap.forEach(doc => {
-                    const inf = doc.data();
-                    html += `<div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-                        <div class="flex justify-between mb-1"><span class="text-[9px] font-black text-slate-300 uppercase">${inf.fecha}</span></div>
-                        <p class="text-xs text-slate-600 leading-relaxed">${inf.detalle}</p>
-                    </div>`;
-                });
-                document.getElementById('lista-informes').innerHTML = html || "<p class='text-xs text-slate-400 italic'>Sin informes.</p>";
-            });
-        }
-
-        // 3. IOSI - IA ASISTENTE
-        function toggleIosi() {
-            document.getElementById('window-iosi').classList.toggle('hidden');
-        }
-
-        async function preguntarAIosi() {
-            const input = document.getElementById('preguntaIosi');
-            const box = document.getElementById('iosiContent');
-            if(!input.value.trim() || !hijoActivo) return;
-
-            const pregunta = input.value.trim();
-            input.value = "";
-            
-            box.innerHTML += `<div class="iosi-bubble bg-slate-200 text-slate-700 self-end rounded-tr-none">${pregunta}</div>`;
-            
-            const loadingId = "loading-" + Date.now();
-            box.innerHTML += `<div id="${loadingId}" class="iosi-bubble bg-indigo-50 text-indigo-400 self-start animate-pulse">Iosi está pensando...</div>`;
-            box.scrollTop = box.scrollHeight;
-
-            try {
-                const informesRef = await db.collection('informes').where('alumnoID', '==', hijoActivo.id).limit(5).get();
-                const contexto = informesRef.docs.map(d => d.data().detalle).join(". ");
-                
-                const notasRef = await db.collection('calificaciones').where('alumnoID', '==', hijoActivo.id).get();
-                let notasContexto = "";
-                if(!notasRef.empty) {
-                    const n = notasRef.docs[0].data().notas;
-                    notasContexto = "Notas actuales: " + Object.entries(n).map(([m, v]) => `${m}: ${v}`).join(", ");
-                }
-
-                // REEMPLAZA ESTA KEY POR LA QUE GENERASTE EN AI STUDIO
-                const miApiKey = "AQ.Ab8RN6IfOgxhdgscaTR3xEVnE5bOUkX4M5Xe7N8Mg3Ll0CHj_w"; 
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${miApiKey}`;
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `Sos Iosi, asistente de la escuela. Contexto del alumno: ${contexto}. ${notasContexto}. Responde de forma muy breve (máximo 3 frases) a lo siguiente: ${pregunta}`
-                            }]
-                        }]
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (data.error) throw new Error(data.error.message);
-
-                const respuestaIA = data.candidates[0].content.parts[0].text;
-                const loadingEl = document.getElementById(loadingId);
-                if(loadingEl) loadingEl.remove();
-                
-                box.innerHTML += `<div class="iosi-bubble bg-indigo-600 text-white self-start rounded-tl-none">${respuestaIA}</div>`;
-                box.scrollTop = box.scrollHeight;
-
-            } catch(e) {
-                console.error("Error Iosi:", e);
-                const loadingEl = document.getElementById(loadingId);
-                if(loadingEl) loadingEl.innerText = "Iosi no puede responder ahora.";
-            }
-        }
-
-        // 4. CHAT
-        function escucharChat() {
-            if(unsubChat) unsubChat();
-            const email = localStorage.getItem('familiaEmail');
-            // Nota: Firebase requiere un índice compuesto para filtrar y ordenar. Revisar consola de Chrome.
-            unsubChat = db.collection('mensajes').where('participantes', 'array-contains', email).orderBy('fecha', 'asc').onSnapshot(snap => {
+    // 5. CHAT CON SECRETARÍA
+    function escucharChat() {
+        if(unsubChat) unsubChat();
+        const email = localStorage.getItem('familiaEmail');
+        
+        unsubChat = db.collection('mensajes')
+            .where('participantes', 'array-contains', email)
+            .onSnapshot(snap => {
                 const box = document.getElementById('chatBox');
                 box.innerHTML = "";
-                snap.forEach(doc => {
-                    const m = doc.data();
+                let msgs = [];
+                snap.forEach(doc => msgs.push(doc.data()));
+                msgs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+                msgs.forEach(m => {
                     const soyYo = m.emisorID === email;
                     const div = document.createElement('div');
-                    div.className = `max-w-[85%] p-3 rounded-2xl text-[11px] shadow-sm ${soyYo ? 'bg-pink-500 text-white self-end rounded-tr-none' : 'bg-slate-100 text-slate-700 self-start rounded-tl-none'}`;
+                    div.className = `max-w-[85%] p-3 rounded-2xl text-[11px] ${soyYo ? 'bg-pink-500 text-white self-end rounded-tr-none' : 'bg-slate-100 text-slate-700 self-start rounded-tl-none'}`;
                     div.innerText = m.texto;
                     box.appendChild(div);
                 });
                 box.scrollTop = box.scrollHeight;
             });
-        }
+    }
 
-        async function enviarMensaje() {
-            const input = document.getElementById('msgInput');
-            const email = localStorage.getItem('familiaEmail');
-            if(!input.value.trim()) return;
-            await db.collection('mensajes').add({
-                emisorID: email,
-                receptorID: "administracion",
-                participantes: [email, "administracion"],
-                texto: input.value.trim(),
-                fecha: new Date().toISOString()
+    async function enviarMensaje() {
+        const input = document.getElementById('msgInput');
+        const email = localStorage.getItem('familiaEmail');
+        if(!input.value.trim()) return;
+        
+        const texto = input.value.trim();
+        input.value = ""; 
+
+        await db.collection('mensajes').add({
+            emisorID: email,
+            receptorID: "administracion",
+            participantes: [email, "administracion"],
+            texto: texto,
+            fecha: new Date().toISOString()
+        });
+    }
+
+    // 6. FEED E INFORMES
+    function escucharFeed(curso) {
+        if(unsubFeed) unsubFeed();
+        unsubFeed = db.collection('comunicados').onSnapshot(snap => {
+            let html = "";
+            snap.forEach(doc => {
+                const p = doc.data();
+                if(p.tag === "TODOS" || p.tag === curso) {
+                    html += `
+                    <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm mb-4">
+                        <span class="text-[8px] font-black bg-pink-100 text-pink-600 px-2 py-1 rounded-md uppercase">${p.tag}</span>
+                        <h4 class="font-bold text-slate-800 my-2">${p.titulo}</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed">${p.texto}</p>
+                    </div>`;
+                }
             });
-            input.value = "";
+            document.getElementById('feedFamilias').innerHTML = html || "<p class='text-center text-xs text-slate-400'>Sin comunicados nuevos.</p>";
+        });
+    }
+
+    function cargarInformes(alumnoID) {
+        db.collection('informes').where('alumnoID', '==', alumnoID).onSnapshot(snap => {
+            let html = "";
+            snap.forEach(doc => {
+                const inf = doc.data();
+                html += `
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm mb-3">
+                    <p class="text-[9px] font-black text-slate-300 uppercase mb-1">${inf.fecha}</p>
+                    <p class="text-xs text-slate-600 leading-relaxed">${inf.detalle}</p>
+                </div>`;
+            });
+            document.getElementById('lista-informes').innerHTML = html || "<p class='text-xs text-slate-400 italic'>No hay informes pedagógicos.</p>";
+        });
+    }
+
+    // NAVEGACIÓN Y CIERRE
+    function switchTab(id) {
+        document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+        document.getElementById('section-' + id).classList.remove('hidden');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active', 'text-pink-500'));
+        document.getElementById('btn-' + id).classList.add('nav-active', 'text-pink-500');
+        if(id === 'chat') escucharChat();
+    }
+    
+    function cerrarSesion() { localStorage.clear(); location.reload(); }
+
+    window.onload = async () => {
+        const savedEmail = localStorage.getItem('familiaEmail');
+        if(savedEmail) {
+            const doc = await db.collection('usuarios').doc(savedEmail).get();
+            if(doc.exists) iniciarApp(doc.data());
         }
-
-        // 5. NAVEGACIÓN
-        function switchTab(id) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-            document.getElementById('section-' + id).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active', 'text-pink-500'));
-            document.getElementById('btn-' + id).classList.add('nav-active', 'text-pink-500');
-            if(id === 'chat') escucharChat();
-        }
-
-        function cerrarSesion() { localStorage.clear(); location.reload(); }
-
-        window.onload = async () => {
-            const savedEmail = localStorage.getItem('familiaEmail');
-            if(savedEmail) {
-                const doc = await db.collection('usuarios').doc(savedEmail).get();
-                if(doc.exists) iniciarApp(doc.data());
-            }
-        };
-    </script>
+    };
+</script>
 </body>
 </html>
