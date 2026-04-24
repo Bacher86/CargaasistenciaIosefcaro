@@ -14,6 +14,7 @@
         body { font-family: 'Inter', sans-serif; }
         .admin-tab { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .sidebar-btn.active { background: #1e293b; border-left: 4px solid #3b82f6; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex">
@@ -24,20 +25,20 @@
             <p class="text-[10px] text-slate-500 uppercase tracking-widest text-center mt-1">Gestión Institucional</p>
         </div>
         <nav class="space-y-2">
-            <button onclick="tab('alumnos')" class="flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
+            <button onclick="tab('alumnos')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
                 <i class="fa-solid fa-graduation-cap mr-3 text-blue-400"></i> Alumnos
             </button>
-            <button onclick="tab('cursos')" class="flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
+            <button onclick="tab('cursos')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
                 <i class="fa-solid fa-chalkboard mr-3 text-green-400"></i> Cursos
             </button>
-            <button onclick="tab('docentes')" class="flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
+            <button onclick="tab('docentes')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
                 <i class="fa-solid fa-user-tie mr-3 text-purple-400"></i> Docentes
             </button>
             <div class="border-t border-slate-800 my-4"></div>
-            <button onclick="tab('familias')" class="flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
+            <button onclick="tab('familias')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
                 <i class="fa-solid fa-people-group mr-3 text-orange-400"></i> Familias
             </button>
-            <button onclick="tab('comunicacion')" class="flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
+            <button onclick="tab('comunicacion')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
                 <i class="fa-solid fa-bullhorn mr-3 text-pink-400"></i> Comunicación
             </button>
         </nav>
@@ -49,14 +50,37 @@
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Gestión de Alumnos</h2>
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="nombreAlumno" placeholder="Nombre Completo" class="p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                    <select id="cursoAlumno" class="p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="nombreAlumno" placeholder="Nombre Completo" class="p-3 bg-slate-50 border rounded-xl outline-none">
+                    <select id="cursoAlumno" class="p-3 bg-slate-50 border rounded-xl outline-none font-bold text-slate-600">
                         <option value="">Cargando cursos...</option>
                     </select>
                     <button onclick="crearAlumno()" class="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">Registrar Alumno</button>
                 </div>
             </div>
-            <div id="tablaAlumnos" class="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-200"></div>
+            <div id="tablaAlumnos" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden"></div>
+        </section>
+
+        <section id="tab-cursos" class="admin-tab hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Configuración de Cursos</h2>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
+                <div class="flex gap-4">
+                    <input type="text" id="nombreCurso" placeholder="Ej: 1° Año A, Sala Verde..." class="flex-1 p-3 bg-slate-50 border rounded-xl outline-none">
+                    <button onclick="crearCurso()" class="bg-green-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-green-700 transition-all">Crear Curso</button>
+                </div>
+            </div>
+            <div id="listaCursos" class="grid grid-cols-1 md:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="tab-docentes" class="admin-tab hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Gestión de Docentes</h2>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="nombreDocente" placeholder="Nombre del Docente" class="p-3 bg-slate-50 border rounded-xl outline-none">
+                    <input type="email" id="emailDocente" placeholder="email@escuela.com" class="p-3 bg-slate-50 border rounded-xl outline-none">
+                    <button onclick="registrarDocente()" class="bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 transition-all">Alta Docente</button>
+                </div>
+            </div>
+            <div id="tablaDocentes" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden"></div>
         </section>
 
         <section id="tab-familias" class="admin-tab hidden">
@@ -77,9 +101,7 @@
                         <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Asignar Hijo/a (Alumno)</label>
                         <select id="selectHijo" class="w-full p-3 bg-slate-50 border rounded-xl outline-none"></select>
                     </div>
-                    <button onclick="registrarFamilia()" class="w-full bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all">
-                        Crear Cuenta de Familia
-                    </button>
+                    <button onclick="registrarFamilia()" class="w-full bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-all">Crear Cuenta de Familia</button>
                 </div>
             </div>
         </section>
@@ -87,59 +109,43 @@
         <section id="tab-comunicacion" class="admin-tab hidden">
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Muro de Comunicación</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 h-fit">
-                    <h3 class="font-bold text-slate-700 mb-4">Nueva Publicación</h3>
-                    <div class="space-y-4">
-                        <input type="text" id="tituloPost" placeholder="Título del comunicado" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-bold">
-                        <textarea id="contenidoPost" rows="4" placeholder="¿Qué está pasando en la escuela?" class="w-full p-3 bg-slate-50 border rounded-xl outline-none"></textarea>
-                        
-                        <div class="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-                            <label class="flex items-center gap-2 px-3 py-2 bg-white border rounded-xl cursor-pointer hover:bg-blue-50 text-[10px] font-bold">
-                                <i class="fa-solid fa-image text-blue-500"></i> Imagen
-                                <input type="file" id="adjuntoImagen" accept="image/*" class="hidden" onchange="previewFile(this)">
-                            </label>
-                            <label class="flex items-center gap-2 px-3 py-2 bg-white border rounded-xl cursor-pointer hover:bg-purple-50 text-[10px] font-bold">
-                                <i class="fa-solid fa-video text-purple-500"></i> Video
-                                <input type="file" id="adjuntoVideo" accept="video/*" class="hidden" onchange="previewFile(this)">
-                            </label>
-                            <label class="flex items-center gap-2 px-3 py-2 bg-white border rounded-xl cursor-pointer hover:bg-orange-50 text-[10px] font-bold">
-                                <i class="fa-solid fa-file-pdf text-orange-500"></i> PDF
-                                <input type="file" id="adjuntoDoc" accept=".pdf" class="hidden" onchange="previewFile(this)">
-                            </label>
-                        </div>
-                        <div id="fileInfo" class="text-[10px] text-indigo-500 font-bold italic px-2"></div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 h-fit space-y-4">
+                    <input type="text" id="tituloPost" placeholder="Título del comunicado" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-bold">
+                    <textarea id="contenidoPost" rows="4" placeholder="¿Qué está pasando en la escuela?" class="w-full p-3 bg-slate-50 border rounded-xl outline-none"></textarea>
+                    
+                    <div class="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                        <label class="flex items-center gap-2 px-3 py-2 bg-white border rounded-xl cursor-pointer hover:bg-blue-50 text-[10px] font-bold">
+                            <i class="fa-solid fa-image text-blue-500"></i> Imagen <input type="file" id="adjuntoImagen" accept="image/*" class="hidden" onchange="previewFile(this)">
+                        </label>
+                        <label class="flex items-center gap-2 px-3 py-2 bg-white border rounded-xl cursor-pointer hover:bg-purple-50 text-[10px] font-bold">
+                            <i class="fa-solid fa-video text-purple-500"></i> Video <input type="file" id="adjuntoVideo" accept="video/*" class="hidden" onchange="previewFile(this)">
+                        </label>
+                        <label class="flex items-center gap-2 px-3 py-2 bg-white border rounded-xl cursor-pointer hover:bg-orange-50 text-[10px] font-bold">
+                            <i class="fa-solid fa-file-pdf text-orange-500"></i> PDF <input type="file" id="adjuntoDoc" accept=".pdf" class="hidden" onchange="previewFile(this)">
+                        </label>
+                    </div>
+                    <div id="fileInfo" class="text-[10px] text-indigo-500 font-bold italic px-2"></div>
 
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Publicar el:</label>
-                                <input type="datetime-local" id="fechaProgramada" class="w-full p-2 bg-slate-50 border rounded-xl text-xs outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Para:</label>
-                                <select id="tagPost" class="w-full p-2 bg-slate-50 border rounded-xl text-xs outline-none font-bold">
-                                    <option value="TODOS">Toda la Escuela</option>
-                                </select>
-                            </div>
-                        </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="datetime-local" id="fechaProgramada" class="w-full p-2 bg-slate-50 border rounded-xl text-xs outline-none">
+                        <select id="tagPost" class="w-full p-2 bg-slate-50 border rounded-xl text-xs outline-none font-bold">
+                            <option value="TODOS">Toda la Escuela</option>
+                        </select>
+                    </div>
 
-                        <div class="flex gap-2 pt-2">
-                            <button onclick="mejorarConIA(event)" class="flex-1 bg-indigo-100 text-indigo-600 py-3 rounded-xl font-bold text-xs hover:bg-indigo-200 transition-all">
-                                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Pulir con IA
-                            </button>
-                            <button onclick="publicarFeed()" class="flex-[2] bg-pink-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-pink-600 transition-all">
-                                Publicar en el Muro
-                            </button>
-                        </div>
+                    <div class="flex gap-2">
+                        <button onclick="mejorarConIA(event)" class="flex-1 bg-indigo-50 text-indigo-600 py-3 rounded-xl font-bold text-xs hover:bg-indigo-100 transition-all">IA Pulir</button>
+                        <button onclick="publicarFeed()" class="flex-[2] bg-pink-500 text-white font-bold py-3 rounded-xl hover:bg-pink-600 shadow-lg">Publicar Ahora</button>
                     </div>
                 </div>
-
-                <div class="space-y-4" id="previewFeed"></div>
+                <div id="previewFeed" class="space-y-4"></div>
             </div>
         </section>
 
     </main>
 
     <script>
+        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
             authDomain: "app-academica-interna.firebaseapp.com",
@@ -152,170 +158,170 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
+        // NAVEGACIÓN
         function tab(id) {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
             document.getElementById('tab-' + id).classList.remove('hidden');
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
         }
 
-        // --- GESTIÓN DE ARCHIVOS ---
-        function previewFile(input) {
-            const info = document.getElementById('fileInfo');
-            if(input.files.length > 0) {
-                info.innerText = `Adjunto listo: ${input.files[0].name}`;
-            }
+        // --- FUNCIONES CURSOS ---
+        async function crearCurso() {
+            const nombre = document.getElementById('nombreCurso').value.trim().toUpperCase();
+            if(!nombre) return alert("Nombre de curso vacío");
+            await db.collection('cursos').doc(nombre).set({ nombre });
+            document.getElementById('nombreCurso').value = "";
         }
 
-        async function subirArchivo(file, ruta) {
-            if(!file) return null;
-            const ref = storage.ref().child(`${ruta}/${Date.now()}_${file.name}`);
+        function escucharCursos() {
+            db.collection('cursos').onSnapshot(snap => {
+                const lista = document.getElementById('listaCursos');
+                const cursoAlumnos = document.getElementById('cursoAlumno');
+                const tagPost = document.getElementById('tagPost');
+                
+                let html = "", options = '<option value="">Elegir curso...</option>', tags = '<option value="TODOS">Toda la Escuela</option>';
+                
+                snap.forEach(doc => {
+                    html += `<div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+                        <span class="font-bold text-slate-700">${doc.id}</span>
+                        <button onclick="borrar('cursos', '${doc.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
+                    </div>`;
+                    options += `<option value="${doc.id}">${doc.id}</option>`;
+                    tags += `<option value="${doc.id}">Solo ${doc.id}</option>`;
+                });
+                lista.innerHTML = html;
+                cursoAlumnos.innerHTML = options;
+                tagPost.innerHTML = tags;
+            });
+        }
+
+        // --- FUNCIONES ALUMNOS ---
+        async function crearAlumno() {
+            const nombre = document.getElementById('nombreAlumno').value;
+            const cursoID = document.getElementById('cursoAlumno').value;
+            if(!nombre || !cursoID) return alert("Faltan datos");
+            await db.collection('alumnos').add({ nombre, cursoID });
+            document.getElementById('nombreAlumno').value = "";
+        }
+
+        function escucharAlumnos() {
+            db.collection('alumnos').onSnapshot(snap => {
+                const tabla = document.getElementById('tablaAlumnos');
+                const selectHijo = document.getElementById('selectHijo');
+                let html = '<table class="w-full text-left"><thead class="bg-slate-50 text-[10px] uppercase text-slate-400 font-black"><tr><th class="p-4">Nombre</th><th class="p-4">Curso</th><th class="p-4">Acción</th></tr></thead><tbody class="divide-y divide-slate-100">';
+                let options = "";
+
+                snap.forEach(doc => {
+                    html += `<tr class="text-sm"><td class="p-4 font-bold text-slate-700">${doc.data().nombre}</td><td class="p-4"><span class="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-xs font-bold">${doc.data().cursoID}</span></td><td class="p-4"><button onclick="borrar('alumnos', '${doc.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    options += `<option value="${doc.id}">${doc.data().nombre} (${doc.data().cursoID})</option>`;
+                });
+                tabla.innerHTML = html + '</tbody></table>';
+                selectHijo.innerHTML = options;
+            });
+        }
+
+        // --- FUNCIONES DOCENTES ---
+        async function registrarDocente() {
+            const nombre = document.getElementById('nombreDocente').value;
+            const email = document.getElementById('emailDocente').value.toLowerCase();
+            if(!nombre || !email) return alert("Faltan datos");
+            await db.collection('usuarios').doc(email).set({ nombre, rol: 'docente' });
+            document.getElementById('nombreDocente').value = "";
+            document.getElementById('emailDocente').value = "";
+        }
+
+        function escucharDocentes() {
+            db.collection('usuarios').where('rol', '==', 'docente').onSnapshot(snap => {
+                const tabla = document.getElementById('tablaDocentes');
+                let html = '<table class="w-full text-left"><thead class="bg-slate-50 text-[10px] uppercase text-slate-400 font-black"><tr><th class="p-4">Nombre</th><th class="p-4">Email</th><th class="p-4">Acción</th></tr></thead><tbody>';
+                snap.forEach(doc => {
+                    html += `<tr class="text-sm"><td class="p-4 font-bold">${doc.data().nombre}</td><td class="p-4 text-slate-500">${doc.id}</td><td class="p-4"><button onclick="borrar('usuarios', '${doc.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                });
+                tabla.innerHTML = html + '</tbody></table>';
+            });
+        }
+
+        // --- FUNCIONES FAMILIAS ---
+        async function registrarFamilia() {
+            const email = document.getElementById('emailFamilia').value.toLowerCase();
+            const nombre = document.getElementById('nombreFamilia').value;
+            const hijoID = document.getElementById('selectHijo').value;
+            if(!email || !nombre) return alert("Faltan datos");
+            await db.collection('usuarios').doc(email).set({ nombre, rol: 'familia', hijoID });
+            alert("Familia vinculada");
+        }
+
+        // --- COMUNICACIÓN & IA ---
+        function previewFile(input) { document.getElementById('fileInfo').innerText = `Archivo: ${input.files[0].name}`; }
+
+        async function subir(file, folder) {
+            if(!file) return "";
+            const ref = storage.ref().child(`${folder}/${Date.now()}_${file.name}`);
             await ref.put(file);
             return await ref.getDownloadURL();
         }
 
-        // --- MEJORAR CON IA (FIXED) ---
         async function mejorarConIA(event) {
-            const tituloInput = document.getElementById('tituloPost');
-            const contenidoInput = document.getElementById('contenidoPost');
-            const btnIA = event.currentTarget; 
-
-            if (!contenidoInput.value) return alert("Escribe un borrador primero.");
-
-            const originalHtml = btnIA.innerHTML;
-            btnIA.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Puliendo...';
-            btnIA.disabled = true;
-
-            const promptText = `Eres un directivo escolar. Mejora este comunicado institucional:
-            Título: ${tituloInput.value}
-            Mensaje: ${contenidoInput.value}
-            Responde ÚNICAMENTE con el cuerpo del mensaje mejorado, con tono profesional y cálido.`;
-
+            const btn = event.currentTarget;
+            const text = document.getElementById('contenidoPost');
+            if(!text.value) return;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             try {
-                const API_KEY = "AIzaSyATS0LI0XhWWyYEcVyncMWBkFutT-SlWQE";
-                // Usando v1beta que es más flexible para generateContent
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-                
-                const response = await fetch(url, {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyATS0LI0XhWWyYEcVyncMWBkFutT-SlWQE`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: promptText }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Mejora este comunicado escolar de forma formal y breve: " + text.value }] }] })
                 });
-
-                const data = await response.json();
-                if (data.error) throw new Error(data.error.message);
-
-                if (data.candidates && data.candidates[0].content) {
-                    contenidoInput.value = data.candidates[0].content.parts[0].text.trim();
-                }
-            } catch (e) {
-                console.error(e);
-                alert("Error de IA: " + e.message);
-            } finally {
-                btnIA.innerHTML = originalHtml;
-                btnIA.disabled = false;
-            }
+                const data = await res.json();
+                text.value = data.candidates[0].content.parts[0].text.trim();
+            } catch (e) { alert("Error IA"); }
+            btn.innerHTML = original;
         }
 
-        // --- PUBLICAR FEED ---
         async function publicarFeed() {
             const titulo = document.getElementById('tituloPost').value;
             const texto = document.getElementById('contenidoPost').value;
             const tag = document.getElementById('tagPost').value;
-            const fechaProg = document.getElementById('fechaProgramada').value;
+            const fecha = document.getElementById('fechaProgramada').value;
             
-            const fileImg = document.getElementById('adjuntoImagen').files[0];
-            const fileVid = document.getElementById('adjuntoVideo').files[0];
-            const fileDoc = document.getElementById('adjuntoDoc').files[0];
+            if(!titulo || !texto) return alert("Falta contenido");
+            
+            const img = await subir(document.getElementById('adjuntoImagen').files[0], 'images');
+            const doc = await subir(document.getElementById('adjuntoDoc').files[0], 'docs');
 
-            if(!titulo || !texto) return alert("Completa título y mensaje");
-
-            try {
-                const btn = event.currentTarget;
-                btn.disabled = true;
-                btn.innerText = "Subiendo multimedia...";
-
-                const imgUrl = await subirArchivo(fileImg, 'posts/images');
-                const vidUrl = await subirArchivo(fileVid, 'posts/videos');
-                const docUrl = await subirArchivo(fileDoc, 'posts/docs');
-
-                await db.collection('comunicados').add({
-                    titulo,
-                    texto,
-                    tag,
-                    urlImagen: imgUrl || "",
-                    urlVideo: vidUrl || "",
-                    urlDoc: docUrl || "",
-                    fechaPublicacion: fechaProg ? new Date(fechaProg).toISOString() : new Date().toISOString(),
-                    creadoEn: new Date().toISOString(),
-                    likes: 0
-                });
-
-                alert("¡Publicado con éxito!");
-                location.reload();
-            } catch (e) {
-                alert("Error al publicar: " + e.message);
-            }
+            await db.collection('comunicados').add({
+                titulo, texto, tag, img, doc,
+                fechaPublicacion: fecha ? new Date(fecha).toISOString() : new Date().toISOString(),
+                creadoEn: new Date().toISOString(),
+                likes: 0
+            });
+            location.reload();
         }
 
-        // --- CARGA DE DATOS Y LISTENERS ---
         function escucharFeed() {
             db.collection('comunicados').orderBy('creadoEn', 'desc').onSnapshot(snap => {
                 const feed = document.getElementById('previewFeed');
-                feed.innerHTML = snap.docs.map(doc => {
-                    const d = doc.data();
-                    return `
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative">
-                            <span class="absolute top-4 right-4 text-[9px] font-black bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">${d.tag}</span>
-                            <h4 class="font-bold text-slate-800 pr-12">${d.titulo}</h4>
-                            <p class="text-sm text-slate-600 mt-2 whitespace-pre-wrap">${d.texto}</p>
-                            ${d.urlImagen ? `<img src="${d.urlImagen}" class="mt-3 rounded-xl w-full h-40 object-cover border">` : ''}
-                            <div class="mt-4 flex items-center text-[10px] text-slate-400 gap-4 font-bold uppercase">
-                                <span><i class="fa-solid fa-clock mr-1"></i> ${new Date(d.fechaPublicacion).toLocaleString()}</span>
-                                ${d.urlDoc ? `<a href="${d.urlDoc}" target="_blank" class="text-orange-500"><i class="fa-solid fa-file-pdf mr-1"></i> Ver PDF</a>` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                feed.innerHTML = snap.docs.map(doc => `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative">
+                        <span class="absolute top-4 right-4 text-[9px] font-black bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">${doc.data().tag}</span>
+                        <h4 class="font-bold text-slate-800">${doc.data().titulo}</h4>
+                        <p class="text-xs text-slate-500 mt-2">${doc.data().texto.substring(0,100)}...</p>
+                        ${doc.data().img ? `<img src="${doc.data().img}" class="mt-2 rounded-lg h-20 w-full object-cover">` : ''}
+                        <button onclick="borrar('comunicados', '${doc.id}')" class="mt-3 text-[10px] text-red-400 font-bold uppercase tracking-widest">Eliminar</button>
+                    </div>
+                `).join('');
             });
         }
 
-        async function registrarFamilia() {
-            const email = document.getElementById('emailFamilia').value.trim().toLowerCase();
-            const nombre = document.getElementById('nombreFamilia').value.trim();
-            const hijoID = document.getElementById('selectHijo').value;
-            if(!email || !nombre || !hijoID) return alert("Completa todos los campos");
-            try {
-                await db.collection('usuarios').doc(email).set({ nombre, rol: 'familia', hijoID }, { merge: true });
-                alert("Familia registrada");
-                document.getElementById('emailFamilia').value = "";
-            } catch (e) { alert("Error"); }
-        }
+        async function borrar(col, id) { if(confirm("¿Eliminar?")) await db.collection(col).doc(id).delete(); }
 
-        function cargarSelects() {
-            db.collection('alumnos').orderBy('nombre').onSnapshot(snap => {
-                const selectHijo = document.getElementById('selectHijo');
-                const selectAlumno = document.getElementById('cursoAlumno'); // Para la pestaña alumnos
-                const options = snap.docs.map(doc => `<option value="${doc.id}">${doc.data().nombre} (${doc.data().cursoID})</option>`).join('');
-                selectHijo.innerHTML = options;
-            });
-            db.collection('cursos').onSnapshot(snap => {
-                const tagPost = document.getElementById('tagPost');
-                const selectCursoAlumno = document.getElementById('cursoAlumno');
-                let opt = '<option value="TODOS">Toda la Escuela</option>';
-                let optCursos = '<option value="">Elegir curso...</option>';
-                snap.forEach(doc => {
-                    opt += `<option value="${doc.id}">Solo ${doc.id}</option>`;
-                    optCursos += `<option value="${doc.id}">${doc.id}</option>`;
-                });
-                tagPost.innerHTML = opt;
-                selectCursoAlumno.innerHTML = optCursos;
-            });
-        }
-
-        // Inicialización
+        // INICIO
+        escucharCursos();
+        escucharAlumnos();
+        escucharDocentes();
         escucharFeed();
-        cargarSelects();
     </script>
 </body>
 </html>
