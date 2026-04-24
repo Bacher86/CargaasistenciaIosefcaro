@@ -1,4 +1,4 @@
-                   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -68,14 +68,12 @@
         <section id="tab-mensajes" class="admin-tab hidden">
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Centro de Mensajería</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[600px] bg-white rounded-3xl shadow-sm border p-4">
-                <div class="border-r pr-4 overflow-y-auto" id="lista-chats">
-                    <p class="text-xs font-black text-slate-400 uppercase mb-4 px-2 tracking-widest">Conversaciones</p>
-                </div>
+                <div class="border-r pr-4 overflow-y-auto" id="lista-chats"></div>
                 <div class="md:col-span-2 flex flex-col h-full">
                     <div id="chat-header" class="p-4 border-b font-bold text-slate-700 bg-slate-50 rounded-t-2xl">Seleccioná una familia</div>
                     <div id="admin-chat-box" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-slate-50/30"></div>
                     <div class="p-4 border-t flex gap-2">
-                        <input type="text" id="admin-reply-input" placeholder="Escribir respuesta..." class="flex-1 border rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="admin-reply-input" placeholder="Escribir respuesta..." class="flex-1 border rounded-xl p-3 outline-none">
                         <button onclick="enviarRespuestaAdmin()" class="bg-blue-600 text-white px-6 rounded-xl hover:bg-blue-700 shadow-lg">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
@@ -156,7 +154,8 @@
                         <input type="email" id="emailFamilia" placeholder="Email responsable" class="w-full p-3 bg-slate-50 border rounded-xl">
                         <input type="text" id="nombreFamilia" placeholder="Nombre Tutor" class="w-full p-3 bg-slate-50 border rounded-xl">
                     </div>
-                    <select id="selectHijo" class="w-full p-3 bg-slate-50 border rounded-xl font-bold text-slate-600"></select>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Seleccionar Hijos (Usa Ctrl para varios)</p>
+                    <select id="selectHijo" multiple class="w-full p-3 bg-slate-50 border rounded-xl font-bold text-slate-600 h-40"></select>
                     <button onclick="registrarFamilia()" class="w-full bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg">Crear Cuenta Familia</button>
                 </div>
             </div>
@@ -185,70 +184,26 @@
             if(id === 'mensajes') cargarListaChats();
         }
 
-       // --- CALENDARIO + AUTO FEED (REVISADO) ---
-async function crearEvento() {
-    const fecha = document.getElementById('fechaEvento').value;
-    const titulo = document.getElementById('tituloEvento').value;
-    const curso = document.getElementById('cursoEvento').value;
-    
-    if(!fecha || !titulo) return alert("Faltan datos");
+        // --- CALENDARIO + AUTO FEED ---
+        async function crearEvento() {
+            const fecha = document.getElementById('fechaEvento').value;
+            const titulo = document.getElementById('tituloEvento').value;
+            const curso = document.getElementById('cursoEvento').value;
+            if(!fecha || !titulo) return alert("Faltan datos");
 
-    try {
-        // 1. Guardar en Calendario
-        await db.collection('eventos').add({ 
-            fecha, 
-            titulo, 
-            curso, 
-            creadoEn: new Date().toISOString() 
-        });
-
-        // 2. Publicar automáticamente en el Feed/Muro
-        await db.collection('comunicados').add({
-            titulo: `NUEVO EVENTO: ${titulo}`,
-            texto: `Se ha programado un nuevo evento para el día ${fecha}. Destinado a: ${curso}`,
-            tag: curso,
-            img: "", 
-            doc: "",
-            fechaPublicacion: new Date().toISOString(),
-            creadoEn: new Date().toISOString(),
-            likes: 0,
-            tipo: "evento_automatico" // Para diferenciarlo si querés
-        });
-
-        document.getElementById('tituloEvento').value = "";
-        alert("Evento agendado y publicado en el muro");
-    } catch(e) { console.error(e); }
-}
-
-// --- MENSAJERÍA (CHAT REAL) ---
-function abrirChat(email) {
-    chatActivoEmail = email;
-    document.getElementById('chat-header').innerText = "Chat con: " + email;
-    
-    // Escucha en tiempo real de la conversación entre estos dos participantes
-    db.collection('mensajes')
-      .where('participantes', 'array-contains', email)
-      .orderBy('fecha', 'asc') // IMPORTANTE: Requiere índice en Firebase si falla
-      .onSnapshot(snap => {
-          const box = document.getElementById('admin-chat-box');
-          box.innerHTML = ""; // Limpiamos para repintar la historia
-          
-          snap.forEach(doc => {
-              const m = doc.data();
-              const esSecretaria = m.emisorID === "secretaria_primaria";
-              
-              const msgDiv = document.createElement('div');
-              msgDiv.className = `max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${
-                  esSecretaria 
-                  ? 'bg-blue-600 text-white self-end rounded-tr-none' 
-                  : 'bg-white border text-slate-700 self-start rounded-tl-none'
-              }`;
-              msgDiv.innerText = m.texto;
-              box.appendChild(msgDiv);
-          });
-          box.scrollTop = box.scrollHeight; // Auto-scroll al último mensaje
-      });
-}
+            try {
+                await db.collection('eventos').add({ fecha, titulo, curso, creadoEn: new Date().toISOString() });
+                await db.collection('comunicados').add({
+                    titulo: `NUEVO EVENTO: ${titulo}`,
+                    texto: `Se ha programado un nuevo evento para el día ${fecha}. Destinado a: ${curso}`,
+                    tag: curso, img: "", doc: "",
+                    fechaPublicacion: new Date().toISOString(), creadoEn: new Date().toISOString(), 
+                    likes: 0, likedBy: [] 
+                });
+                document.getElementById('tituloEvento').value = "";
+                alert("Evento agendado y publicado");
+            } catch(e) { console.error(e); }
+        }
 
         function escucharEventos() {
             db.collection('eventos').orderBy('fecha', 'asc').onSnapshot(snap => {
@@ -381,7 +336,8 @@ function abrirChat(email) {
             if(!t || !c) return alert("Faltan datos");
             await db.collection('comunicados').add({
                 titulo: t, texto: c, tag: tag, img: img, doc: doc,
-                fechaPublicacion: new Date().toISOString(), creadoEn: new Date().toISOString(), likes: 0
+                fechaPublicacion: new Date().toISOString(), creadoEn: new Date().toISOString(), 
+                likes: 0, likedBy: []
             });
             alert("Publicado");
             document.getElementById('tituloPost').value = ""; document.getElementById('contenidoPost').value = "";
@@ -405,14 +361,21 @@ function abrirChat(email) {
         async function registrarFamilia() {
             const e = document.getElementById('emailFamilia').value.toLowerCase();
             const n = document.getElementById('nombreFamilia').value;
-            const h = document.getElementById('selectHijo').value;
-            await db.collection('usuarios').doc(e).set({ nombre: n, rol: 'familia', hijoID: h });
-            alert("Vínculo creado");
+            const select = document.getElementById('selectHijo');
+            const hijosIDs = Array.from(select.selectedOptions).map(opt => opt.value);
+            
+            if(!e || !n || hijosIDs.length === 0) return alert("Faltan datos");
+            
+            await db.collection('usuarios').doc(e).set({ 
+                nombre: n, 
+                rol: 'familia', 
+                hijosIDs: hijosIDs // Ahora es un Array
+            });
+            alert("Vínculo creado con " + hijosIDs.length + " hijos.");
         }
 
         async function borrar(col, id) { if(confirm("¿Borrar?")) await db.collection(col).doc(id).delete(); }
 
-        // Inicio de escuchas
         escucharCursos(); escucharAlumnos(); escucharEventos(); escucharFeed(); escucharDocentes();
     </script>
 </body>
