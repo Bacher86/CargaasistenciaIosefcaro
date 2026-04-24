@@ -215,6 +215,30 @@
             }
         });
     }
+// 2. Lógica de ASISTENCIAS (Versión segura sin índices)
+if (p.includes("falta") || p.includes("inasistencia") || p.includes("tarde") || p.includes("faltó")) {
+    if (p.includes("cuándo") || p.includes("qué día") || p.includes("fecha")) {
+        const snap = await db.collection('asistencias')
+            .where('alumnoID', '==', hijoActivo.id)
+            .limit(10) // Traemos los últimos 10
+            .get();
+
+        if (snap.empty) return `${hijoActivo.nombre} no tiene faltas registradas.`;
+        
+        // Ordenamos por fecha manualmente aquí para no trabar Firebase
+        let registros = [];
+        snap.forEach(d => registros.push(d.data()));
+        registros.sort((a, b) => b.fecha.localeCompare(a.fecha)); // Orden descendente
+
+        let list = "Últimos registros detallados:<br>";
+        registros.slice(0, 5).forEach(info => {
+            const tipo = info.estado === 'A' ? 'Ausente' : 'Tarde';
+            list += `• **${info.fecha}**: ${tipo}<br>`;
+        });
+        return list;
+    }
+    return `${hijoActivo.nombre} tiene un total de **${data.inasistencias || 0}** inasistencias.`;
+}
 
     // --- CEREBRO INTELIGENTE DE IOSI PRO (Actualizado) ---
     async function obtenerRespuestaIosi(mensaje) {
@@ -239,28 +263,6 @@
             return resumen;
         }
 
-        // 2. Lógica de ASISTENCIAS (Busca fechas exactas en Firebase)
-        if (p.includes("falta") || p.includes("inasistencia") || p.includes("tarde") || p.includes("faltó")) {
-            if (p.includes("cuándo") || p.includes("qué día") || p.includes("fecha")) {
-                const snap = await db.collection('asistencias')
-                    .where('alumnoID', '==', hijoActivo.id)
-                    .where('estado', 'in', ['A', 'T'])
-                    .orderBy('fecha', 'desc')
-                    .limit(5)
-                    .get();
-
-                if (snap.empty) return `${hijoActivo.nombre} no tiene faltas registradas.`;
-                
-                let list = "Últimos registros detallados:<br>";
-                snap.forEach(d => {
-                    const info = d.data();
-                    const tipo = info.estado === 'A' ? 'Ausente' : 'Tarde';
-                    list += `• **${info.fecha}**: ${tipo}<br>`;
-                });
-                return list;
-            }
-            return `${hijoActivo.nombre} tiene un total de **${data.inasistencias || 0}** inasistencias en el boletín.`;
-        }
 
         // 3. Lógica de NOTICIAS / FEED
         if (p.includes("novedad") || p.includes("noticia") || p.includes("pasó") || p.includes("comunicado")) {
