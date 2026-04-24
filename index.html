@@ -1,504 +1,251 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma Iosef Caro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .section-content { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Estilos para botones de asistencia rápida */
-        .btn-active-P { background-color: #22c55e !important; color: white !important; border-color: #16a34a !important; }
-        .btn-active-A { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
-        .btn-active-T { background-color: #f59e0b !important; color: white !important; border-color: #d97706 !important; }
-    </style>
-</head>
-<body class="bg-slate-50 min-h-screen">
+// CONFIGURACIÓN FIREBASE (Mantenemos tus credenciales)
+const firebaseConfig = {
+    apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
+    authDomain: "app-academica-interna.firebaseapp.com",
+    projectId: "app-academica-interna",
+    storageBucket: "app-academica-interna.firebasestorage.app",
+    messagingSenderId: "169882587504",
+    appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
-    <div id="loginScreen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-6 text-center">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-sm:max-w-sm">
-            <h1 class="text-3xl font-bold text-slate-800 mb-2">Iosef Caro</h1>
-            <p class="text-slate-400 mb-8 font-medium italic text-sm">Portal del Docente</p>
-            <div class="space-y-4 text-left">
-                <input type="email" id="loginEmail" placeholder="Email" class="w-full p-4 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                <input type="password" id="loginPass" placeholder="Contraseña" class="w-full p-4 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                <button onclick="loginManual()" id="btnLogin" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">Entrar</button>
+let cursosPermitidosDocente = [];
+let alumnoSeleccionadoParaBoletin = null;
+document.getElementById('fechaAsistencia').valueAsDate = new Date();
+
+// --- NAVEGACIÓN ---
+function showSection(id) {
+    document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
+    document.getElementById('sec-' + id).classList.remove('hidden');
+    if(id === 'inicio') actualizarDashboard();
+    if(id === 'boletines') prepararModuloBoletin();
+}
+
+// --- SESIÓN Y DASHBOARD ---
+auth.onAuthStateChanged(user => {
+    if (user) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('appScreen').classList.remove('hidden');
+        document.getElementById('userMail').innerText = `Docente: ${user.email}`;
+        inicializarCursosDocente().then(() => actualizarDashboard());
+        showSection('inicio');
+    } else {
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('appScreen').classList.add('hidden');
+    }
+});
+
+async function actualizarDashboard() {
+    const email = auth.currentUser.email;
+    // Contar Alumnos
+    const snapAlum = await db.collection('alumnos').get();
+    document.getElementById('countAlumnos').innerText = snapAlum.size;
+    
+    // Contar Informes
+    const snapInf = await db.collection('informes').get();
+    document.getElementById('countInformes').innerText = snapInf.size;
+
+    // Estado Asistencia Hoy
+    const hoy = new Date().toISOString().split('T')[0];
+    const snapAsis = await db.collection('asistencias').where('fecha', '==', hoy).limit(1).get();
+    const status = document.getElementById('statusAsistencia');
+    if(!snapAsis.empty) {
+        status.innerText = "Completada";
+        status.className = "text-xl font-bold text-green-600";
+    } else {
+        status.innerText = "Pendiente";
+        status.className = "text-xl font-bold text-rose-500 animate-pulse";
+    }
+}
+
+async function inicializarCursosDocente() {
+    const select = document.getElementById('selectCurso');
+    const email = auth.currentUser.email.toLowerCase();
+    const userDoc = await db.collection('usuarios').doc(email).get();
+    
+    if (userDoc.exists) {
+        cursosPermitidosDocente = userDoc.data().cursosPermitidos || [];
+        let options = '<option value="" disabled selected>Elegir curso...</option>';
+        const docs = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
+        
+        const listaCursosDiv = document.getElementById('listaMisCursos');
+        listaCursosDiv.innerHTML = "";
+
+        docs.forEach(doc => { 
+            if (doc.exists) {
+                options += `<option value="${doc.id}">${doc.data().nombre}</option>`;
+                listaCursosDiv.innerHTML += `<span class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl font-bold text-xs">${doc.data().nombre}</span>`;
+            } 
+        });
+        select.innerHTML = options;
+    }
+}
+
+// --- LÓGICA DE ASISTENCIA (CORREGIDA PARA FAMILIAS) ---
+async function cargarListaAlumnos() {
+    const cursoID = document.getElementById('selectCurso').value;
+    const fecha = document.getElementById('fechaAsistencia').value;
+    const contenedor = document.getElementById('listaAlumnos');
+    if (!cursoID || !fecha) return;
+
+    contenedor.innerHTML = '<div class="p-10 flex justify-center"><i class="fa-solid fa-circle-notch animate-spin text-blue-500 text-2xl"></i></div>';
+
+    const [snapAlumnos, snapAsis] = await Promise.all([
+        db.collection('alumnos').where('cursoID', '==', cursoID).get(),
+        db.collection('asistencias').where('cursoID', '==', cursoID).where('fecha', '==', fecha).get()
+    ]);
+
+    const historial = {};
+    snapAsis.forEach(doc => historial[doc.data().alumnoID] = doc.data().estado);
+
+    contenedor.innerHTML = snapAlumnos.docs.map(doc => {
+        const id = doc.id;
+        const estado = historial[id] || '';
+        return `
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between group hover:border-blue-300 transition-all">
+                <span class="font-bold text-slate-700 text-sm">${doc.data().nombre}</span>
+                <div class="flex bg-slate-100 p-1 rounded-xl gap-1">
+                    <button onclick="marcar('${id}', 'P')" id="btn-${id}-P" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${estado === 'P' ? 'btn-active-P' : 'text-slate-400'}">P</button>
+                    <button onclick="marcar('${id}', 'A')" id="btn-${id}-A" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${estado === 'A' ? 'btn-active-A' : 'text-slate-400'}">A</button>
+                    <button onclick="marcar('${id}', 'T')" id="btn-${id}-T" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${estado === 'T' ? 'btn-active-T' : 'text-slate-400'}">T</button>
+                </div>
             </div>
-        </div>
-    </div>
+        `;
+    }).join('');
+}
 
-    <div id="appScreen" class="hidden flex min-h-screen">
-        <aside class="w-20 md:w-64 bg-slate-900 text-white flex flex-col transition-all">
-            <div class="p-6 text-center border-b border-slate-800">
-                <span class="text-xl font-bold hidden md:inline">Iosef Caro</span>
-                <span class="text-xl font-bold md:hidden">IC</span>
-            </div>
-            <nav class="flex-1 mt-6 px-3 space-y-2 text-sm">
-                <button onclick="showSection('inicio')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
-                    <i class="fa-solid fa-house text-lg"></i> <span class="hidden md:inline font-medium">Inicio</span>
-                </button>
-                <button onclick="showSection('asistencia')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
-                    <i class="fa-solid fa-clipboard-user text-lg"></i> <span class="hidden md:inline font-medium text-left">Asistencia</span>
-                </button>
-                <button onclick="showSection('legajos')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
-                    <i class="fa-solid fa-id-card-clip text-lg"></i> <span class="hidden md:inline font-medium text-left">Legajos</span>
-                </button>
-                <button onclick="showSection('informes')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all">
-                    <i class="fa-solid fa-triangle-exclamation text-lg"></i> <span class="hidden md:inline font-medium text-left">Informes</span>
-                </button>
-                <button onclick="showSection('boletines')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-slate-800 transition-all opacity-50">
-                    <i class="fa-solid fa-book-open text-lg"></i> <span class="hidden md:inline font-medium">Boletines</span>
-                </button>
-            </nav>
-            <div class="p-4 border-t border-slate-800">
-                <button onclick="logout()" class="flex items-center gap-4 w-full p-4 rounded-2xl text-red-400 hover:bg-red-500/10 transition-all">
-                    <i class="fa-solid fa-right-from-bracket text-lg"></i> <span class="hidden md:inline font-medium">Cerrar Sesión</span>
-                </button>
-            </div>
-        </aside>
+async function marcar(alumnoID, estado) {
+    const fecha = document.getElementById('fechaAsistencia').value;
+    const cursoID = document.getElementById('selectCurso').value;
+    const docID = `${fecha}_${alumnoID}`;
 
-        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
-            
-            <section id="sec-inicio" class="section-content">
-                <div class="max-w-4xl">
-                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Panel General</h2>
-                    <p id="userMail" class="text-slate-500 mb-2 italic text-sm font-medium"></p>
-                    
-                    <button onclick="cambiarPass()" class="text-xs text-blue-600 font-bold hover:underline mb-10 flex items-center gap-2">
-                        <i class="fa-solid fa-key"></i> Configurar mi contraseña personal
-                    </button>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-users"></i></div>
-                                <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg">Tus Alumnos</span>
-                            </div>
-                            <h4 class="text-3xl font-black text-slate-800" id="countAlumnos">--</h4>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-calendar-check"></i></div>
-                            </div>
-                            <h4 class="text-xl font-bold text-slate-800" id="statusAsistencia">Verificando...</h4>
-                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Estado de Hoy</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-invoice"></i></div>
-                            </div>
-                            <h4 class="text-3xl font-black text-slate-800" id="countInformes">--</h4>
-                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">Informes Totales</p>
-                        </div>
-                    </div>
+    // Update UI instantáneamente
+    const botones = [`P`, `A`, `T`];
+    botones.forEach(e => {
+        const btn = document.getElementById(`btn-${alumnoID}-${e}`);
+        btn.className = "px-4 py-2 rounded-lg text-xs font-black transition-all text-slate-400 bg-slate-100";
+    });
+    document.getElementById(`btn-${alumnoID}-${estado}`).className = `px-4 py-2 rounded-lg text-xs font-black transition-all btn-active-${estado}`;
 
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-10">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Mis Cursos Asignados</h4>
-                        <div id="listaMisCursos" class="flex flex-wrap gap-3"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="sec-asistencia" class="section-content hidden">
-                <div class="max-w-xl">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-6 italic">Control de Asistencia</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 text-center">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Fecha</label>
-                            <input type="date" id="fechaAsistencia" onchange="cargarListaAlumnos()" class="bg-transparent font-bold text-slate-700 outline-none">
-                        </div>
-                        <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 text-center">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Curso</label>
-                            <select id="selectCurso" onchange="cargarListaAlumnos()" class="bg-transparent font-bold text-slate-700 outline-none w-full"></select>
-                        </div>
-                    </div>
-                    <div id="listaAlumnos" class="space-y-3">
-                        <p class="text-center p-10 text-slate-400 italic">Selecciona un curso</p>
-                    </div>
-                </div>
-            </section>
-
-            <section id="sec-informes" class="section-content hidden">
-                <div class="max-w-2xl">
-                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Informes y Sanciones</h2>
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
-                        <div>
-                            <label class="text-xs font-bold text-slate-400 uppercase mb-2 block">1. Buscar Alumno</label>
-                            <div class="relative">
-                                <input type="text" id="busquedaAlumno" onkeyup="buscarAlumnoInforme()" placeholder="Escribe el nombre..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500">
-                                <div id="sugerencias" class="absolute z-10 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-y-auto border border-slate-100 hidden"></div>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <select id="tipoInforme" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                                <option value="Sanción Disciplinaria">Sanción Disciplinaria</option>
-                                <option value="Falta de Atención">Falta de Atención</option>
-                                <option value="Uniforme / Material">Uniforme / Material</option>
-                                <option value="Nota Positiva">Nota Positiva</option>
-                            </select>
-                            <input type="number" id="cantInforme" value="1" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center font-bold">
-                        </div>
-                        <textarea id="detalleInforme" rows="3" placeholder="Describe lo sucedido..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500"></textarea>
-                        <button onclick="enviarInforme()" class="w-full bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-orange-600 transition-all">Subir al Legajo</button>
-                    </div>
-                </div>
-            </section>
-
-            <section id="sec-legajos" class="section-content hidden">
-                <div class="max-w-4xl">
-                    <h2 class="text-3xl font-bold text-slate-800 mb-8">Legajos de Alumnos</h2>
-                    <div class="relative mb-8">
-                        <input type="text" id="busquedaLegajo" onkeyup="buscarParaLegajo()" placeholder="Buscar alumno..." class="w-full p-5 bg-white shadow-xl rounded-3xl outline-none">
-                        <div id="sugerenciasLegajo" class="absolute z-20 w-full bg-white shadow-2xl rounded-2xl mt-2 max-h-60 overflow-y-auto hidden border border-slate-100"></div>
-                    </div>
-                    <div id="contenidoLegajo" class="hidden">
-                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div class="flex items-center gap-6 w-full">
-                                <div class="w-20 h-20 bg-blue-600 text-white rounded-3xl flex items-center justify-center text-3xl font-black" id="avatarAlumno">--</div>
-                                <div>
-                                    <h3 class="text-2xl font-bold text-slate-800" id="legajoNombre">Nombre</h3>
-                                    <p class="text-blue-500 font-bold" id="legajoCurso">Curso</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                                <h4 class="font-bold text-slate-800 mb-4 italic">Historial de Conducta</h4>
-                                <div id="timelineInformes" class="space-y-4 text-sm"></div>
-                            </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                                <h4 class="font-bold text-slate-800 mb-4 italic uppercase text-[10px] tracking-widest text-slate-400">Últimas Asistencias</h4>
-                                <div id="timelineAsistencias" class="space-y-2 mt-4"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="sec-boletines" class="section-content hidden">
-                <div class="p-20 text-center text-slate-300">
-                    <i class="fa-solid fa-lock text-5xl mb-4"></i>
-                    <p class="font-medium italic">Módulo de Boletines en desarrollo...</p>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-    <script>
-        // CONFIGURACIÓN FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
-            authDomain: "app-academica-interna.firebaseapp.com",
-            projectId: "app-academica-interna",
-            storageBucket: "app-academica-interna.firebasestorage.app",
-            messagingSenderId: "169882587504",
-            appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-
-        let cursosPermitidosDocente = [];
-        document.getElementById('fechaAsistencia').valueAsDate = new Date();
-
-        // NAVEGACIÓN
-        function showSection(id) {
-            document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
-            document.getElementById('sec-' + id).classList.remove('hidden');
-            if(id === 'inicio') actualizarDashboard();
-        }
-
-        // SESIÓN
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('appScreen').classList.remove('hidden');
-                document.getElementById('userMail').innerText = `Docente: ${user.email}`;
-                inicializarCursosDocente().then(() => actualizarDashboard());
-                showSection('inicio');
-            } else {
-                document.getElementById('loginScreen').classList.remove('hidden');
-                document.getElementById('appScreen').classList.add('hidden');
-            }
+    try {
+        // 1. Guardar Registro Diario
+        await db.collection('asistencias').doc(docID).set({
+            alumnoID, cursoID, fecha, estado,
+            autor: auth.currentUser.email,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        async function inicializarCursosDocente() {
-            const select = document.getElementById('selectCurso');
-            const email = auth.currentUser.email.toLowerCase();
-            const userDoc = await db.collection('usuarios').doc(email).get();
-            if (userDoc.exists) {
-                cursosPermitidosDocente = userDoc.data().cursosPermitidos || [];
-                let options = '<option value="" disabled selected>Elegir curso...</option>';
-                const docs = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
-                docs.forEach(doc => { if (doc.exists) options += `<option value="${doc.id}">${doc.data().nombre}</option>`; });
-                select.innerHTML = options;
-            }
-        }
+        // 2. Sincronizar con Resumen de Familia (Colección calificaciones)
+        const asisSnapshot = await db.collection('asistencias').where('alumnoID', '==', alumnoID).get();
+        let totalFaltas = 0;
+        asisSnapshot.forEach(doc => {
+            const e = doc.data().estado;
+            if(e === 'A') totalFaltas += 1;
+            if(e === 'T') totalFaltas += 0.5;
+        });
 
-        // LÓGICA DE ASISTENCIA ATÓMICA
-        async function cargarListaAlumnos() {
-            const cursoID = document.getElementById('selectCurso').value;
-            const fecha = document.getElementById('fechaAsistencia').value;
-            const contenedor = document.getElementById('listaAlumnos');
-            if (!cursoID || !fecha) return;
+        await db.collection('calificaciones').doc(alumnoID).set({
+            alumnoID: alumnoID,
+            inasistencias: totalFaltas,
+            ultimaActualizacion: new Date().toISOString()
+        }, { merge: true });
 
-            contenedor.innerHTML = '<p class="text-center p-10 text-slate-400 italic">Cargando lista...</p>';
+    } catch (e) {
+        console.error("Error al marcar:", e);
+    }
+}
 
-            const [snapAlumnos, snapAsis] = await Promise.all([
-                db.collection('alumnos').where('cursoID', '==', cursoID).get(),
-                db.collection('asistencias').where('cursoID', '==', cursoID).where('fecha', '==', fecha).get()
-            ]);
-
-            const historial = {};
-            snapAsis.forEach(doc => historial[doc.data().alumnoID] = doc.data().estado);
-
-            contenedor.innerHTML = snapAlumnos.docs.map(doc => {
-                const id = doc.id;
-                const estado = historial[id] || '';
-                return `
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
-                        <span class="font-bold text-slate-700 text-sm">${doc.data().nombre}</span>
-                        <div class="flex bg-slate-100 p-1 rounded-xl gap-1">
-                            <button onclick="marcar('${id}', 'P')" id="btn-${id}-P" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${estado === 'P' ? 'btn-active-P' : 'text-slate-400'}">P</button>
-                            <button onclick="marcar('${id}', 'A')" id="btn-${id}-A" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${estado === 'A' ? 'btn-active-A' : 'text-slate-400'}">A</button>
-                            <button onclick="marcar('${id}', 'T')" id="btn-${id}-T" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${estado === 'T' ? 'btn-active-T' : 'text-slate-400'}">T</button>
-                        </div>
+// --- MÓDULO DE BOLETINES (¡NUEVO!) ---
+function prepararModuloBoletin() {
+    const sec = document.getElementById('sec-boletines');
+    sec.innerHTML = `
+        <div class="max-w-2xl">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">Gestión de Notas</h2>
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-6">
+                <input type="text" id="busquedaBoletin" onkeyup="buscarParaBoletin()" placeholder="Buscar alumno para calificar..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:ring-2 focus:ring-indigo-500">
+                <div id="sugerenciasBoletin" class="mt-2 space-y-1"></div>
+            </div>
+            <div id="panelCalificacion" class="hidden bg-white p-8 rounded-3xl shadow-lg border border-indigo-50 transition-all">
+                <div class="flex items-center gap-4 mb-8">
+                    <div id="bol-avatar" class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold"></div>
+                    <div>
+                        <h3 id="bol-nombre" class="font-black text-slate-800 text-xl"></h3>
+                        <p id="bol-curso" class="text-xs text-slate-400 font-bold uppercase tracking-widest"></p>
                     </div>
-                `;
-            }).join('');
-        }
+                </div>
+                <div id="listaMaterias" class="space-y-4 mb-8">
+                    </div>
+                <button onclick="guardarBoletin()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-indigo-600 transition-all">Guardar Boletín</button>
+            </div>
+        </div>
+    `;
+}
 
-        async function marcar(alumnoID, estado) {
-            const fecha = document.getElementById('fechaAsistencia').value;
-            const cursoID = document.getElementById('selectCurso').value;
-            const docID = `${fecha}_${alumnoID}`;
+async function buscarParaBoletin() {
+    const bus = document.getElementById('busquedaBoletin').value.toLowerCase();
+    const sug = document.getElementById('sugerenciasBoletin');
+    if(bus.length < 2) { sug.innerHTML = ""; return; }
 
-            const botones = [`P`, `A`, `T`];
-            botones.forEach(e => {
-                const btn = document.getElementById(`btn-${alumnoID}-${e}`);
-                btn.className = "px-4 py-2 rounded-lg text-xs font-black transition-all text-slate-400 bg-slate-100";
-            });
-            
-            const btnActivo = document.getElementById(`btn-${alumnoID}-${estado}`);
-            btnActivo.classList.remove('text-slate-400', 'bg-slate-100');
-            btnActivo.classList.add(`btn-active-${estado}`);
+    const snap = await db.collection('alumnos').get();
+    const filtered = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(bus));
+    
+    sug.innerHTML = filtered.map(d => `
+        <div onclick="seleccionarAlumnoBoletin('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-4 bg-white border border-slate-100 rounded-2xl cursor-pointer hover:bg-indigo-50 font-bold text-slate-700 text-sm flex justify-between items-center">
+            ${d.data().nombre} <i class="fa-solid fa-chevron-right text-[10px] opacity-30"></i>
+        </div>
+    `).join('');
+}
 
-            try {
-                await db.collection('asistencias').doc(docID).set({
-                    alumnoID: alumnoID,
-                    cursoID: cursoID,
-                    fecha: fecha,
-                    estado: estado,
-                    autor: auth.currentUser.email,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-            } catch (error) {
-                alert("Error de conexión al guardar");
-            }
-        }
+async function seleccionarAlumnoBoletin(id, nombre, curso) {
+    alumnoSeleccionadoParaBoletin = id;
+    document.getElementById('sugerenciasBoletin').innerHTML = "";
+    document.getElementById('panelCalificacion').classList.remove('hidden');
+    document.getElementById('bol-nombre').innerText = nombre;
+    document.getElementById('bol-avatar').innerText = nombre.charAt(0);
+    document.getElementById('bol-curso').innerText = "Cargando curso...";
 
-      // DASHBOARD ACTUALIZADO
-        async function actualizarDashboard() {
-            const emailDocente = auth.currentUser.email;
+    // Obtener notas actuales
+    const docNotas = await db.collection('calificaciones').doc(id).get();
+    const notasActuales = docNotas.exists ? (docNotas.data().notas || {}) : {};
 
-            // 1. Contador de Alumnos (Solo los de sus cursos)
-            const snapAlumnos = await db.collection('alumnos').get();
-            const misAlumnos = snapAlumnos.docs.filter(d => cursosPermitidosDocente.includes(d.data().cursoID));
-            document.getElementById('countAlumnos').innerText = misAlumnos.length;
+    // Materias estáticas (podes cambiarlas o traerlas de DB)
+    const materias = ["Matemática", "Lengua", "Inglés", "Ciencias Sociales", "Ciencias Naturales", "Const. Ciudadana"];
+    
+    document.getElementById('listaMaterias').innerHTML = materias.map(m => `
+        <div class="flex justify-between items-center p-2 border-b border-slate-50">
+            <span class="text-sm font-bold text-slate-600">${m}</span>
+            <input type="number" step="0.1" class="nota-input w-20 p-2 bg-slate-50 rounded-xl text-center font-black text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-500" data-materia="${m}" value="${notasActuales[m] || ''}">
+        </div>
+    `).join('');
+}
 
-            // 2. Contador de Informes (FILTRADO: Solo los creados por este docente)
-            const snapInf = await db.collection('informes').where('autor', '==', emailDocente).get();
-            document.getElementById('countInformes').innerText = snapInf.size;
+async function guardarBoletin() {
+    const inputs = document.querySelectorAll('.nota-input');
+    let notas = {};
+    inputs.forEach(i => {
+        if(i.value) notas[i.getAttribute('data-materia')] = parseFloat(i.value);
+    });
 
-            // 3. Estado de Asistencia de Hoy
-            const hoy = new Date().toISOString().split('T')[0];
-            const snapHoy = await db.collection('asistencias').where('fecha', '==', hoy).get();
-            const ya = snapHoy.docs.some(doc => cursosPermitidosDocente.includes(doc.data().cursoID));
-            const status = document.getElementById('statusAsistencia');
-            status.innerText = ya ? "Completada ✅" : "Pendiente ⏳";
-            status.className = ya ? "text-xl font-bold text-green-600" : "text-xl font-bold text-orange-600";
+    try {
+        await db.collection('calificaciones').doc(alumnoSeleccionadoParaBoletin).set({
+            alumnoID: alumnoSeleccionadoParaBoletin,
+            notas: notas,
+            ultimaActualizacion: new Date().toISOString()
+        }, { merge: true });
+        
+        alert("¡Boletín actualizado con éxito!");
+        document.getElementById('panelCalificacion').classList.add('hidden');
+        document.getElementById('busquedaBoletin').value = "";
+    } catch(e) {
+        alert("Error al guardar");
+    }
+}
 
-            // 4. Mis Cursos (Ahora son BOTONES INTERACTIVOS)
-            const listaCursosHTML = document.getElementById('listaMisCursos');
-            let badges = "";
-            const docs = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
-            
-            docs.forEach(doc => { 
-                if(doc.exists) {
-                    badges += `
-                        <button onclick="irAAsistencia('${doc.id}')" 
-                            class="bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl border border-blue-100 text-sm font-bold shadow-sm hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-200 transition-all active:scale-95">
-                            <i class="fa-solid fa-arrow-right-to-bracket mr-2 opacity-50"></i>${doc.data().nombre}
-                        </button>`;
-                }
-            });
-            listaCursosHTML.innerHTML = badges || '<p class="text-slate-400">Sin cursos asignados</p>';
-        }
-
-        // FUNCIÓN DE SALTO A ASISTENCIA
-        function irAAsistencia(cursoID) {
-            // 1. Cambiamos visualmente a la sección de asistencia
-            showSection('asistencia');
-            
-            // 2. Seteamos el selector de curso
-            const select = document.getElementById('selectCurso');
-            select.value = cursoID;
-            
-            // 3. Disparamos la carga de alumnos de ese curso automáticamente
-            cargarListaAlumnos();
-        }
-
-        // INFORMES
-        let idSel = "";
-        async function buscarAlumnoInforme() {
-            const q = document.getElementById('busquedaAlumno').value.toLowerCase();
-            const sug = document.getElementById('sugerencias');
-            if (q.length < 2) { sug.classList.add('hidden'); return; }
-            const snap = await db.collection('alumnos').get();
-            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(q) && cursosPermitidosDocente.includes(d.data().cursoID));
-            sug.classList.remove('hidden');
-            sug.innerHTML = filtrados.map(d => `<div onclick="selInf('${d.id}', '${d.data().nombre}')" class="p-4 hover:bg-slate-50 cursor-pointer border-b text-sm font-medium text-slate-700">${d.data().nombre}</div>`).join('');
-        }
-
-        function selInf(id, n) { 
-            idSel = id; document.getElementById('busquedaAlumno').value = n; 
-            document.getElementById('sugerencias').classList.add('hidden'); 
-        }
-
-        async function enviarInforme() {
-            const det = document.getElementById('detalleInforme').value;
-            if(!idSel || !det) return alert("Completa los campos");
-            await db.collection('informes').add({
-                alumnoID: idSel,
-                tipo: document.getElementById('tipoInforme').value,
-                cantidad: parseInt(document.getElementById('cantInforme').value),
-                detalle: det, fecha: new Date().toISOString().split('T')[0],
-                autor: auth.currentUser.email, timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            alert("Enviado"); 
-            document.getElementById('detalleInforme').value = "";
-            showSection('inicio');
-        }
-
-        // LEGAJOS (VER FICHA CON INASISTENCIAS MEJORADAS)
-        async function buscarParaLegajo() {
-            const q = document.getElementById('busquedaLegajo').value.toLowerCase();
-            const sug = document.getElementById('sugerenciasLegajo');
-            if (q.length < 2) { sug.classList.add('hidden'); return; }
-            const snap = await db.collection('alumnos').get();
-            const filtrados = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(q) && cursosPermitidosDocente.includes(d.data().cursoID));
-            sug.classList.remove('hidden');
-            sug.innerHTML = filtrados.map(d => `<div onclick="verFicha('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-4 hover:bg-blue-50 cursor-pointer border-b font-medium text-slate-700">${d.data().nombre}</div>`).join('');
-        }
-
-       async function verFicha(id, n, c) {
-            document.getElementById('sugerenciasLegajo').classList.add('hidden');
-            document.getElementById('contenidoLegajo').classList.remove('hidden');
-            document.getElementById('legajoNombre').innerText = n;
-            document.getElementById('avatarAlumno').innerText = n[0];
-            
-            // Buscar nombre del curso
-            const cursoDoc = await db.collection('cursos').doc(c).get();
-            document.getElementById('legajoCurso').innerText = cursoDoc.exists ? cursoDoc.data().nombre : c;
-
-            // --- 1. CARGAR ASISTENCIAS ---
-            const listaAsis = document.getElementById('timelineAsistencias');
-            listaAsis.innerHTML = '<p class="text-slate-400 text-xs p-4">Cargando...</p>';
-
-            try {
-                // Quitamos el orderBy temporalmente para evitar el error de índice de Firebase
-                const snapAsis = await db.collection('asistencias')
-                    .where('alumnoID', '==', id)
-                    .get();
-
-                if (snapAsis.empty) {
-                    listaAsis.innerHTML = '<p class="text-slate-400 italic text-xs p-4 text-center">Sin registros de asistencia.</p>';
-                } else {
-                    // Ordenamos por fecha manualmente por si no tenés el índice creado
-                    const docsOrdenados = snapAsis.docs.sort((a, b) => b.data().fecha.localeCompare(a.data().fecha)).slice(0, 15);
-                    
-                    listaAsis.innerHTML = docsOrdenados.map(doc => {
-                        const data = doc.data();
-                        const config = {
-                            'P': { color: 'text-green-600', bg: 'bg-green-50', etiqueta: 'Presente' },
-                            'A': { color: 'text-red-600', bg: 'bg-red-50', etiqueta: 'Ausente' },
-                            'T': { color: 'text-orange-600', bg: 'bg-orange-50', etiqueta: 'Tarde' }
-                        };
-                        const estilo = config[data.estado] || { color: 'text-slate-500', bg: 'bg-slate-50', etiqueta: data.estado };
-                        return `
-                            <div class="flex justify-between items-center p-3 mb-1 rounded-xl ${estilo.bg} border border-transparent">
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] font-black text-slate-400 uppercase">${data.fecha}</span>
-                                    <span class="text-xs font-bold ${estilo.color}">${estilo.etiqueta}</span>
-                                </div>
-                                <i class="fa-solid ${data.estado === 'A' ? 'fa-circle-xmark' : 'fa-circle-check'} ${estilo.color} opacity-30"></i>
-                            </div>
-                        `;
-                    }).join('');
-                }
-            } catch (e) {
-                console.error("Error asistencias:", e);
-                listaAsis.innerHTML = '<p class="text-red-400 text-xs p-4">Error al cargar datos.</p>';
-            }
-
-            // --- 2. CARGAR INFORMES ---
-            const listaInf = document.getElementById('timelineInformes');
-            listaInf.innerHTML = '<p class="text-slate-400 text-xs p-4">Cargando...</p>';
-
-            try {
-                const snapInf = await db.collection('informes')
-                    .where('alumnoID', '==', id)
-                    .get();
-
-                if (snapInf.empty) {
-                    listaInf.innerHTML = '<p class="text-slate-400 italic p-4 text-center">No hay informes de conducta.</p>';
-                } else {
-                    // Ordenamos manualmente por fecha/timestamp
-                    const informesOrdenados = snapInf.docs.sort((a, b) => b.data().fecha.localeCompare(a.data().fecha));
-
-                    listaInf.innerHTML = informesOrdenados.map(doc => {
-                        const d = doc.data();
-                        const isPositivo = d.tipo === "Nota Positiva";
-                        return `
-                            <div class="p-4 rounded-2xl ${isPositivo ? 'bg-green-50' : 'bg-slate-50'} border border-slate-100 mb-3">
-                                <div class="flex justify-between mb-1">
-                                    <span class="text-[10px] font-bold uppercase ${isPositivo ? 'text-green-600' : 'text-slate-400'}">${d.tipo}</span>
-                                    <span class="text-[10px] text-slate-400">${d.fecha}</span>
-                                </div>
-                                <p class="text-slate-700 leading-relaxed font-medium">${d.detalle}</p>
-                                <p class="text-[9px] mt-2 text-slate-400 italic text-right">Autor: ${d.autor || 'Docente'}</p>
-                            </div>
-                        `;
-                    }).join('');
-                }
-            } catch (e) {
-                console.error("Error informes:", e);
-                listaInf.innerHTML = '<p class="text-red-400 text-xs p-4">Error al cargar informes.</p>';
-            }
-        }
-
-        async function loginManual() {
-            const e = document.getElementById('loginEmail').value;
-            const p = document.getElementById('loginPass').value;
-            try { await auth.signInWithEmailAndPassword(e, p); } catch { alert("Credenciales incorrectas"); }
-        }
-        function logout() { auth.signOut(); }
-        async function cambiarPass() {
-            const e = auth.currentUser.email;
-            if(confirm("¿Enviar link de restauración a tu email?")) { await auth.sendPasswordResetEmail(e); alert("Enviado. Revisa tu casilla."); }
-        }
-        function irAAsistencia(cursoID) {
-    showSection('asistencia');
-    const select = document.getElementById('selectCurso');
-    select.value = cursoID;
-    cargarListaAlumnos(); // Dispara la carga automática de los alumnos
+// --- LOGOUT ---
+function logout() {
+    auth.signOut();
 }
     </script>
-</body>
-</html>
+        
