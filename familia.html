@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comunidad Familia v2.0 - Pro</title>
+    <title>Comunidad Familia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
@@ -14,8 +14,6 @@
         .nav-active { color: #db2777 !important; transform: scale(1.1); }
         .nav-active i { background: #fdf2f8; padding: 10px; border-radius: 15px; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
-        .card-news { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .card-news:active { transform: scale(0.97); }
         .ios-scroll::-webkit-scrollbar { display: none; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .modal-open { animation: slideUp 0.4s ease-out; }
@@ -32,18 +30,15 @@
     </div>
 
     <div id="loginScreen" class="fixed inset-0 z-[110] bg-white flex flex-col items-center justify-center px-8">
-        <div class="w-full max-w-sm">
+        <div class="w-full max-w-sm text-center">
             <div class="w-24 h-24 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-[2.5rem] shadow-2xl flex items-center justify-center text-white text-4xl mb-10 rotate-6 mx-auto">
                 <i class="fa-solid fa-shield-heart"></i>
             </div>
             <h1 class="text-4xl font-black text-slate-900 mb-2 tracking-tight">Hola de nuevo.</h1>
             <p class="text-slate-400 font-medium mb-10 text-sm">Ingresá para ver el progreso de tus hijos.</p>
             <div class="space-y-4">
-                <div class="relative">
-                    <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                    <input type="email" id="emailAcceso" placeholder="correo@ejemplo.com" class="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl p-5 pl-12 outline-none focus:border-pink-500 transition-all font-semibold">
-                </div>
-                <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white font-black py-5 rounded-3xl shadow-xl hover:bg-pink-600 active:scale-95 transition-all">ACCEDER AHORA</button>
+                <input type="email" id="emailAcceso" placeholder="correo@ejemplo.com" class="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl p-5 outline-none focus:border-pink-500 transition-all font-semibold">
+                <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white font-black py-5 rounded-3xl shadow-xl hover:bg-pink-600 transition-all">ACCEDER AHORA</button>
             </div>
         </div>
     </div>
@@ -51,12 +46,10 @@
     <div id="mainPanel" class="hidden">
         <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600">
-                    <i class="fa-solid fa-user-tie"></i>
-                </div>
+                <div class="w-10 h-10 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600"><i class="fa-solid fa-user-tie"></i></div>
                 <div>
                     <p id="nombreTutor" class="font-black text-slate-800 text-sm tracking-tight">...</p>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase">Panel Familia</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Familia</p>
                 </div>
             </div>
             <button onclick="cerrarSesion()" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
@@ -71,89 +64,69 @@
             </div>
 
             <div id="section-home" class="view-section">
-                <div class="flex justify-between items-end mb-6">
-                    <h3 class="font-black text-2xl text-slate-800 tracking-tighter">Noticias</h3>
-                    <div class="flex bg-slate-200/50 p-1 rounded-xl text-[10px] font-bold">
-                        <button onclick="filtrarNoticias('todas')" id="filter-todas" class="px-3 py-1 bg-white rounded-lg shadow-sm">TODAS</button>
-                        <button onclick="filtrarNoticias('nuevas')" id="filter-nuevas" class="px-3 py-1 rounded-lg text-slate-500">NUEVAS</button>
-                    </div>
-                </div>
+                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Noticias</h3>
                 <div id="feedFamilias" class="space-y-6"></div>
             </div>
 
+            <div id="section-calendar" class="view-section hidden">
+                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Calendario Escolar</h3>
+                <div id="calendarFeed" class="space-y-4"></div>
+            </div>
+
             <div id="section-boletin" class="view-section hidden">
-                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Rendimiento</h3>
+                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Rendimiento Académico</h3>
                 <div class="grid grid-cols-2 gap-4 mb-8">
-                    <div class="bg-indigo-600 p-5 rounded-[2.5rem] text-white shadow-lg shadow-indigo-100">
+                    <div class="bg-indigo-600 p-5 rounded-[2.5rem] text-white shadow-lg">
                         <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest">Asistencia</p>
                         <p id="b-asist" class="text-3xl font-black">0%</p>
                     </div>
                     <div class="bg-white p-5 rounded-[2.5rem] border border-slate-100">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Faltas</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Faltas Totales</p>
                         <p id="b-inasist" class="text-3xl font-black text-slate-800">0</p>
                     </div>
                 </div>
                 <div id="tabla-notas" class="space-y-3"></div>
             </div>
 
-            <div id="section-chat" class="view-section hidden flex flex-col h-[60vh]">
-                <div class="mb-4">
-                    <div class="relative mb-4">
-                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
-                        <input type="text" id="chatSearch" placeholder="Buscar oficina o docente..." class="w-full bg-white border border-slate-100 rounded-2xl p-3 pl-10 text-xs outline-none focus:ring-2 focus:ring-pink-500 transition-all">
-                    </div>
-                    <div id="contactList" class="flex gap-3 overflow-x-auto ios-scroll pb-2"></div>
-                </div>
-                <div id="chatBox" class="flex-1 bg-white border border-slate-100 rounded-[2.5rem] p-6 overflow-y-auto mb-4 flex flex-col gap-4 shadow-inner">
-                    <div class="text-center text-slate-300 text-[10px] py-10 font-bold uppercase tracking-widest">Seleccioná un contacto para hablar</div>
+            <div id="section-chat" class="view-section hidden">
+                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-4">Mensajería</h3>
+                <div id="contactList" class="flex gap-4 overflow-x-auto ios-scroll pb-6"></div>
+                <div id="chatBox" class="bg-white border rounded-[2.5rem] p-6 h-64 overflow-y-auto mb-4 flex flex-col gap-3 shadow-inner">
+                    <p class="text-center text-slate-300 text-[10px] font-bold uppercase mt-10">Seleccioná un canal para comunicarte</p>
                 </div>
             </div>
         </main>
 
-        <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm glass rounded-[2.5rem] shadow-2xl h-20 flex items-center justify-around px-4 z-50 border-t border-white/50">
-            <button onclick="switchTab('home')" class="nav-btn nav-active text-slate-400" id="btn-home"><i class="fa-solid fa-house text-xl"></i></button>
+        <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm glass rounded-[2.5rem] shadow-2xl h-20 flex items-center justify-around px-4 z-50">
+            <button onclick="switchTab('home')" class="nav-btn nav-active" id="btn-home"><i class="fa-solid fa-house text-xl"></i></button>
+            <button onclick="switchTab('calendar')" class="nav-btn text-slate-400" id="btn-calendar"><i class="fa-solid fa-calendar text-xl"></i></button>
             <button onclick="switchTab('boletin')" class="nav-btn text-slate-400" id="btn-boletin"><i class="fa-solid fa-chart-line text-xl"></i></button>
             <button onclick="switchTab('chat')" class="nav-btn text-slate-400" id="btn-chat"><i class="fa-solid fa-comment-dots text-xl"></i></button>
         </nav>
 
-        <div id="btn-iosi" onclick="toggleIosi()" class="fixed bottom-32 right-8 w-14 h-14 bg-slate-900 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[100] active:scale-90 transition-all border-4 border-white rotate-3">
+        <div id="btn-iosi" onclick="toggleIosi()" class="fixed bottom-32 right-8 w-14 h-14 bg-slate-900 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[100] active:scale-90 border-4 border-white rotate-3">
             <i class="fa-solid fa-bolt-lightning text-yellow-400"></i>
         </div>
 
         <div id="window-iosi" class="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-md hidden flex items-end justify-center p-4">
             <div class="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden modal-open">
                 <div class="bg-gradient-to-r from-slate-900 to-indigo-900 p-6 text-white flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-yellow-400 rounded-xl flex items-center justify-center text-slate-900 shadow-lg"><i class="fa-solid fa-bolt"></i></div>
-                        <div><p class="font-black text-sm uppercase tracking-tight">Iosi AI v4.0</p></div>
-                    </div>
-                    <button onclick="toggleIosi()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                    <p class="font-black text-sm uppercase">Iosi AI v4.0</p>
+                    <button onclick="toggleIosi()"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div id="iosiContent" class="h-80 overflow-y-auto p-6 space-y-4 bg-slate-50 ios-scroll">
-                    <div class="flex justify-start"><div class="bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none text-xs font-medium text-slate-600 shadow-sm">Hola Uriel. Preguntame por "notas" o "faltas".</div></div>
+                <div id="iosiContent" class="h-80 overflow-y-auto p-6 space-y-4 bg-slate-50 ios-scroll text-xs">
+                    <div class="bg-white p-4 rounded-2xl border text-slate-600">Hola. Puedo decirte las notas de cualquier materia o qué días hubo inasistencias.</div>
                 </div>
                 <div class="p-4 bg-white border-t flex gap-2">
-                    <input type="text" id="preguntaIosi" placeholder="Preguntame algo..." class="flex-1 bg-slate-100 rounded-2xl px-5 py-3 text-sm outline-none font-medium">
+                    <input type="text" id="preguntaIosi" placeholder="Preguntame algo..." class="flex-1 bg-slate-100 rounded-2xl px-5 py-3 text-sm outline-none">
                     <button onclick="analisisRapidoIosi()" class="bg-indigo-600 text-white px-5 rounded-2xl active:scale-95 transition-all"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-        </div>
-
-        <div id="newsModal" class="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-6">
-            <div class="bg-white w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl relative">
-                <button onclick="cerrarNoticia()" class="absolute top-4 right-4 w-10 h-10 bg-black/10 rounded-full flex items-center justify-center text-white z-10"><i class="fa-solid fa-xmark"></i></button>
-                <div id="newsModalImg" class="h-48 bg-slate-200 bg-cover bg-center"></div>
-                <div class="p-8">
-                    <span id="newsModalTag" class="text-[10px] font-black bg-pink-50 text-pink-600 px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">DOCENCIA</span>
-                    <h2 id="newsModalTitle" class="text-2xl font-black text-slate-900 mb-4 leading-tight">...</h2>
-                    <p id="newsModalText" class="text-slate-500 text-sm leading-relaxed mb-6">...</p>
-                    <button onclick="cerrarNoticia()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl">Entendido</button>
                 </div>
             </div>
         </div>
     </div>
 
 <script>
+    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
         authDomain: "app-academica-interna.firebaseapp.com",
@@ -168,16 +141,22 @@
     let hijoActivo = null;
     let noticiasGlobal = [];
 
+    // ACCESO
     async function validarAcceso() {
         const email = document.getElementById('emailAcceso').value.trim().toLowerCase();
         if(!email) return;
         document.getElementById('loadingOverlay').classList.remove('hidden');
-        const doc = await db.collection('usuarios').doc(email).get();
-        if(doc.exists && doc.data().rol === 'familia') {
-            localStorage.setItem('familiaEmail', email);
-            iniciarApp(doc.data());
-        } else {
-            alert("Acceso inválido");
+        try {
+            const doc = await db.collection('usuarios').doc(email).get();
+            if(doc.exists && doc.data().rol === 'familia') {
+                localStorage.setItem('familiaEmail', email);
+                iniciarApp(doc.data());
+            } else {
+                alert("Acceso inválido");
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        } catch(e) {
+            console.error(e);
             document.getElementById('loadingOverlay').classList.add('hidden');
         }
     }
@@ -187,17 +166,17 @@
         document.getElementById('mainPanel').classList.remove('hidden');
         document.getElementById('nombreTutor').innerText = data.nombre;
 
-        const hijos = Array.isArray(data.hijoID) ? data.hijoID : [data.hijoID];
-        if(hijos.length > 1) {
+        const hijosIds = Array.isArray(data.hijoID) ? data.hijoID : [data.hijoID];
+        if(hijosIds.length > 1) {
             document.getElementById('selectorHijosContainer').classList.remove('hidden');
             const select = document.getElementById('selectorHijos');
             select.innerHTML = "";
-            for(let id of hijos) {
+            for(let id of hijosIds) {
                 const h = await db.collection('alumnos').doc(id).get();
                 if(h.exists) select.innerHTML += `<option value="${id}">${h.data().nombre}</option>`;
             }
         }
-        if(hijos[0]) cargarDatosHijo(hijos[0]);
+        if(hijosIds[0]) cargarDatosHijo(hijosIds[0]);
         cargarContactos();
         document.getElementById('loadingOverlay').classList.add('hidden');
     }
@@ -207,79 +186,92 @@
         if(doc.exists) {
             hijoActivo = { id: doc.id, ...doc.data() };
             escucharFeed(hijoActivo.cursoID);
+            escucharCalendario(hijoActivo.cursoID);
             vincularBoletin(hijoActivo.id);
         }
     }
 
+    // BOLETÍN REAL-TIME
     function vincularBoletin(id) {
         db.collection('calificaciones').doc(id).onSnapshot(doc => {
             if(doc.exists) {
                 const d = doc.data();
                 document.getElementById('b-inasist').innerText = d.inasistencias || 0;
-                const asistenciaPerc = Math.max(0, 100 - ((d.inasistencias || 0) * 100 / 180)).toFixed(1);
-                document.getElementById('b-asist').innerText = asistenciaPerc + "%";
+                const asis = Math.max(0, 100 - ((d.inasistencias || 0) * 100 / 180)).toFixed(1);
+                document.getElementById('b-asist').innerText = asis + "%";
                 const tabla = document.getElementById('tabla-notas');
                 tabla.innerHTML = "";
-                const notas = d.notas || {};
-                Object.keys(notas).forEach(m => {
-                    tabla.innerHTML += `<div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm"><span class="font-bold text-slate-600 text-xs uppercase">${m}</span><span class="font-black text-indigo-600 text-lg">${notas[m]}</span></div>`;
+                Object.entries(d.notas || {}).forEach(([m, v]) => {
+                    tabla.innerHTML += `<div class="flex justify-between items-center bg-white p-4 rounded-2xl border shadow-sm">
+                        <span class="font-bold text-slate-600 text-xs uppercase">${m}</span>
+                        <span class="font-black text-indigo-600 text-lg">${v}</span>
+                    </div>`;
                 });
             }
         });
     }
 
+    // NOTICIAS Y CALENDARIO
     function escucharFeed(curso) {
         db.collection('comunicados').onSnapshot(snap => {
-            noticiasGlobal = [];
+            const container = document.getElementById('feedFamilias');
+            container.innerHTML = "";
             snap.forEach(doc => {
                 const p = doc.data();
-                if(p.tag === "TODOS" || p.tag === curso) noticiasGlobal.push({id: doc.id, ...p});
+                if(p.tag === "TODOS" || p.tag === curso) {
+                    container.innerHTML += `<div class="bg-white p-6 rounded-[2.5rem] border shadow-sm">
+                        <h4 class="font-black text-slate-800 text-lg">${p.titulo}</h4>
+                        <p class="text-xs text-slate-400 mt-2">${p.texto}</p>
+                    </div>`;
+                }
             });
-            renderizarNoticias('todas');
         });
     }
 
-    function renderizarNoticias(filtro) {
-        const container = document.getElementById('feedFamilias');
-        const leidas = JSON.parse(localStorage.getItem('leidas') || '[]');
-        container.innerHTML = "";
-        let filtradas = filtro === 'nuevas' ? noticiasGlobal.filter(n => !leidas.includes(n.id)) : noticiasGlobal;
-        filtradas.forEach(n => {
-            container.innerHTML += `
-                <div onclick="abrirNoticia('${n.id}')" class="card-news bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm mb-4 cursor-pointer">
-                    <h4 class="font-black text-slate-800 text-lg leading-tight mb-2">${n.titulo}</h4>
-                    <p class="text-xs text-slate-400 line-clamp-2">${n.texto}</p>
-                </div>`;
+    function escucharCalendario(curso) {
+        db.collection('eventos').onSnapshot(snap => {
+            const container = document.getElementById('calendarFeed');
+            container.innerHTML = "";
+            snap.forEach(doc => {
+                const e = doc.data();
+                if(e.cursoID === "TODOS" || e.cursoID === curso) {
+                    container.innerHTML += `<div class="bg-white p-4 rounded-2xl border-l-4 border-indigo-500 flex justify-between items-center">
+                        <div><p class="font-black text-slate-800 text-sm">${e.titulo}</p><p class="text-[10px] text-slate-400 uppercase font-bold">${e.fecha}</p></div>
+                        <i class="fa-solid fa-chevron-right text-slate-200"></i>
+                    </div>`;
+                }
+            });
         });
     }
 
-    function abrirNoticia(id) {
-        const n = noticiasGlobal.find(x => x.id === id);
-        document.getElementById('newsModalTitle').innerText = n.titulo;
-        document.getElementById('newsModalText').innerText = n.texto;
-        document.getElementById('newsModalTag').innerText = n.tag;
-        document.getElementById('newsModalImg').style.backgroundImage = `url(${n.imagen || 'https://images.unsplash.com/photo-1546410531-bb4caa1b424d?auto=format&fit=crop&q=80&w=400'})`;
-        document.getElementById('newsModal').classList.remove('hidden');
-    }
-
-    function cerrarNoticia() { document.getElementById('newsModal').classList.add('hidden'); }
-
+    // IOSI AI PRO
     async function obtenerRespuestaIosi(mensaje) {
         const p = mensaje.toLowerCase();
-        if (!hijoActivo) return "No tengo datos del alumno.";
+        if (!hijoActivo) return "No hay alumno activo.";
         const docRef = await db.collection('calificaciones').doc(hijoActivo.id).get();
         const data = docRef.exists ? docRef.data() : {};
-        const notas = data.notas || {};
-
+        
         if (p.includes("nota") || p.includes("calificación")) {
-            let res = "Notas: ";
-            Object.entries(notas).forEach(([m, v]) => res += `${m}: ${v}. `);
-            return res;
+            const notas = data.notas || {};
+            let materia = Object.keys(notas).find(m => p.includes(m.toLowerCase()));
+            if (materia) return `${hijoActivo.nombre} tiene un **${notas[materia]}** en ${materia}.`;
+            let r = "Notas de hoy:<br>";
+            Object.entries(notas).forEach(([m,v]) => r += `• ${m}: **${v}**<br>`);
+            return r;
         }
-        if (p.includes("falta") || p.includes("inasistencia")) {
-            return `Tiene **${data.inasistencias || 0}** faltas en total.`;
+
+        if (p.includes("falta") || p.includes("día") || p.includes("inasistencia")) {
+            const snapAsist = await db.collection('asistencias')
+                .where('alumnoID', '==', hijoActivo.id)
+                .where('estado', 'in', ['A', 'T'])
+                .orderBy('fecha', 'desc').limit(5).get();
+
+            if (snapAsist.empty) return `No hay registros. Total: ${data.inasistencias || 0} faltas.`;
+            let rep = `Inasistencias recientes:<br>`;
+            snapAsist.forEach(d => rep += `• **${d.data().fecha}**: ${d.data().estado === 'A' ? 'Ausente' : 'Tarde'}<br>`);
+            return rep;
         }
-        return "Preguntame por 'notas' o 'faltas'.";
+        return "Preguntame por 'notas' o 'inasistencias'.";
     }
 
     async function analisisRapidoIosi() {
@@ -287,15 +279,16 @@
         const box = document.getElementById('iosiContent');
         const txt = input.value.trim();
         if(!txt) return;
-        box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-xl rounded-tr-none text-xs shadow-md">${txt}</div></div>`;
+        box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-xl text-xs">${txt}</div></div>`;
         input.value = "";
-        const respuesta = await obtenerRespuestaIosi(txt);
+        const r = await obtenerRespuestaIosi(txt);
         setTimeout(() => {
-            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border p-3 rounded-xl rounded-tl-none text-xs text-slate-600 shadow-sm">${respuesta}</div></div>`;
+            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border p-3 rounded-xl text-xs text-slate-600 shadow-sm">${r}</div></div>`;
             box.scrollTop = box.scrollHeight;
         }, 600);
     }
 
+    // UTILIDADES
     function switchTab(id) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
         document.getElementById('section-' + id).classList.remove('hidden');
@@ -303,13 +296,17 @@
         document.getElementById('btn-' + id).classList.add('nav-active');
     }
 
+    function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
+
     function cargarContactos() {
-        const c = [{n:'Secretaría', i:'fa-building'}, {n:'Adm', i:'fa-file-invoice'}, {n:'Dir', i:'fa-user-tie'}];
-        document.getElementById('contactList').innerHTML = c.map(x => `<div class="flex-shrink-0 flex flex-col items-center gap-2"><div class="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shadow-sm"><i class="fa-solid ${x.i}"></i></div><span class="text-[9px] font-bold text-slate-400 uppercase">${x.n}</span></div>`).join('');
+        const c = [{n:'Administración', i:'fa-file-invoice-dollar'}, {n:'Dirección', i:'fa-user-tie'}];
+        document.getElementById('contactList').innerHTML = c.map(x => `
+            <div class="flex-shrink-0 flex flex-col items-center gap-2">
+                <div class="w-16 h-16 bg-white border rounded-3xl flex items-center justify-center text-slate-400 shadow-sm"><i class="fa-solid ${x.i}"></i></div>
+                <span class="text-[9px] font-black text-slate-400 uppercase">${x.n}</span>
+            </div>`).join('');
     }
 
-    function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
-    function filtrarNoticias(modo) { renderizarNoticias(modo); }
     function cerrarSesion() { localStorage.clear(); location.reload(); }
 </script>
 </body>
