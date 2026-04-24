@@ -257,6 +257,17 @@
             });
             input.value = "";
         }
+        // En la App de Familias, para ver la respuesta del Admin:
+function escucharMisMensajes(miEmail) {
+    db.collection('mensajes')
+      .where('participantes', 'array-contains', miEmail)
+      .orderBy('fecha', 'asc')
+      .onSnapshot(snap => {
+          // Aquí pintas los globos de texto. 
+          // Si emisorID == miEmail -> Globo a la derecha.
+          // Si emisorID == "secretaria_primaria" -> Globo a la izquierda.
+      });
+}
 
         async function darLike(id) {
             await db.collection('comunicados').doc(id).update({ likes: firebase.firestore.FieldValue.increment(1) });
