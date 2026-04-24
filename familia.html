@@ -315,19 +315,65 @@
         return "Podés preguntarme sobre notas, inasistencias o informes.";
     }
 
-    async function analisisRapidoIosi() {
-        const input = document.getElementById('preguntaIosi');
-        const box = document.getElementById('iosiContent');
-        if(!input.value.trim()) return;
-        const txt = input.value.trim();
-        box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none shadow-md">${txt}</div></div>`;
-        input.value = "";
-        const r = await obtenerRespuestaIosi(txt);
-        setTimeout(() => {
-            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border p-3 rounded-2xl rounded-tl-none text-slate-600 shadow-sm">${r}</div></div>`;
-            box.scrollTop = box.scrollHeight;
-        }, 600);
+        // --- LÓGICA DE IOSI AI ACTUALIZADA ---
+    async function obtenerRespuestaIosi(mensaje) {
+        const p = mensaje.toLowerCase();
+        if (!hijoActivo) return "Aún no tengo los datos del alumno cargados.";
+
+        try {
+            // Caso 1: Pregunta por Notas
+            if (p.includes("nota") || p.includes("sacó") || p.includes("calificación")) {
+                const calDoc = await db.collection('calificaciones').doc(hijoActivo.id).get();
+                const calData = calDoc.exists ? calDoc.data() : {};
+                let res = "Estas son las notas actuales:<br>";
+                if (!calData.notas) return "Aún no hay notas cargadas en el boletín.";
+                Object.entries(calData.notas).forEach(([k,v]) => res += `• ${k}: **${v}**<br>`);
+                return res;
+            }
+
+            // Caso 2: Pregunta por FECHAS EXACTAS de faltas
+            if (p.includes("cuándo") || p.includes("qué día") || p.includes("fechas")) {
+                const asistSnap = await db.collection('asistencias')
+                    .where('alumnoID', '==', hijoActivo.id)
+                    .orderBy('fecha', 'desc')
+                    .get();
+
+                if (asistSnap.empty) return "No tengo registradas faltas específicas en el sistema.";
+
+                let fechasRes = "Faltó los siguientes días:<br>";
+                let contador = 0;
+                asistSnap.forEach(doc => {
+                    const data = doc.data();
+                    // Filtramos solo los que son Ausente (A)
+                    if (data.estado === 'A' || data.estado === 'Ausente') {
+                        fechasRes += `• **${data.fecha}**<br>`;
+                        contador++;
+                    }
+                });
+                
+                return contador > 0 ? fechasRes : "No registra inasistencias en el detalle diario.";
+            }
+
+            // Caso 3: Pregunta por Total de faltas
+            if (p.includes("falta") || p.includes("faltó")) {
+                const calDoc = await db.collection('calificaciones').doc(hijoActivo.id).get();
+                const total = calDoc.exists ? (calDoc.data().inasistencias || 0) : 0;
+                return `${hijoActivo.nombre} tiene un total de **${total}** faltas. Si querés saber las fechas exactas, preguntame '¿qué días faltó?'`;
+            }
+
+            // Caso 4: Informes
+            if (p.includes("informe") || p.includes("reporte")) {
+                return "Los informes escritos los podés ver en la pestaña de Rendimiento (icono del birrete).";
+            }
+
+        } catch(e) { 
+            console.error(e);
+            return "Tuve un problema al leer la base de datos. Asegurate de que la colección 'asistencias' tenga los campos 'alumnoID' y 'fecha'."; 
+        }
+
+        return "Podés preguntarme: '¿Qué notas tiene?', '¿Cuándo faltó?' o '¿Cuántas faltas tiene?'";
     }
+
 
     function switchTab(id) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
