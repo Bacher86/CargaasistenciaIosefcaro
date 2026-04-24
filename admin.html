@@ -194,29 +194,42 @@
             });
         }
 
-        // --- COMUNICACIÓN (Actualizada con ImgBB) ---
         async function publicarFeed() {
-            const titulo = document.getElementById('tituloPost').value;
-            const texto = document.getElementById('contenidoPost').value;
-            const tag = document.getElementById('tagPost').value;
-            const fecha = document.getElementById('fechaProgramada').value;
-            const img = document.getElementById('linkImagen').value.trim();
-            const doc = document.getElementById('linkPDF').value.trim();
+    const titulo = document.getElementById('tituloPost').value;
+    const texto = document.getElementById('contenidoPost').value;
+    const tag = document.getElementById('tagPost').value;
+    const fecha = document.getElementById('fechaProgramada').value;
+    
+    // Ahora tomamos los links directamente de los inputs de texto
+    const img = document.getElementById('linkImagen').value.trim();
+    const doc = document.getElementById('linkPDF').value.trim();
 
-            if(!titulo || !texto) return alert("Falta contenido");
+    if(!titulo || !texto) return alert("Falta título o contenido");
 
-            await db.collection('comunicados').add({
-                titulo, texto, tag, img, doc,
-                fechaPublicacion: fecha ? new Date(fecha).toISOString() : new Date().toISOString(),
-                creadoEn: new Date().toISOString(),
-                likes: 0
-            });
-            
-            document.getElementById('tituloPost').value = "";
-            document.getElementById('contenidoPost').value = "";
-            document.getElementById('linkImagen').value = "";
-            document.getElementById('linkPDF').value = "";
-        }
+    try {
+        await db.collection('comunicados').add({
+            titulo,
+            texto,
+            tag,
+            img, // Link de ImgBB
+            doc, // Link de PDF
+            fechaPublicacion: fecha ? new Date(fecha).toISOString() : new Date().toISOString(),
+            creadoEn: new Date().toISOString(),
+            likes: 0
+        });
+        
+        alert("¡Comunicado publicado!");
+        // Limpiamos los campos para el próximo
+        document.getElementById('tituloPost').value = "";
+        document.getElementById('contenidoPost').value = "";
+        document.getElementById('linkImagen').value = "";
+        document.getElementById('linkPDF').value = "";
+        
+    } catch (e) {
+        console.error("Error al publicar:", e);
+        alert("Error al guardar en la base de datos.");
+    }
+}
 
         // --- IA PULIR ---
         async function mejorarConIA(event) {
