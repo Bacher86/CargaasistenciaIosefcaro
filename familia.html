@@ -136,7 +136,7 @@
         </div>
     </div>
 <script>
-    // 1. CONFIGURACIÓN DE FIREBASE
+    // 1. CONFIGURACIÓN Y ESTADO GLOBAL
     const firebaseConfig = {
         apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
         authDomain: "app-academica-interna.firebaseapp.com",
@@ -148,27 +148,26 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let tutorData = null;
     let hijoActivo = null;
-    let unsubChat = null;
-    let unsubFeed = null;
-    let unsubCal = null;
+    let tutorEmail = "";
+    let iosiMemory = []; // Memoria de corto plazo para el asistente
 
-    // 2. ACCESO Y SELECTOR
+    // 2. MOTOR DE ACCESO INTEGRADO
     async function validarAcceso() {
         const email = document.getElementById('emailAcceso').value.trim().toLowerCase();
-        if(!email) return alert("Por favor, ingresá tu email.");
+        if(!email) return;
+        
         try {
             const doc = await db.collection('usuarios').doc(email).get();
             if(doc.exists && doc.data().rol === 'familia') {
                 localStorage.setItem('familiaEmail', email);
+                tutorEmail = email;
                 iniciarApp(doc.data());
-            } else { alert("Email no registrado o sin permisos."); }
-        } catch(e) { alert("Error de conexión: " + e.message); }
+            } else { alert("Acceso denegado."); }
+        } catch(e) { console.error(e); }
     }
 
     async function iniciarApp(data) {
-        tutorData = data;
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('mainPanel').classList.remove('hidden');
         document.getElementById('nombreTutor').innerText = data.nombre;
@@ -177,239 +176,203 @@
         const select = document.getElementById('selectorHijos');
         select.innerHTML = "";
 
-        if(hijosArray.length > 1) {
-            document.getElementById('selectorHijosContainer').classList.remove('hidden');
-            for(let id of hijosArray) {
-                const hDoc = await db.collection('alumnos').doc(id).get();
-                if(hDoc.exists) {
-                    select.innerHTML += `<option value="${id}">${hDoc.data().nombre}</option>`;
-                }
+        for(let id of hijosArray) {
+            const hDoc = await db.collection('alumnos').doc(id).get();
+            if(hDoc.exists) {
+                select.innerHTML += `<option value="${id}">${hDoc.data().nombre}</option>`;
             }
         }
-        seleccionarHijo(hijosArray[0]);
+        cargarDatosHijo(hijosArray[0]);
     }
 
-    async function seleccionarHijo(id) {
-        if(!id) return;
+    async function cargarDatosHijo(id) {
         document.getElementById('loadingOverlay').classList.remove('hidden');
         const hDoc = await db.collection('alumnos').doc(id).get();
-        if(!hDoc.exists) return;
-        
         hijoActivo = { id: hDoc.id, ...hDoc.data() };
+
         document.getElementById('nombreHijoDisplay').innerText = hijoActivo.nombre;
         document.getElementById('cursoHijoDisplay').innerText = hijoActivo.cursoID;
-        
+
+        // Suscripciones en paralelo
         escucharFeed(hijoActivo.cursoID);
         escucharCalendario(hijoActivo.cursoID);
-        cargarAcademico(hijoActivo.id);
-        cargarInformes(hijoActivo.id);
-        
-        setTimeout(() => document.getElementById('loadingOverlay').classList.add('hidden'), 500);
+        vincularDatosAcademicos(hijoActivo.id);
+        escucharChat();
+
+        setTimeout(() => document.getElementById('loadingOverlay').classList.add('hidden'), 600);
     }
 
-    // 3. IOSI CASERO (Cerebro Expandido y Contextual)
-    function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
-
+    // 3. IOSI 2.0: INTELIGENCIA CONTEXTUAL
     function analisisRapidoIosi() {
         const input = document.getElementById('preguntaIosi');
         const box = document.getElementById('iosiContent');
-        const texto = input.value.toLowerCase().trim();
-        if(!texto || !hijoActivo) return;
+        const consulta = input.value.trim();
+        if(!consulta) return;
 
-        // Burbuja Usuario
-        box.innerHTML += `<div class="flex flex-col items-end mb-3">
-            <div class="bg-slate-200 text-slate-700 p-3 rounded-2xl rounded-tr-none text-xs shadow-sm max-w-[85%]">${input.value}</div>
-        </div>`;
-        input.value = "";
-
-        let respuesta = "";
-        const faltas = document.getElementById('b-inasist').innerText;
-        const notasTexto = document.getElementById('tabla-notas').innerText;
-        const agendaTexto = document.getElementById('calendarFeed').innerText;
-        const noticiasTexto = document.getElementById('feedFamilias').innerText;
-
-        if (texto.includes("nota") || texto.includes("materia") || texto.includes("boletin")) {
-            respuesta = notasTexto.length > 20 
-                ? `Estuve revisando el boletín de ${hijoActivo.nombre}. Veo notas cargadas. Recordá que podés ver el detalle en la pestaña de Notas.`
-                : "Aún no veo notas cargadas en el sistema para este período.";
-        } 
-        else if (texto.includes("falta") || texto.includes("inasistencia") || texto.includes("asistencia")) {
-            respuesta = `${hijoActivo.nombre} tiene registradas ${faltas} inasistencias hasta hoy. ${parseInt(faltas) > 15 ? 'Ojo, está cerca del límite.' : 'Viene muy bien con la asistencia.'}`;
-        }
-        else if (texto.includes("cuando") || texto.includes("fecha") || texto.includes("calendario") || texto.includes("evento")) {
-            respuesta = agendaTexto.length > 25 
-                ? `En el calendario veo eventos próximos. El primero que aparece es: "${agendaTexto.split('\n')[0]}".`
-                : "No hay eventos próximos agendados en el calendario escolar.";
-        }
-        else if (texto.includes("novedad") || texto.includes("noticia") || texto.includes("comunicado")) {
-            respuesta = noticiasTexto.length > 25
-                ? `Hay comunicados nuevos. Lo más relevante parece ser: "${noticiasTexto.substring(0, 60)}...".`
-                : "No hay noticias nuevas en el muro de hoy.";
-        }
-        else {
-            respuesta = "Soy tu asistente Iosi. Podés preguntarme sobre: **notas**, **inasistencias**, fechas del **calendario** o las últimas **noticias**.";
-        }
-
-        setTimeout(() => {
-            box.innerHTML += `<div class="flex flex-col items-start mb-3">
-                <div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tl-none text-xs shadow-md max-w-[85%]">${respuesta}</div>
+        // Renderizado de mensaje de usuario con estilo "glassmorphism"
+        box.innerHTML += `
+            <div class="flex justify-end mb-4 animate-slide-in">
+                <div class="bg-indigo-100 text-indigo-900 px-4 py-2 rounded-2xl rounded-tr-none shadow-sm text-sm max-w-[80%] border border-indigo-200">
+                    ${consulta}
+                </div>
             </div>`;
+        
+        input.value = "";
+        const contexto = consulta.toLowerCase();
+        let respuesta = "";
+
+        // Captura de datos vivos del DOM
+        const faltasCount = parseInt(document.getElementById('b-inasist').innerText) || 0;
+        const agendaInfo = document.getElementById('calendarFeed').innerText;
+
+        // Lógica de respuesta mejorada
+        if(contexto.includes("hola") || contexto.includes("quien sos")) {
+            respuesta = `Hola! Soy Iosi, el asistente de ${hijoActivo.nombre}. Puedo resumirte su día, ver faltas o chequear el calendario.`;
+        } else if(contexto.includes("falta") || contexto.includes("inasistencia")) {
+            const riesgo = faltasCount > 20 ? "🔴 Crítico" : (faltasCount > 12 ? "🟡 Precaución" : "🟢 Excelente");
+            respuesta = `Actualmente registra **${faltasCount} faltas**. Estado: ${riesgo}.`;
+        } else if(contexto.includes("calendario") || contexto.includes("fecha") || contexto.includes("evento")) {
+            respuesta = agendaInfo.includes("Sin agenda") 
+                ? "No hay eventos programados en el corto plazo." 
+                : `Lo próximo en agenda es: "${agendaInfo.split('\n')[0].substring(0, 50)}...".`;
+        } else {
+            respuesta = "Entiendo. No tengo info específica sobre eso, pero si me preguntás por **notas** o **calendario** te puedo ayudar mejor.";
+        }
+
+        // Simulación de "escribiendo..."
+        setTimeout(() => {
+            box.innerHTML += `
+                <div class="flex justify-start mb-4 animate-fade-in">
+                    <div class="bg-white border border-slate-100 text-slate-700 px-4 py-3 rounded-2xl rounded-tl-none shadow-md text-xs max-w-[85%] leading-relaxed">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                            <b class="text-indigo-600 uppercase text-[9px]">Iosi AI</b>
+                        </div>
+                        ${respuesta}
+                    </div>
+                </div>`;
             box.scrollTop = box.scrollHeight;
-        }, 500);
+        }, 800);
     }
 
-    // 4. FUNCIONES FIREBASE ACTUALIZADAS
-    function cargarAcademico(alumnoID) {
-        db.collection('calificaciones').where('alumnoID', '==', alumnoID).onSnapshot(snap => {
-            const tabla = document.getElementById('tabla-notas');
-            const badgFaltas = document.getElementById('b-inasist');
-            const badgAsist = document.getElementById('b-asist');
-
-            if(snap.empty) {
-                badgFaltas.innerText = "0"; badgAsist.innerText = "0";
-                tabla.innerHTML = "<p class='text-xs text-center text-slate-400 py-6'>Sin datos académicos.</p>";
-                return;
-            }
-            
+    // 4. DATOS ACADÉMICOS CON SEMÁFORO DE ASISTENCIA
+    function vincularDatosAcademicos(id) {
+        db.collection('calificaciones').where('alumnoID', '==', id).onSnapshot(snap => {
+            if(snap.empty) return;
             const d = snap.docs[0].data();
             
-            // CORRECCIÓN INASISTENCIAS (Busca en varios nombres posibles por si cambias en Firebase)
-            badgFaltas.innerText = d.inasistencias || d.Inasistencias || d.faltas || "0";
-            badgAsist.innerText = d.asistencias || d.Asistencias || d.presentes || "0";
+            // Render de inasistencias con lógica de color
+            const f = parseInt(d.inasistencias || d.faltas || 0);
+            const badge = document.getElementById('b-inasist');
+            badge.innerText = f;
             
+            // "Chiche": Cambio de color dinámico según gravedad
+            if(f > 15) badge.parentElement.className = "bg-red-50 p-4 rounded-3xl border border-red-100";
+            else if(f > 8) badge.parentElement.className = "bg-orange-50 p-4 rounded-3xl border border-orange-100";
+            
+            // Render de Notas con estilo de "Tarjetas de Calificación"
             let html = "";
-            if(d.notas) {
-                Object.entries(d.notas).forEach(([m, n]) => {
-                    html += `
-                    <div class="flex justify-between items-center p-4 bg-white rounded-2xl border border-slate-100 shadow-sm mb-2 transform transition-all hover:scale-[1.01]">
-                        <span class="text-xs font-bold text-slate-600 capitalize">${m}</span>
-                        <div class="flex items-center gap-3">
-                            <span class="font-black text-sm ${n >= 6 ? 'text-blue-600' : 'text-red-500'}">${n}</span>
-                            <div class="w-1 h-8 rounded-full ${n >= 6 ? 'bg-blue-100' : 'bg-red-100'}"></div>
-                        </div>
-                    </div>`;
-                });
-            }
-            tabla.innerHTML = html;
-        });
-    }
-
-    function escucharCalendario(curso) {
-        if(unsubCal) unsubCal();
-        unsubCal = db.collection('eventos').where('curso', 'in', ['TODOS', curso]).onSnapshot(snap => {
-            let evs = [];
-            snap.forEach(doc => evs.push(doc.data()));
-            evs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-            let html = "";
-            evs.forEach(e => {
-                const f = new Date(e.fecha + "T00:00:00");
-                html += `<div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex gap-4 items-center mb-3">
-                    <div class="bg-slate-900 text-white w-12 h-12 rounded-2xl flex flex-col items-center justify-center shadow-lg">
-                        <span class="text-lg font-black leading-none">${f.getDate()}</span>
-                        <span class="text-[7px] font-bold opacity-60 uppercase">${f.toLocaleString('es-ES', { month: 'short' })}</span>
+            Object.entries(d.notas || {}).forEach(([materia, nota]) => {
+                html += `
+                <div class="bg-white p-4 rounded-2xl mb-3 flex justify-between items-center shadow-sm border-l-4 ${nota >= 6 ? 'border-blue-500' : 'border-red-500'}">
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase font-black">${materia}</p>
+                        <p class="text-xs font-bold text-slate-700">Calificación Actual</p>
                     </div>
-                    <div><p class="text-sm font-bold text-slate-800">${e.titulo}</p><p class="text-[9px] text-slate-400 italic">${e.tipo || 'Escolar'}</p></div>
+                    <span class="text-xl font-black ${nota >= 6 ? 'text-blue-600' : 'text-red-500'}">${nota}</span>
                 </div>`;
             });
-            document.getElementById('calendarFeed').innerHTML = html || "<p class='text-center text-xs text-slate-400'>No hay eventos próximos.</p>";
+            document.getElementById('tabla-notas').innerHTML = html;
         });
     }
 
-    // CHAT PRO: Con diseño moderno y scroll automático
+    // 5. CHAT "WHATSAPP STYLE" CON INDICADOR DE HORA REAL
     function escucharChat() {
-        if(unsubChat) unsubChat();
         const email = localStorage.getItem('familiaEmail');
-        unsubChat = db.collection('mensajes').where('participantes', 'array-contains', email).onSnapshot(snap => {
-            const box = document.getElementById('chatBox'); 
+        db.collection('mensajes').where('participantes', 'array-contains', email)
+        .onSnapshot(snap => {
+            const box = document.getElementById('chatBox');
             box.innerHTML = "";
-            let msgs = []; 
+            let msgs = [];
             snap.forEach(doc => msgs.push(doc.data()));
-            msgs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+            msgs.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
 
             msgs.forEach(m => {
-                const soy = m.emisorID === email;
-                const hora = m.fecha ? new Date(m.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-                const div = document.createElement('div');
-                div.className = `flex flex-col mb-4 ${soy ? 'items-end' : 'items-start'}`;
-                div.innerHTML = `
-                    <div class="max-w-[82%] p-3 rounded-2xl text-[12px] shadow-sm relative ${soy ? 'bg-pink-500 text-white rounded-tr-none' : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'}">
-                        ${m.texto}
-                    </div>
-                    <span class="text-[8px] text-slate-400 mt-1 px-1 font-semibold">${hora}</span>
-                `;
-                box.appendChild(div);
+                const soyYo = m.emisorID === email;
+                const hora = m.fecha ? new Date(m.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                
+                box.innerHTML += `
+                    <div class="flex flex-col ${soyYo ? 'items-end' : 'items-start'} mb-4">
+                        <div class="relative px-4 py-2 rounded-2xl shadow-sm text-sm ${
+                            soyYo ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
+                        }">
+                            ${m.texto}
+                            ${soyYo ? '<i class="fa-solid fa-check-double text-[8px] ml-1 opacity-70"></i>' : ''}
+                        </div>
+                        <span class="text-[9px] text-slate-400 mt-1 font-bold">${hora}</span>
+                    </div>`;
             });
             box.scrollTop = box.scrollHeight;
         });
     }
 
-    async function enviarMensaje() {
-        const input = document.getElementById('msgInput');
-        const email = localStorage.getItem('familiaEmail');
-        if(!input.value.trim()) return;
-        const texto = input.value.trim(); 
-        input.value = "";
-        await db.collection('mensajes').add({
-            emisorID: email, receptorID: "administracion", participantes: [email, "administracion"],
-            texto: texto, fecha: new Date().toISOString()
-        });
-    }
-
+    // 6. FUNCIONES DE APOYO (FEED Y CALENDARIO)
     function escucharFeed(curso) {
-        if(unsubFeed) unsubFeed();
-        unsubFeed = db.collection('comunicados').onSnapshot(snap => {
+        db.collection('comunicados').onSnapshot(snap => {
             let html = "";
             snap.forEach(doc => {
                 const p = doc.data();
                 if(p.tag === "TODOS" || p.tag === curso) {
-                    html += `<div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm mb-5 transform transition-all">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-[8px] font-black bg-pink-100 text-pink-600 px-2 py-1 rounded-md uppercase">${p.tag}</span>
-                            <i class="fa-solid fa-ellipsis text-slate-300"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-800 mb-2">${p.titulo}</h4>
-                        <p class="text-xs text-slate-500 leading-relaxed">${p.texto}</p>
+                    html += `
+                    <div class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm mb-4 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                        <span class="text-[8px] font-black bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md mb-2 inline-block italic">${p.tag}</span>
+                        <h4 class="font-bold text-slate-800">${p.titulo}</h4>
+                        <p class="text-xs text-slate-500 mt-1">${p.texto}</p>
                     </div>`;
                 }
             });
-            document.getElementById('feedFamilias').innerHTML = html || "<p class='text-center text-xs text-slate-400'>No hay novedades nuevas.</p>";
+            document.getElementById('feedFamilias').innerHTML = html;
         });
     }
 
-    function cargarInformes(alumnoID) {
-        db.collection('informes').where('alumnoID', '==', alumnoID).onSnapshot(snap => {
+    function escucharCalendario(curso) {
+        db.collection('eventos').where('curso', 'in', ['TODOS', curso]).onSnapshot(snap => {
             let html = "";
             snap.forEach(doc => {
-                const inf = doc.data();
-                html += `<div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm mb-3">
-                    <div class="flex items-center gap-2 mb-2">
-                        <div class="w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse"></div>
-                        <p class="text-[9px] font-black text-slate-400 uppercase">${inf.fecha}</p>
+                const e = doc.data();
+                const f = new Date(e.fecha + "T00:00:00");
+                html += `
+                <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-3xl mb-3 border border-dashed border-slate-200">
+                    <div class="text-center bg-white p-2 rounded-xl shadow-sm min-w-[50px]">
+                        <p class="text-lg font-black text-indigo-600 leading-none">${f.getDate()}</p>
+                        <p class="text-[8px] font-bold text-slate-400 uppercase">${f.toLocaleString('es', {month:'short'})}</p>
                     </div>
-                    <p class="text-xs text-slate-600 leading-relaxed font-medium">${inf.detalle}</p>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700">${e.titulo}</p>
+                        <p class="text-[10px] text-indigo-500 font-medium">${e.tipo || 'Evento'}</p>
+                    </div>
                 </div>`;
             });
-            document.getElementById('lista-informes').innerHTML = html || "<p class='text-xs text-slate-400 italic text-center py-4'>Sin informes pedagógicos.</p>";
+            document.getElementById('calendarFeed').innerHTML = html || "<p class='text-xs text-center text-slate-400'>No hay eventos.</p>";
         });
     }
 
     function switchTab(id) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
         document.getElementById('section-' + id).classList.remove('hidden');
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active', 'text-pink-500'));
-        document.getElementById('btn-' + id).classList.add('nav-active', 'text-pink-500');
-        if(id === 'chat') escucharChat();
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('text-indigo-600', 'font-black'));
+        document.getElementById('btn-' + id).classList.add('text-indigo-600', 'font-black');
     }
-    
-    function cerrarSesion() { localStorage.clear(); location.reload(); }
 
-    window.onload = async () => {
-        const savedEmail = localStorage.getItem('familiaEmail');
-        if(savedEmail) {
-            const doc = await db.collection('usuarios').doc(savedEmail).get();
-            if(doc.exists) iniciarApp(doc.data());
+    window.onload = () => {
+        const saved = localStorage.getItem('familiaEmail');
+        if(saved) {
+            db.collection('usuarios').doc(saved).get().then(doc => {
+                if(doc.exists) iniciarApp(doc.data());
+            });
         }
-    };
+    }
 </script>
 </body>
 </html>
