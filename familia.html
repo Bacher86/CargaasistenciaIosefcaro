@@ -355,29 +355,66 @@
     // 5. IOSI CEREBRO 4.0
     function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
 
-    function analisisRapidoIosi() {
-        const input = document.getElementById('preguntaIosi');
-        const box = document.getElementById('iosiContent');
-        const p = input.value.trim().toLowerCase();
-        if(!p) return;
+    // 5. IOSI CEREBRO 4.0 - ACTUALIZADO CON LECTURA DE AGENDA REAL
+function analisisRapidoIosi() {
+    const input = document.getElementById('preguntaIosi');
+    const box = document.getElementById('iosiContent');
+    const p = input.value.trim().toLowerCase();
+    if(!p) return;
 
-        box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none text-xs font-bold">${input.value}</div></div>`;
-        input.value = "";
+    // Render del mensaje del usuario
+    box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none text-xs font-bold shadow-md">${input.value}</div></div>`;
+    const textoUsuario = input.value;
+    input.value = "";
 
-        let r = "";
-        const f = parseInt(document.getElementById('b-inasist').innerText) || 0;
-        
-        if(p.includes("notas") || p.includes("promedio")) r = `He analizado las notas de **${hijoActivo.nombre}**. Su desempeño es constante, pero recordá chequear el boletín por cualquier informe nuevo.`;
-        else if(p.includes("faltas") || p.includes("inasistencias")) r = `Registra **${f} faltas**. ${f > 15 ? 'Estamos en una zona de riesgo, ojo con las llegadas tarde.' : 'Está en un rango excelente de asistencia.'}`;
-        else if(p.includes("hola") || p.includes("resumen")) r = `Todo bien por aquí. Hoy no hay avisos de emergencia para ${hijoActivo.nombre}. ¿Querés que veamos la agenda?`;
-        else r = "No tengo info sobre eso, pero puedo decirte cómo va en notas, faltas o qué hay en la agenda escolar.";
+    let r = "";
+    
+    // 1. EXTRAER INFO EN TIEMPO REAL DE LA UI
+    const faltas = document.getElementById('b-inasist').innerText || "0";
+    
+    // 2. EXTRAER EVENTOS DE LA AGENDA (TRUCO MAESTRO)
+    // Buscamos todos los títulos de eventos dentro del feed de calendario
+    const eventosUI = document.querySelectorAll('#calendarFeed p.text-slate-800');
+    let listaEventos = [];
+    eventosUI.forEach(el => listaEventos.push(el.innerText.trim()));
 
-        setTimeout(() => {
-            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border p-4 rounded-2xl rounded-tl-none text-xs font-medium text-slate-600 shadow-sm">${r}</div></div>`;
-            box.scrollTop = box.scrollHeight;
-        }, 600);
+    // 3. LÓGICA DE RESPUESTA CON CONTEXTO REAL
+    if(p.includes("agenda") || p.includes("calendario") || p.includes("mañana") || p.includes("evento")) {
+        if(listaEventos.length > 0) {
+            r = `En la agenda de **${hijoActivo.nombre}** veo lo siguiente: "${listaEventos.join(', ')}". ¿Te gustaría que te de más detalles de alguno?`;
+        } else {
+            r = `Estuve revisando la agenda y, por el momento, no hay eventos o exámenes programados para los próximos días. ¡Vienen tranquilos!`;
+        }
+    } 
+    else if(p.includes("notas") || p.includes("promedio") || p.includes("como va")) {
+        r = `Analizando el boletín... Las notas de **${hijoActivo.nombre}** están cargadas. Veo que el sistema está actualizado. Recordá que cualquier nota roja genera una notificación automática.`;
+    }
+    else if(p.includes("faltas") || p.includes("inasistencias")) {
+        const f = parseInt(faltas);
+        r = `Lleva **${f} faltas** hasta hoy. ${f > 15 ? 'Ojo, que ya pasaron la mitad del límite permitido.' : 'Viene con muy buena asistencia, ¡seguimos así!'}`;
+    }
+    else if(p.includes("hola") || p.includes("quien sos")) {
+        r = `¡Hola! Soy Iosi. Mi trabajo es leer todos los datos de la escuela para que vos no tengas que buscarlos. ¿Querés saber qué hay en la **agenda** o cómo viene con las **faltas**?`;
+    }
+    else {
+        r = "Entiendo. No tengo información específica sobre eso en mi base de datos actual, pero puedo resumirte la **agenda escolar**, decirte las **faltas** o mostrarte las **notas**.";
     }
 
+    // Simulación de escritura y respuesta
+    setTimeout(() => {
+        box.innerHTML += `
+            <div class="flex justify-start animate-fade-in">
+                <div class="bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none text-xs font-medium text-slate-600 shadow-sm leading-relaxed">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
+                        <span class="text-[9px] font-black text-indigo-600 uppercase tracking-tighter">Iosi Analysis</span>
+                    </div>
+                    ${r}
+                </div>
+            </div>`;
+        box.scrollTop = box.scrollHeight;
+    }, 650);
+}
     // 6. FUNCIONES DE APOYO
     function vincularBoletin(id) {
         db.collection('calificaciones').where('alumnoID', '==', id).onSnapshot(snap => {
