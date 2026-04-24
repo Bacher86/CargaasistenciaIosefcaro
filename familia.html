@@ -135,7 +135,6 @@
             </div>
         </div>
     </div>
-
 <script>
     // 1. CONFIGURACIÓN DE FIREBASE
     const firebaseConfig = {
@@ -208,7 +207,7 @@
         document.getElementById('loadingOverlay').classList.add('hidden');
     }
 
-    // 3. IOSI CASERO (Lógica de análisis local)
+    // 3. IOSI CASERO (Cerebro Expandido)
     function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
 
     function analisisRapidoIosi() {
@@ -223,21 +222,32 @@
         let respuesta = "";
         const faltas = document.getElementById('b-inasist').innerText;
         const notasHTML = document.getElementById('tabla-notas').innerText;
+        const eventos = document.getElementById('calendarFeed').innerText;
+        const noticias = document.getElementById('feedFamilias').innerText;
 
         if (texto.includes("nota") || texto.includes("promedio") || texto.includes("materia")) {
             respuesta = notasHTML.length > 15 
-                ? `Para ${hijoActivo.nombre} veo notas cargadas. Las que están en azul son aprobadas y en rojo las que requieren atención.`
+                ? `Para ${hijoActivo.nombre} veo notas cargadas. Las azules son aprobadas y las rojas requieren atención.`
                 : "Todavía no hay notas cargadas en el boletín digital.";
         } 
         else if (texto.includes("falta") || texto.includes("inasistencia") || texto.includes("asistencia")) {
-            respuesta = `${hijoActivo.nombre} tiene un total de ${faltas} inasistencias registradas.`;
-            if(parseInt(faltas) > 15) respuesta += " Ojo, está cerca del límite permitido.";
+            respuesta = `${hijoActivo.nombre} tiene ${faltas} inasistencias. ${parseInt(faltas) > 10 ? 'Atención con el límite de faltas.' : 'Está dentro de lo normal.'}`;
         }
-        else if (texto.includes("resumen") || texto.includes("hola") || texto.includes("todo bien")) {
-            respuesta = `${hijoActivo.nombre} está en ${hijoActivo.cursoID}. Tiene ${faltas} faltas y el boletín ya tiene información actualizada.`;
+        else if (texto.includes("cuando") || texto.includes("fecha") || texto.includes("calendario") || texto.includes("evento")) {
+            respuesta = eventos.length > 20 
+                ? `En la agenda escolar figura: ${eventos.substring(0, 60)}... Revisá la pestaña de calendario para más detalle.`
+                : "No hay eventos próximos agendados por ahora.";
+        }
+        else if (texto.includes("novedad") || texto.includes("noticia") || texto.includes("paso") || texto.includes("comunicado")) {
+            respuesta = noticias.length > 20
+                ? `La última noticia dice: "${noticias.substring(0, 50)}...". Podés ver el texto completo en el muro de inicio.`
+                : "No se publicaron comunicados nuevos recientemente.";
+        }
+        else if (texto.includes("resumen") || texto.includes("hola")) {
+            respuesta = `${hijoActivo.nombre} está en ${hijoActivo.cursoID}. Tiene ${faltas} faltas y hay información actualizada en su boletín e informes.`;
         }
         else {
-            respuesta = "No estoy seguro de eso, pero puedo decirte sobre sus **notas**, **faltas** o darte un **resumen**.";
+            respuesta = "No estoy seguro, pero puedo informarte sobre: **notas**, **faltas**, **calendario** o las últimas **noticias**.";
         }
 
         setTimeout(() => {
@@ -246,23 +256,26 @@
         }, 400);
     }
 
-    // 4. FUNCIONES FIREBASE (Normales)
+    // 4. FUNCIONES FIREBASE ACTUALIZADAS
     function cargarAcademico(alumnoID) {
         db.collection('calificaciones').where('alumnoID', '==', alumnoID).onSnapshot(snap => {
             const tabla = document.getElementById('tabla-notas');
             if(snap.empty) {
                 document.getElementById('b-asist').innerText = "0";
                 document.getElementById('b-inasist').innerText = "0";
-                tabla.innerHTML = "<p class='text-xs text-center text-slate-400'>Sin datos.</p>";
+                tabla.innerHTML = "<p class='text-xs text-center text-slate-400 font-medium py-4'>Sin datos.</p>";
                 return;
             }
             const d = snap.docs[0].data();
-            document.getElementById('b-asist').innerText = d.asistencias || 0;
-            document.getElementById('b-inasist').innerText = d.inasistencias || 0;
+            // CORRECCIÓN INASISTENCIAS
+            document.getElementById('b-asist').innerText = d.asistencias || "0";
+            document.getElementById('b-inasist').innerText = d.inasistencias || "0";
+            
             let html = "";
             if(d.notas) {
                 Object.entries(d.notas).forEach(([m, n]) => {
-                    html += `<div class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    html += `
+                    <div class="flex justify-between items-center p-3 bg-white rounded-2xl border border-slate-100 shadow-sm">
                         <span class="text-xs font-bold text-slate-600 capitalize">${m}</span>
                         <span class="font-black ${n >= 6 ? 'text-blue-600' : 'text-red-500'}">${n}</span>
                     </div>`;
@@ -293,6 +306,7 @@
         });
     }
 
+    // CHAT PRO: Con hora y mejor diseño
     function escucharChat() {
         if(unsubChat) unsubChat();
         const email = localStorage.getItem('familiaEmail');
@@ -302,9 +316,16 @@
             msgs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
             msgs.forEach(m => {
                 const soy = m.emisorID === email;
+                const hora = m.fecha ? new Date(m.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
                 const div = document.createElement('div');
-                div.className = `max-w-[85%] p-3 rounded-2xl text-[11px] ${soy ? 'bg-pink-500 text-white self-end rounded-tr-none' : 'bg-slate-100 text-slate-700 self-start rounded-tl-none'}`;
-                div.innerText = m.texto; box.appendChild(div);
+                div.className = `flex flex-col mb-2 ${soy ? 'items-end' : 'items-start'}`;
+                div.innerHTML = `
+                    <div class="max-w-[85%] p-3 rounded-2xl text-[12px] shadow-sm ${soy ? 'bg-pink-500 text-white rounded-tr-none' : 'bg-slate-100 text-slate-700 rounded-tl-none'}">
+                        ${m.texto}
+                    </div>
+                    <span class="text-[8px] text-slate-400 mt-1 px-1">${hora}</span>
+                `;
+                box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         });
