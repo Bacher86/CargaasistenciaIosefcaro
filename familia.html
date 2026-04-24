@@ -13,55 +13,85 @@
         body { font-family: 'Inter', sans-serif; }
         .post-card { transition: transform 0.2s; }
         .post-card:active { transform: scale(0.98); }
+        .login-gradient { background: radial-gradient(circle at top right, #fdf2f8, #ffffff); }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
 
-    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
-        <div class="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center text-white">
-                    <i class="fa-solid fa-graduation-cap text-xs"></i>
+    <div id="loginScreen" class="fixed inset-0 z-[100] bg-white login-gradient flex flex-col items-center justify-center px-6 transition-opacity duration-500">
+        <div class="w-full max-w-sm text-center">
+            <div class="w-20 h-20 bg-pink-500 rounded-[2rem] shadow-xl shadow-pink-200 flex items-center justify-center text-white text-3xl mx-auto mb-8 rotate-3">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h1 class="text-4xl font-black text-slate-800 tracking-tighter mb-3">Hola de nuevo</h1>
+            <p class="text-slate-400 text-sm mb-10 font-medium">Ingresá el correo que registraste en la escuela para ver las novedades.</p>
+            
+            <div class="space-y-4">
+                <div class="text-left">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-4 mb-2 block tracking-widest">Email de Familia</label>
+                    <input type="email" id="emailAcceso" placeholder="mama-papa@correo.com" 
+                        class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-slate-700 outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 transition-all font-medium shadow-sm">
                 </div>
-                <h1 class="font-black text-slate-800 tracking-tight">COMUNIDAD <span class="text-pink-500 text-xs">Escuela</span></h1>
+                <button onclick="validarAcceso()" id="btnLogin" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-3">
+                    Ingresar al Panel <i class="fa-solid fa-arrow-right text-xs text-pink-400"></i>
+                </button>
             </div>
-            <button onclick="cerrarSesion()" class="text-slate-400 hover:text-red-500 transition-colors">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </button>
+            <p class="mt-12 text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em]">Gestión Institucional 2026</p>
         </div>
-    </header>
+    </div>
 
-    <main class="max-w-md mx-auto px-4 py-6 pb-24">
-        
-        <div id="perfilAlumno" class="mb-8 p-4 bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl text-white shadow-xl shadow-slate-200 hidden">
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Familia de:</p>
-            <h2 id="nombreHijo" class="text-xl font-bold">Cargando...</h2>
-            <div class="flex gap-2 mt-3">
-                <span id="cursoHijo" class="bg-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold border border-white/20 uppercase tracking-tighter">Curso</span>
-                <span class="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-[10px] font-bold border border-blue-500/20">AÑO 2026</span>
+    <div id="mainPanel" class="hidden">
+        <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
+            <div class="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center text-white shadow-lg shadow-pink-200">
+                        <i class="fa-solid fa-graduation-cap text-xs"></i>
+                    </div>
+                    <h1 class="font-black text-slate-800 tracking-tight">COMUNIDAD <span class="text-pink-500 text-xs italic">Escuela</span></h1>
+                </div>
+                <button onclick="cerrarSesion()" class="w-10 h-10 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
             </div>
-        </div>
+        </header>
 
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-black text-slate-800 text-sm uppercase tracking-tighter">Novedades Recientes</h3>
-            <div class="h-[1px] flex-1 bg-slate-200 ml-4"></div>
-        </div>
-
-        <div id="feedFamilias" class="space-y-6">
-            <div class="animate-pulse space-y-4">
-                <div class="h-48 bg-slate-200 rounded-3xl"></div>
-                <div class="h-6 bg-slate-200 rounded-full w-2/3"></div>
+        <main class="max-w-md mx-auto px-4 py-6 pb-24">
+            
+            <div id="perfilAlumno" class="mb-8 p-6 bg-gradient-to-br from-slate-800 via-slate-900 to-black rounded-[2.5rem] text-white shadow-2xl shadow-slate-300 relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-4">
+                        <p class="text-[10px] font-black text-pink-400 uppercase tracking-[0.2em]">Credencial Familia</p>
+                        <i class="fa-solid fa-wifi text-[10px] text-green-400 animate-pulse"></i>
+                    </div>
+                    <h2 id="nombreHijo" class="text-2xl font-bold tracking-tight mb-4 leading-none">...</h2>
+                    <div class="flex gap-2">
+                        <span id="cursoHijo" class="bg-white/10 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-[10px] font-black border border-white/20 uppercase">...</span>
+                        <span class="bg-white/10 text-slate-300 px-3 py-1.5 rounded-xl text-[10px] font-black border border-white/5 uppercase">Periodo 2026</span>
+                    </div>
+                </div>
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-pink-500/20 rounded-full blur-3xl"></div>
             </div>
-        </div>
 
-    </main>
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-black text-slate-800 text-sm uppercase tracking-tighter">Muro de Noticias</h3>
+                <div class="h-[1px] flex-1 bg-slate-200 ml-4"></div>
+            </div>
 
-    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-xl border border-slate-200 rounded-full shadow-2xl h-16 flex items-center justify-around px-6 z-50">
-        <button class="text-pink-500"><i class="fa-solid fa-house text-lg"></i></button>
-        <button class="text-slate-400 hover:text-blue-500"><i class="fa-solid fa-calendar-check text-lg"></i></button>
-        <button class="text-slate-400 hover:text-blue-500"><i class="fa-solid fa-file-invoice text-lg"></i></button>
-        <button class="text-slate-400 hover:text-blue-500"><i class="fa-solid fa-gear text-lg"></i></button>
-    </nav>
+            <div id="feedFamilias" class="space-y-6">
+                <div class="animate-pulse space-y-4">
+                    <div class="h-48 bg-slate-200 rounded-[2rem]"></div>
+                    <div class="h-6 bg-slate-200 rounded-full w-2/3"></div>
+                </div>
+            </div>
+        </main>
+
+        <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-xl border border-slate-200 rounded-full shadow-2xl h-16 flex items-center justify-around px-6 z-50">
+            <button class="text-pink-500 bg-pink-50 w-10 h-10 rounded-full flex items-center justify-center"><i class="fa-solid fa-house"></i></button>
+            <button class="text-slate-400"><i class="fa-solid fa-calendar-check text-lg"></i></button>
+            <button class="text-slate-400"><i class="fa-solid fa-file-invoice text-lg"></i></button>
+            <button class="text-slate-400"><i class="fa-solid fa-gear text-lg"></i></button>
+        </nav>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -75,31 +105,48 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 1. Simulación de Sesión (Luego lo haremos con Auth real)
-        // Por ahora, busca el email que cargaste en el Admin
-        const userEmail = prompt("Ingresá tu email registrado:");
-
-        async function cargarDatosFamilia() {
-            const userDoc = await db.collection('usuarios').doc(userEmail).get();
+        // 1. GESTIÓN DE ACCESO
+        async function validarAcceso() {
+            const email = document.getElementById('emailAcceso').value.trim().toLowerCase();
+            const btn = document.getElementById('btnLogin');
             
-            if (!userDoc.exists) {
-                alert("Email no encontrado");
-                return;
+            if(!email) return alert("Por favor, ingresá un correo.");
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
+            btn.disabled = true;
+
+            try {
+                const userDoc = await db.collection('usuarios').doc(email).get();
+                
+                if (userDoc.exists && userDoc.data().rol === 'familia') {
+                    localStorage.setItem('familiaEmail', email);
+                    mostrarPanel(userDoc.data());
+                } else {
+                    alert("Acceso denegado. Este email no figura como familia autorizada.");
+                    btn.innerHTML = 'Ingresar al Panel <i class="fa-solid fa-arrow-right text-xs text-pink-400"></i>';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert("Error de conexión con la base de datos.");
+                btn.disabled = false;
             }
-
-            const userData = userDoc.data();
-            const hijoDoc = await db.collection('alumnos').doc(userData.hijoID).get();
-            const hijoData = hijoDoc.data();
-
-            document.getElementById('perfilAlumno').classList.remove('hidden');
-            document.getElementById('nombreHijo').innerText = hijoData.nombre;
-            document.getElementById('cursoHijo').innerText = hijoData.cursoID;
-
-            cargarFeed(hijoData.cursoID);
         }
 
+        async function mostrarPanel(userData) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainPanel').classList.remove('hidden');
+
+            const hijoDoc = await db.collection('alumnos').doc(userData.hijoID).get();
+            if (hijoDoc.exists) {
+                const hijoData = hijoDoc.data();
+                document.getElementById('nombreHijo').innerText = hijoData.nombre;
+                document.getElementById('cursoHijo').innerText = hijoData.cursoID;
+                cargarFeed(hijoData.cursoID);
+            }
+        }
+
+        // 2. CARGA DE CONTENIDO
         async function cargarFeed(cursoID) {
-            // Filtramos por fecha (que ya sea la hora de publicar) y por alcance
             const ahora = new Date().toISOString();
 
             db.collection('comunicados')
@@ -111,59 +158,64 @@
 
                     snap.forEach(doc => {
                         const post = doc.data();
-                        
-                        // Solo mostramos si es para TODOS o para el curso específico del hijo
                         if(post.tag === "TODOS" || post.tag === cursoID) {
                             html += `
-                                <article class="post-card bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                                    ${post.img ? `<img src="${post.img}" class="w-full h-56 object-cover">` : ''}
-                                    <div class="p-5">
+                                <article class="post-card bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
+                                    ${post.img ? `<img src="${post.img}" class="w-full h-64 object-cover">` : ''}
+                                    <div class="p-6">
                                         <div class="flex items-center gap-2 mb-3">
-                                            <span class="text-[9px] font-black bg-pink-100 text-pink-600 px-2 py-0.5 rounded uppercase tracking-widest">${post.tag}</span>
-                                            <span class="text-[10px] text-slate-400 font-bold">${new Date(post.fechaPublicacion).toLocaleDateString()}</span>
+                                            <span class="text-[9px] font-black bg-pink-50 text-pink-500 px-2.5 py-1 rounded-lg uppercase tracking-widest">${post.tag}</span>
+                                            <span class="text-[10px] text-slate-300 font-bold">${new Date(post.fechaPublicacion).toLocaleDateString('es-AR')}</span>
                                         </div>
-                                        <h4 class="text-lg font-bold text-slate-800 leading-tight mb-2">${post.titulo}</h4>
-                                        <p class="text-sm text-slate-600 leading-relaxed mb-4">${post.texto}</p>
+                                        <h4 class="text-xl font-bold text-slate-800 leading-tight mb-3">${post.titulo}</h4>
+                                        <p class="text-sm text-slate-500 leading-relaxed mb-6">${post.texto}</p>
                                         
                                         ${post.doc ? `
-                                            <a href="${post.doc}" target="_blank" class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group hover:bg-orange-50 transition-colors">
-                                                <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
-                                                    <i class="fa-solid fa-file-pdf"></i>
+                                            <a href="${post.doc}" target="_blank" class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-pink-50 transition-colors group">
+                                                <div class="w-12 h-12 bg-white text-pink-500 rounded-xl flex items-center justify-center shadow-sm group-hover:bg-pink-500 group-hover:text-white transition-all">
+                                                    <i class="fa-solid fa-file-pdf text-lg"></i>
                                                 </div>
                                                 <div class="flex-1">
-                                                    <p class="text-xs font-bold text-slate-700">Documento Adjunto</p>
-                                                    <p class="text-[10px] text-slate-400">Toca para descargar o ver</p>
+                                                    <p class="text-xs font-bold text-slate-700 uppercase tracking-tighter">Descargar Adjunto</p>
+                                                    <p class="text-[10px] text-slate-400">Documento oficial PDF</p>
                                                 </div>
                                             </a>
                                         ` : ''}
                                     </div>
-                                    <div class="px-5 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
+                                    <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
                                         <button onclick="darLike('${doc.id}')" class="text-slate-400 text-xs font-bold flex items-center gap-2 hover:text-pink-500 transition-colors">
-                                            <i class="fa-regular fa-heart"></i> ${post.likes || 0} Familias
+                                            <i class="fa-regular fa-heart"></i> ${post.likes || 0}
                                         </button>
-                                        <i class="fa-solid fa-share-nodes text-slate-300 cursor-pointer"></i>
+                                        <button class="text-slate-300"><i class="fa-solid fa-share-nodes"></i></button>
                                     </div>
                                 </article>
                             `;
                         }
                     });
-                    
-                    feed.innerHTML = html || '<p class="text-center text-slate-400 text-sm py-10 italic">No hay comunicados para tu curso hoy.</p>';
+                    feed.innerHTML = html || '<div class="text-center py-20"><i class="fa-solid fa- Inbox text-3xl text-slate-200 mb-4 block"></i><p class="text-slate-400 text-sm italic">No hay novedades para hoy.</p></div>';
                 });
         }
 
         async function darLike(id) {
             const postRef = db.collection('comunicados').doc(id);
-            await postRef.update({
-                likes: firebase.firestore.FieldValue.increment(1)
-            });
+            await postRef.update({ likes: firebase.firestore.FieldValue.increment(1) });
         }
 
         function cerrarSesion() {
-            if(confirm("¿Querés salir?")) location.reload();
+            if(confirm("¿Querés cerrar la sesión de familia?")) {
+                localStorage.removeItem('familiaEmail');
+                location.reload();
+            }
         }
 
-        cargarDatosFamilia();
+        // AUTO-LOGIN AL CARGAR
+        window.onload = async () => {
+            const savedEmail = localStorage.getItem('familiaEmail');
+            if(savedEmail) {
+                const userDoc = await db.collection('usuarios').doc(savedEmail).get();
+                if(userDoc.exists) mostrarPanel(userDoc.data());
+            }
+        }
     </script>
 </body>
 </html>
