@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comunidad Familia v2.0 - Pro</title>
+    <title>Comunidad Familia v2.0 - Iosef Caro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
@@ -32,13 +32,13 @@
     </div>
 
     <div id="loginScreen" class="fixed inset-0 z-[110] bg-white flex flex-col items-center justify-center px-8">
-        <div class="w-full max-w-sm">
+        <div class="w-full max-w-sm text-center">
             <div class="w-24 h-24 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-[2.5rem] shadow-2xl flex items-center justify-center text-white text-4xl mb-10 rotate-6 mx-auto">
                 <i class="fa-solid fa-shield-heart"></i>
             </div>
             <h1 class="text-4xl font-black text-slate-900 mb-2 tracking-tight">Hola de nuevo.</h1>
             <p class="text-slate-400 font-medium mb-10 text-sm">Ingresá para ver el progreso de tus hijos.</p>
-            <div class="space-y-4">
+            <div class="space-y-4 text-left">
                 <div class="relative">
                     <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
                     <input type="email" id="emailAcceso" placeholder="correo@ejemplo.com" class="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl p-5 pl-12 outline-none focus:border-pink-500 transition-all font-semibold">
@@ -81,11 +81,6 @@
                 <div id="feedFamilias" class="space-y-6"></div>
             </div>
 
-            <div id="section-calendar" class="view-section hidden">
-                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Próximos Eventos</h3>
-                <div id="calendarFeed" class="space-y-4"></div>
-            </div>
-
             <div id="section-boletin" class="view-section hidden">
                 <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Rendimiento</h3>
                 <div class="grid grid-cols-2 gap-4 mb-8">
@@ -101,30 +96,19 @@
                 <div id="tabla-notas" class="space-y-3"></div>
             </div>
 
-            <div id="section-chat" class="view-section hidden flex flex-col h-[60vh]">
-                <div class="mb-4">
-                    <div class="relative mb-4">
-                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
-                        <input type="text" id="chatSearch" placeholder="Buscar oficina o docente..." class="w-full bg-white border border-slate-100 rounded-2xl p-3 pl-10 text-xs outline-none focus:ring-2 focus:ring-pink-500 transition-all">
-                    </div>
-                    <div id="contactList" class="flex gap-3 overflow-x-auto ios-scroll pb-2">
-                        </div>
-                </div>
-                <div id="chatBox" class="flex-1 bg-white border border-slate-100 rounded-[2.5rem] p-6 overflow-y-auto mb-4 flex flex-col gap-4 shadow-inner">
-                    <div class="text-center text-slate-300 text-[10px] py-10 font-bold uppercase tracking-widest">Seleccioná un contacto para hablar</div>
-                </div>
-                <div class="flex gap-2 items-center bg-white p-2 rounded-full border shadow-xl pr-2">
-                    <input type="text" id="msgInput" placeholder="Escribí un mensaje..." class="flex-1 p-3 pl-5 outline-none text-sm font-medium">
-                    <button onclick="enviarMensaje()" class="bg-pink-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"><i class="fa-solid fa-paper-plane"></i></button>
+            <div id="section-chat" class="view-section hidden">
+                <h3 class="font-black text-2xl text-slate-800 tracking-tighter mb-6">Mensajes</h3>
+                <div id="contactList" class="flex gap-4 overflow-x-auto ios-scroll mb-8 pb-2"></div>
+                <div id="chatBox" class="bg-white border border-slate-100 rounded-[2.5rem] h-80 p-6 overflow-y-auto mb-4 flex flex-col gap-4 shadow-inner">
+                    <div class="text-center text-slate-300 text-[10px] py-10 font-bold uppercase tracking-widest">Seleccioná un contacto</div>
                 </div>
             </div>
         </main>
 
         <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm glass rounded-[2.5rem] shadow-2xl h-20 flex items-center justify-around px-4 z-50 border-t border-white/50">
-            <button onclick="switchTab('home')" class="nav-btn nav-active text-slate-400 transition-all" id="btn-home"><i class="fa-solid fa-house text-xl"></i></button>
-            <button onclick="switchTab('calendar')" class="nav-btn text-slate-400 transition-all" id="btn-calendar"><i class="fa-solid fa-calendar text-xl"></i></button>
-            <button onclick="switchTab('boletin')" class="nav-btn text-slate-400 transition-all" id="btn-boletin"><i class="fa-solid fa-chart-line text-xl"></i></button>
-            <button onclick="switchTab('chat')" class="nav-btn text-slate-400 transition-all" id="btn-chat"><i class="fa-solid fa-comment-dots text-xl"></i></button>
+            <button onclick="switchTab('home')" class="nav-btn nav-active text-slate-400" id="btn-home"><i class="fa-solid fa-house text-xl"></i></button>
+            <button onclick="switchTab('boletin')" class="nav-btn text-slate-400" id="btn-boletin"><i class="fa-solid fa-chart-line text-xl"></i></button>
+            <button onclick="switchTab('chat')" class="nav-btn text-slate-400" id="btn-chat"><i class="fa-solid fa-comment-dots text-xl"></i></button>
         </nav>
 
         <div id="btn-iosi" onclick="toggleIosi()" class="fixed bottom-32 right-8 w-14 h-14 bg-slate-900 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[100] active:scale-90 transition-all border-4 border-white rotate-3">
@@ -136,39 +120,22 @@
                 <div class="bg-gradient-to-r from-slate-900 to-indigo-900 p-6 text-white flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 bg-yellow-400 rounded-xl flex items-center justify-center text-slate-900 shadow-lg"><i class="fa-solid fa-bolt"></i></div>
-                        <div>
-                            <p class="font-black text-sm uppercase tracking-tight">Iosi AI v4.0</p>
-                            <p class="text-[9px] opacity-60 font-bold">Analista de datos escolar</p>
-                        </div>
+                        <div><p class="font-black text-sm uppercase tracking-tight">Iosi AI v4.0</p></div>
                     </div>
                     <button onclick="toggleIosi()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div id="iosiContent" class="h-80 overflow-y-auto p-6 space-y-4 bg-slate-50 ios-scroll">
-                    <div class="flex justify-start"><div class="bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none text-xs font-medium text-slate-600 shadow-sm">Hola Uriel. Estoy listo para darte el resumen de hoy. Probá con "notas", "faltas" o "mañana".</div></div>
+                    <div class="flex justify-start"><div class="bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none text-xs font-medium text-slate-600 shadow-sm">Hola. Soy Iosi. Preguntame por "notas" o "faltas".</div></div>
                 </div>
                 <div class="p-4 bg-white border-t flex gap-2">
                     <input type="text" id="preguntaIosi" placeholder="Preguntame algo..." class="flex-1 bg-slate-100 rounded-2xl px-5 py-3 text-sm outline-none font-medium">
-                    <button onclick="analisisRapidoIosi()" class="bg-indigo-600 text-white px-5 rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-all"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-        </div>
-
-        <div id="newsModal" class="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-6">
-            <div class="bg-white w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl relative">
-                <button onclick="cerrarNoticia()" class="absolute top-4 right-4 w-10 h-10 bg-black/10 rounded-full flex items-center justify-center text-white z-10"><i class="fa-solid fa-xmark"></i></button>
-                <div id="newsModalImg" class="h-48 bg-slate-200 bg-cover bg-center"></div>
-                <div class="p-8">
-                    <span id="newsModalTag" class="text-[10px] font-black bg-pink-50 text-pink-600 px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">DOCENCIA</span>
-                    <h2 id="newsModalTitle" class="text-2xl font-black text-slate-900 mb-4 leading-tight">...</h2>
-                    <p id="newsModalText" class="text-slate-500 text-sm leading-relaxed mb-6">...</p>
-                    <button onclick="cerrarNoticia()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl">Entendido</button>
+                    <button onclick="analisisRapidoIosi()" class="bg-indigo-600 text-white px-5 rounded-2xl active:scale-95 transition-all"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
 <script>
-    // 1. CONFIGURACIÓN
     const firebaseConfig = {
         apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
         authDomain: "app-academica-interna.firebaseapp.com",
@@ -181,14 +148,14 @@
     const db = firebase.firestore();
 
     let hijoActivo = null;
-    let receptorActivo = null;
     let noticiasGlobal = [];
 
-    // 2. SISTEMA DE ACCESO
+    // --- ACCESO Y CONFIGURACIÓN ---
     async function validarAcceso() {
         const email = document.getElementById('emailAcceso').value.trim().toLowerCase();
         if(!email) return;
         document.getElementById('loadingOverlay').classList.remove('hidden');
+        
         const doc = await db.collection('usuarios').doc(email).get();
         if(doc.exists && doc.data().rol === 'familia') {
             localStorage.setItem('familiaEmail', email);
@@ -223,11 +190,89 @@
         const doc = await db.collection('alumnos').doc(id).get();
         hijoActivo = { id: doc.id, ...doc.data() };
         escucharFeed(hijoActivo.cursoID);
-        escucharCalendario(hijoActivo.cursoID);
         vincularBoletin(hijoActivo.id);
     }
 
-    // 3. NOTICIAS PRO (LEÍDO/NO LEÍDO + MODAL)
+    // --- RENDIMIENTO (BOLETÍN) ---
+    function vincularBoletin(id) {
+        db.collection('calificaciones').doc(id).onSnapshot(doc => {
+            if(doc.exists) {
+                const d = doc.data();
+                document.getElementById('b-inasist').innerText = d.inasistencias || 0;
+                const asistenciaPerc = Math.max(0, 100 - ((d.inasistencias || 0) * 100 / 180)).toFixed(1);
+                document.getElementById('b-asist').innerText = asistenciaPerc + "%";
+                
+                const tabla = document.getElementById('tabla-notas');
+                tabla.innerHTML = "";
+                const notas = d.notas || {};
+                Object.keys(notas).forEach(m => {
+                    tabla.innerHTML += `
+                        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <span class="font-bold text-slate-600 text-xs uppercase">${m}</span>
+                            <span class="font-black text-indigo-600 text-lg">${notas[m]}</span>
+                        </div>`;
+                });
+            }
+        });
+    }
+
+    // --- CEREBRO INTELIGENTE DE IOSI ---
+    async function obtenerRespuestaIosi(mensaje) {
+        const p = mensaje.toLowerCase();
+        if (!hijoActivo) return "No tengo datos del alumno.";
+
+        const docRef = await db.collection('calificaciones').doc(hijoActivo.id).get();
+        const data = docRef.exists ? docRef.data() : {};
+        const notas = data.notas || {};
+
+        if (p.includes("nota") || p.includes("sacó") || p.includes("calificación")) {
+            const materias = Object.keys(notas);
+            let materiaFound = materias.find(m => p.includes(m.toLowerCase()));
+            if (materiaFound) return `En **${materiaFound}** tiene un **${notas[materiaFound]}**.`;
+            return "Decime de qué materia querés saber la nota.";
+        }
+
+        if (p.includes("falta") || p.includes("inasistencia") || p.includes("tarde")) {
+            if (p.includes("cuándo") || p.includes("qué día")) {
+                const snap = await db.collection('asistencias').where('alumnoID', '==', hijoActivo.id).where('estado', 'in', ['A', 'T']).orderBy('fecha', 'desc').limit(3).get();
+                if (snap.empty) return "No tiene faltas registradas.";
+                let list = "Últimos registros:";
+                snap.forEach(d => list += `\n• ${d.data().fecha} (${d.data().estado})`);
+                return list;
+            }
+            return `Tiene un total de **${data.inasistencias || 0}** faltas.`;
+        }
+
+        return "Podés preguntarme '¿Qué nota tiene en Matemática?' o '¿Cuántas faltas lleva?'.";
+    }
+
+    async function analisisRapidoIosi() {
+        const input = document.getElementById('preguntaIosi');
+        const box = document.getElementById('iosiContent');
+        const txt = input.value.trim();
+        if(!txt) return;
+
+        box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-xl rounded-tr-none text-xs shadow-md">${txt}</div></div>`;
+        input.value = "";
+        box.scrollTop = box.scrollHeight;
+
+        const respuesta = await obtenerRespuestaIosi(txt);
+        setTimeout(() => {
+            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border p-3 rounded-xl rounded-tl-none text-xs text-slate-600 shadow-sm">${respuesta}</div></div>`;
+            box.scrollTop = box.scrollHeight;
+        }, 600);
+    }
+
+    // --- NAVEGACIÓN Y OTROS ---
+    function switchTab(id) {
+        document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+        document.getElementById('section-' + id).classList.remove('hidden');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
+        document.getElementById('btn-' + id).classList.add('nav-active');
+    }
+
+    function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
+
     function escucharFeed(curso) {
         db.collection('comunicados').onSnapshot(snap => {
             noticiasGlobal = [];
@@ -241,240 +286,21 @@
 
     function renderizarNoticias(filtro) {
         const container = document.getElementById('feedFamilias');
-        const leidas = JSON.parse(localStorage.getItem('leidas') || '[]');
-        container.innerHTML = "";
-        
-        let filtradas = noticiasGlobal;
-        if(filtro === 'nuevas') filtradas = noticiasGlobal.filter(n => !leidas.includes(n.id));
-
-        filtradas.forEach(n => {
-            const esNueva = !leidas.includes(n.id);
-            container.innerHTML += `
-                <div onclick="abrirNoticia('${n.id}')" class="card-news bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden cursor-pointer">
-                    ${esNueva ? '<div class="absolute top-6 right-6 w-2 h-2 bg-pink-500 rounded-full animate-ping"></div>' : ''}
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-3 py-1 rounded-lg uppercase tracking-tighter">${n.tag}</span>
-                        <span class="text-[9px] font-bold text-slate-300">HACE UN MOMENTO</span>
-                    </div>
-                    <h4 class="font-black text-slate-800 text-lg leading-tight mb-2">${n.titulo}</h4>
-                    <p class="text-xs text-slate-400 line-clamp-2">${n.texto}</p>
-                </div>`;
-        });
+        container.innerHTML = noticiasGlobal.map(n => `
+            <div class="card-news bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm mb-4">
+                <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-3 py-1 rounded-lg uppercase mb-2 inline-block">${n.tag}</span>
+                <h4 class="font-black text-slate-800 text-lg leading-tight mb-2">${n.titulo}</h4>
+                <p class="text-xs text-slate-400">${n.texto}</p>
+            </div>`).join('');
     }
 
-    function filtrarNoticias(modo) {
-        document.querySelectorAll('[id^="filter-"]').forEach(b => b.className = "px-3 py-1 rounded-lg text-slate-500");
-        document.getElementById('filter-'+modo).className = "px-3 py-1 bg-white rounded-lg shadow-sm text-slate-900";
-        renderizarNoticias(modo);
-    }
-
-    function abrirNoticia(id) {
-        const n = noticiasGlobal.find(x => x.id === id);
-        const leidas = JSON.parse(localStorage.getItem('leidas') || '[]');
-        if(!leidas.includes(id)) {
-            leidas.push(id);
-            localStorage.setItem('leidas', JSON.stringify(leidas));
-        }
-        
-        document.getElementById('newsModalTitle').innerText = n.titulo;
-        document.getElementById('newsModalText').innerText = n.texto;
-        document.getElementById('newsModalTag').innerText = n.tag;
-        document.getElementById('newsModalImg').style.backgroundImage = `url(${n.imagen || 'https://images.unsplash.com/photo-1546410531-bb4caa1b424d?auto=format&fit=crop&q=80&w=400'})`;
-        document.getElementById('newsModal').classList.remove('hidden');
-        renderizarNoticias('todas');
-    }
-
-    function cerrarNoticia() { document.getElementById('newsModal').classList.add('hidden'); }
-
-    // 4. CHAT MULTI-CONTACTO
     function cargarContactos() {
-        const contactos = [
-            {id: 'secretaria', nombre: 'Secretaría Primaria', icon: 'fa-building-user', color: 'bg-blue-500'},
-            {id: 'administracion', nombre: 'Administración / Cuotas', icon: 'fa-file-invoice-dollar', color: 'bg-emerald-500'},
-            {id: 'directivo', nombre: 'Dirección Nivel', icon: 'fa-user-tie', color: 'bg-indigo-500'}
-        ];
         const list = document.getElementById('contactList');
-        list.innerHTML = "";
-        contactos.forEach(c => {
-            list.innerHTML += `
-                <div onclick="seleccionarChat('${c.id}', '${c.nombre}')" class="flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer group">
-                    <div class="w-16 h-16 ${c.color} text-white rounded-3xl flex items-center justify-center text-xl shadow-lg transition-transform group-active:scale-90">
-                        <i class="fa-solid ${c.icon}"></i>
-                    </div>
-                    <span class="text-[9px] font-black text-slate-400 uppercase text-center w-20 leading-none">${c.nombre}</span>
-                </div>`;
-        });
-    }
-
-    function seleccionarChat(id, nombre) {
-        receptorActivo = id;
-        document.getElementById('chatBox').innerHTML = `<div class="text-center text-slate-300 text-[10px] py-10 font-bold uppercase">Chateando con ${nombre}</div>`;
-        escucharChat();
-    }
-
-    function escucharChat() {
-        if(!receptorActivo) return;
-        const email = localStorage.getItem('familiaEmail');
-        db.collection('mensajes')
-          .where('participantes', 'array-contains', email)
-          .onSnapshot(snap => {
-            const box = document.getElementById('chatBox');
-            box.innerHTML = "";
-            let msgs = [];
-            snap.forEach(doc => {
-                const m = doc.data();
-                if(m.participantes.includes(receptorActivo)) msgs.push(m);
-            });
-            msgs.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-
-            msgs.forEach(m => {
-                const soy = m.emisorID === email;
-                box.innerHTML += `
-                    <div class="flex flex-col ${soy ? 'items-end' : 'items-start'}">
-                        <div class="px-4 py-3 rounded-2xl text-xs font-medium max-w-[80%] shadow-sm ${soy ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-slate-100 text-slate-700 rounded-tl-none'}">
-                            ${m.texto}
-                        </div>
-                        <span class="text-[8px] text-slate-300 mt-1 font-black px-1 uppercase">${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                    </div>`;
-            });
-            box.scrollTop = box.scrollHeight;
-        });
-    }
-
-    async function enviarMensaje() {
-        const input = document.getElementById('msgInput');
-        const email = localStorage.getItem('familiaEmail');
-        if(!input.value.trim() || !receptorActivo) return;
-        const txt = input.value; input.value = "";
-        await db.collection('mensajes').add({
-            emisorID: email, receptorID: receptorActivo, participantes: [email, receptorActivo],
-            texto: txt, fecha: new Date().toISOString()
-        });
-    }
-
-    // 5. IOSI CEREBRO 4.0
-    function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
-
-    // 5. IOSI CEREBRO 4.0 - ACTUALIZADO CON LECTURA DE AGENDA REAL
-function analisisRapidoIosi() {
-    const input = document.getElementById('preguntaIosi');
-    const box = document.getElementById('iosiContent');
-    const p = input.value.trim().toLowerCase();
-    if(!p) return;
-
-    // Render del mensaje del usuario
-    box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none text-xs font-bold shadow-md">${input.value}</div></div>`;
-    const textoUsuario = input.value;
-    input.value = "";
-
-    let r = "";
-    
-    // 1. EXTRAER INFO EN TIEMPO REAL DE LA UI
-    const faltas = document.getElementById('b-inasist').innerText || "0";
-    
-    // 2. EXTRAER EVENTOS DE LA AGENDA (TRUCO MAESTRO)
-    // Buscamos todos los títulos de eventos dentro del feed de calendario
-    const eventosUI = document.querySelectorAll('#calendarFeed p.text-slate-800');
-    let listaEventos = [];
-    eventosUI.forEach(el => listaEventos.push(el.innerText.trim()));
-
-    // 3. LÓGICA DE RESPUESTA CON CONTEXTO REAL
-    if(p.includes("agenda") || p.includes("calendario") || p.includes("mañana") || p.includes("evento")) {
-        if(listaEventos.length > 0) {
-            r = `En la agenda de **${hijoActivo.nombre}** veo lo siguiente: "${listaEventos.join(', ')}". ¿Te gustaría que te de más detalles de alguno?`;
-        } else {
-            r = `Estuve revisando la agenda y, por el momento, no hay eventos o exámenes programados para los próximos días. ¡Vienen tranquilos!`;
-        }
-    } 
-    else if(p.includes("notas") || p.includes("promedio") || p.includes("como va")) {
-        r = `Analizando el boletín... Las notas de **${hijoActivo.nombre}** están cargadas. Veo que el sistema está actualizado. Recordá que cualquier nota roja genera una notificación automática.`;
-    }
-    else if(p.includes("faltas") || p.includes("inasistencias")) {
-        const f = parseInt(faltas);
-        r = `Lleva **${f} faltas** hasta hoy. ${f > 15 ? 'Ojo, que ya pasaron la mitad del límite permitido.' : 'Viene con muy buena asistencia, ¡seguimos así!'}`;
-    }
-    else if(p.includes("hola") || p.includes("quien sos")) {
-        r = `¡Hola! Soy Iosi. Mi trabajo es leer todos los datos de la escuela para que vos no tengas que buscarlos. ¿Querés saber qué hay en la **agenda** o cómo viene con las **faltas**?`;
-    }
-    else {
-        r = "Entiendo. No tengo información específica sobre eso en mi base de datos actual, pero puedo resumirte la **agenda escolar**, decirte las **faltas** o mostrarte las **notas**.";
-    }
-
-    // Simulación de escritura y respuesta
-    setTimeout(() => {
-        box.innerHTML += `
-            <div class="flex justify-start animate-fade-in">
-                <div class="bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none text-xs font-medium text-slate-600 shadow-sm leading-relaxed">
-                    <div class="flex items-center gap-2 mb-2">
-                        <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
-                        <span class="text-[9px] font-black text-indigo-600 uppercase tracking-tighter">Iosi Analysis</span>
-                    </div>
-                    ${r}
-                </div>
-            </div>`;
-        box.scrollTop = box.scrollHeight;
-    }, 650);
-}
-    // 6. FUNCIONES DE APOYO
-    function vincularBoletin(id) {
-        db.collection('calificaciones').where('alumnoID', '==', id).onSnapshot(snap => {
-            if(snap.empty) return;
-            const d = snap.docs[0].data();
-            const f = parseInt(d.inasistencias || 0);
-            document.getElementById('b-inasist').innerText = f;
-            document.getElementById('b-asist').innerText = (100 - (f * 2)) + "%";
-
-            let html = "";
-            Object.entries(d.notas || {}).forEach(([m, n]) => {
-                html += `
-                <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-50 shadow-sm">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${m}</span>
-                    <span class="text-lg font-black ${n >= 6 ? 'text-indigo-600' : 'text-rose-500'}">${n}</span>
-                </div>`;
-            });
-            document.getElementById('tabla-notas').innerHTML = html;
-        });
-    }
-
-    function escucharCalendario(curso) {
-        db.collection('eventos').where('curso', 'in', ['TODOS', curso]).onSnapshot(snap => {
-            let html = "";
-            snap.forEach(doc => {
-                const e = doc.data();
-                const f = new Date(e.fecha + "T00:00:00");
-                html += `
-                <div class="flex items-center gap-4 bg-white p-4 rounded-[2rem] border border-slate-50 shadow-sm">
-                    <div class="bg-slate-900 text-white w-12 h-12 rounded-2xl flex flex-col items-center justify-center">
-                        <span class="text-xs font-black leading-none">${f.getDate()}</span>
-                        <span class="text-[7px] font-bold uppercase opacity-50">${f.toLocaleString('es',{month:'short'})}</span>
-                    </div>
-                    <div>
-                        <p class="text-xs font-black text-slate-800 uppercase tracking-tighter">${e.titulo}</p>
-                        <p class="text-[9px] text-pink-500 font-bold uppercase tracking-widest">${e.tipo || 'Evento'}</p>
-                    </div>
-                </div>`;
-            });
-            document.getElementById('calendarFeed').innerHTML = html || "<p class='text-center text-slate-300 text-xs py-10 font-bold'>No hay eventos próximos.</p>";
-        });
-    }
-
-    function switchTab(id) {
-        document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-        document.getElementById('section-' + id).classList.remove('hidden');
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
-        document.getElementById('btn-' + id).classList.add('nav-active');
+        const c = [{n: 'Secretaría', i: 'fa-building'}, {n: 'Administración', i: 'fa-file-invoice'}, {n: 'Directivo', i: 'fa-user-tie'}];
+        list.innerHTML = c.map(x => `<div class="flex-shrink-0 flex flex-col items-center gap-2"><div class="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shadow-sm"><i class="fa-solid ${x.i}"></i></div><span class="text-[9px] font-bold text-slate-400 uppercase">${x.n}</span></div>`).join('');
     }
 
     function cerrarSesion() { localStorage.clear(); location.reload(); }
-
-    window.onload = () => {
-        const saved = localStorage.getItem('familiaEmail');
-        if(saved) {
-            db.collection('usuarios').doc(saved).get().then(doc => { if(doc.exists) iniciarApp(doc.data()); });
-        } else {
-            document.getElementById('loadingOverlay').classList.add('hidden');
-        }
-    }
 </script>
 </body>
 </html>
