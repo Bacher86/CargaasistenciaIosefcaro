@@ -303,15 +303,20 @@
             }
         }
 
-        // DASHBOARD
+      // DASHBOARD ACTUALIZADO
         async function actualizarDashboard() {
+            const emailDocente = auth.currentUser.email;
+
+            // 1. Contador de Alumnos (Solo los de sus cursos)
             const snapAlumnos = await db.collection('alumnos').get();
             const misAlumnos = snapAlumnos.docs.filter(d => cursosPermitidosDocente.includes(d.data().cursoID));
             document.getElementById('countAlumnos').innerText = misAlumnos.length;
 
-            const snapInf = await db.collection('informes').get();
+            // 2. Contador de Informes (FILTRADO: Solo los creados por este docente)
+            const snapInf = await db.collection('informes').where('autor', '==', emailDocente).get();
             document.getElementById('countInformes').innerText = snapInf.size;
 
+            // 3. Estado de Asistencia de Hoy
             const hoy = new Date().toISOString().split('T')[0];
             const snapHoy = await db.collection('asistencias').where('fecha', '==', hoy).get();
             const ya = snapHoy.docs.some(doc => cursosPermitidosDocente.includes(doc.data().cursoID));
@@ -319,11 +324,34 @@
             status.innerText = ya ? "Completada ✅" : "Pendiente ⏳";
             status.className = ya ? "text-xl font-bold text-green-600" : "text-xl font-bold text-orange-600";
 
+            // 4. Mis Cursos (Ahora son BOTONES INTERACTIVOS)
             const listaCursosHTML = document.getElementById('listaMisCursos');
             let badges = "";
             const docs = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
-            docs.forEach(doc => { if(doc.exists) badges += `<span class="bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl border border-blue-100 text-sm font-bold shadow-sm">${doc.data().nombre}</span>`; });
-            listaCursosHTML.innerHTML = badges || '<p class="text-slate-400">Sin cursos</p>';
+            
+            docs.forEach(doc => { 
+                if(doc.exists) {
+                    badges += `
+                        <button onclick="irAAsistencia('${doc.id}')" 
+                            class="bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl border border-blue-100 text-sm font-bold shadow-sm hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-200 transition-all active:scale-95">
+                            <i class="fa-solid fa-arrow-right-to-bracket mr-2 opacity-50"></i>${doc.data().nombre}
+                        </button>`;
+                }
+            });
+            listaCursosHTML.innerHTML = badges || '<p class="text-slate-400">Sin cursos asignados</p>';
+        }
+
+        // FUNCIÓN DE SALTO A ASISTENCIA
+        function irAAsistencia(cursoID) {
+            // 1. Cambiamos visualmente a la sección de asistencia
+            showSection('asistencia');
+            
+            // 2. Seteamos el selector de curso
+            const select = document.getElementById('selectCurso');
+            select.value = cursoID;
+            
+            // 3. Disparamos la carga de alumnos de ese curso automáticamente
+            cargarListaAlumnos();
         }
 
         // INFORMES
@@ -465,6 +493,12 @@
             const e = auth.currentUser.email;
             if(confirm("¿Enviar link de restauración a tu email?")) { await auth.sendPasswordResetEmail(e); alert("Enviado. Revisa tu casilla."); }
         }
+        function irAAsistencia(cursoID) {
+    showSection('asistencia');
+    const select = document.getElementById('selectCurso');
+    select.value = cursoID;
+    cargarListaAlumnos(); // Dispara la carga automática de los alumnos
+}
     </script>
 </body>
 </html>
