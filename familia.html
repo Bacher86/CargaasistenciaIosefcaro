@@ -10,10 +10,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .nav-active { color: #ec4899; background: #fdf2f8; border-radius: 9999px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
         .view-section { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Estilos Iosi */
+        #window-iosi { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .iosi-bubble { max-width: 85%; padding: 10px 14px; border-radius: 1.2rem; font-size: 11px; line-height: 1.4; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -90,20 +94,6 @@
                     <div id="tabla-notas" class="space-y-2"></div>
                 </div>
 
-                <h3 class="font-black text-slate-800 text-xs uppercase tracking-widest mb-4">Asistente IA del Alumno</h3>
-                <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-5 mb-6 text-white shadow-lg">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i class="fa-solid fa-wand-magic-sparkles text-yellow-300"></i>
-                        <span class="text-[10px] font-black uppercase">Consulta IA</span>
-                    </div>
-                    <p class="text-[11px] opacity-90 mb-3">Preguntame sobre el desempeño o informes de tu hijo/a.</p>
-                    <div class="flex gap-2">
-                        <input type="text" id="preguntaIA" placeholder="¿Cómo va en lengua?" class="flex-1 bg-white/20 border border-white/30 rounded-xl px-3 py-2 text-xs outline-none placeholder:text-white/50">
-                        <button onclick="consultarIA()" class="bg-white text-indigo-600 px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition-all">Preguntar</button>
-                    </div>
-                    <div id="resumenIAContent" class="hidden mt-4 p-4 bg-white/10 rounded-2xl text-[11px] leading-relaxed border border-white/10"></div>
-                </div>
-
                 <h3 class="font-black text-slate-800 text-xs uppercase tracking-widest mb-4">Informes Pedagógicos</h3>
                 <div id="lista-informes" class="space-y-3"></div>
             </div>
@@ -123,6 +113,28 @@
             <button onclick="switchTab('boletin')" class="nav-btn text-slate-400" id="btn-boletin"><i class="fa-solid fa-paste"></i></button>
             <button onclick="switchTab('chat')" class="nav-btn text-slate-400" id="btn-chat"><i class="fa-solid fa-comment-dots"></i></button>
         </nav>
+
+        <div id="btn-iosi" onclick="toggleIosi()" class="fixed bottom-24 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-[100] active:scale-95 transition-all cursor-pointer border-2 border-white">
+            <i class="fa-solid fa-robot text-xl"></i>
+            <span class="absolute -top-10 right-0 bg-slate-800 text-white text-[10px] px-2 py-1 rounded-lg font-bold animate-bounce whitespace-nowrap">Hablá con Iosi</span>
+        </div>
+
+        <div id="window-iosi" class="fixed bottom-40 right-6 w-[85%] max-w-[320px] bg-white rounded-3xl shadow-2xl z-[100] border border-slate-200 hidden flex flex-col overflow-hidden">
+            <div class="bg-indigo-600 p-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-yellow-300"></i>
+                    <span class="font-bold text-sm">Iosi - Asistente IA</span>
+                </div>
+                <button onclick="toggleIosi()" class="text-white/70 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="iosiContent" class="h-64 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-50">
+                <div class="iosi-bubble bg-indigo-100 text-indigo-800 self-start rounded-tl-none">¡Hola! Soy Iosi. Preguntame lo que quieras sobre el desempeño de tu hijo/a.</div>
+            </div>
+            <div class="p-3 border-t bg-white flex gap-2">
+                <input type="text" id="preguntaIosi" placeholder="Escribí acá..." class="flex-1 bg-slate-100 border-none rounded-xl px-3 py-2 text-xs outline-none">
+                <button onclick="preguntarAIosi()" class="bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -147,7 +159,6 @@
         async function validarAcceso() {
             const email = document.getElementById('emailAcceso').value.trim().toLowerCase();
             if(!email) return alert("Ingresá tu email.");
-            
             try {
                 const doc = await db.collection('usuarios').doc(email).get();
                 if(doc.exists && doc.data().rol === 'familia') {
@@ -179,6 +190,13 @@
 
         async function seleccionarHijo(id) {
             document.getElementById('loadingOverlay').classList.remove('hidden');
+            
+            // Limpieza de datos previos
+            document.getElementById('feedFamilias').innerHTML = "";
+            document.getElementById('calendarFeed').innerHTML = "";
+            document.getElementById('tabla-notas').innerHTML = "";
+            document.getElementById('lista-informes').innerHTML = "";
+
             const hDoc = await db.collection('alumnos').doc(id).get();
             if(!hDoc.exists) return;
             
@@ -194,7 +212,7 @@
             document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
-        // 2. LISTENERS (Feed, Calendario, Notas)
+        // 2. LISTENERS
         function escucharFeed(curso) {
             if(unsubFeed) unsubFeed();
             unsubFeed = db.collection('comunicados').orderBy('fechaPublicacion', 'desc').onSnapshot(snap => {
@@ -203,8 +221,7 @@
                     const p = doc.data();
                     if(p.tag === "TODOS" || p.tag === curso) {
                         const liked = localStorage.getItem(`like_${doc.id}`);
-                        html += `
-                        <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm">
+                        html += `<div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm">
                             <span class="text-[8px] font-black bg-pink-100 text-pink-600 px-2 py-1 rounded-md uppercase">${p.tag}</span>
                             <h4 class="font-bold text-slate-800 my-2">${p.titulo}</h4>
                             <p class="text-xs text-slate-500 leading-relaxed mb-4">${p.texto}</p>
@@ -219,10 +236,10 @@
         }
 
         function darLike(docID) {
-            if(localStorage.getItem(`like_${docID}`)) return alert("Ya diste like a este comunicado.");
+            if(localStorage.getItem(`like_${docID}`)) return;
             localStorage.setItem(`like_${docID}`, "true");
             document.getElementById(`btnLike_${docID}`).classList.replace('text-slate-300', 'text-pink-500');
-            // Aquí podrías actualizar el contador en Firebase si quisieras
+            document.getElementById(`btnLike_${docID}`).innerHTML = `<i class="fa-solid fa-heart"></i> Me gusta`;
         }
 
         function escucharCalendario(curso) {
@@ -232,8 +249,7 @@
                 snap.forEach(doc => {
                     const e = doc.data();
                     const fecha = new Date(e.fecha + "T00:00:00");
-                    html += `
-                    <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex gap-4 items-center">
+                    html += `<div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex gap-4 items-center">
                         <div class="bg-slate-900 text-white w-12 h-12 rounded-2xl flex flex-col items-center justify-center">
                             <span class="text-lg font-black leading-none">${fecha.getDate()}</span>
                             <span class="text-[7px] font-bold opacity-60 uppercase">${fecha.toLocaleString('es-ES', { month: 'short' })}</span>
@@ -251,7 +267,11 @@
         function cargarNotas(alumnoID) {
             db.collection('calificaciones').where('alumnoID', '==', alumnoID).onSnapshot(snap => {
                 const tabla = document.getElementById('tabla-notas');
-                if(snap.empty) return tabla.innerHTML = "<p class='text-xs text-center text-slate-400'>Sin notas publicadas.</p>";
+                if(snap.empty) {
+                    document.getElementById('b-asist').innerText = "0";
+                    document.getElementById('b-inasist').innerText = "0";
+                    return tabla.innerHTML = "<p class='text-xs text-center text-slate-400'>Sin notas publicadas.</p>";
+                }
                 const d = snap.docs[0].data();
                 document.getElementById('b-asist').innerText = d.asistencias || 0;
                 document.getElementById('b-inasist').innerText = d.inasistencias || 0;
@@ -280,36 +300,53 @@
             });
         }
 
-        // 3. IA - CONSULTA
-        async function consultarIA() {
-            const input = document.getElementById('preguntaIA');
-            const box = document.getElementById('resumenIAContent');
+        // 3. IOSI - IA ASISTENTE
+        function toggleIosi() {
+            document.getElementById('window-iosi').classList.toggle('hidden');
+        }
+
+        async function preguntarAIosi() {
+            const input = document.getElementById('preguntaIosi');
+            const box = document.getElementById('iosiContent');
             if(!input.value.trim()) return;
 
-            box.classList.remove('hidden');
-            box.innerHTML = "<div class='animate-pulse'>Analizando informes del alumno...</div>";
-
-            // Recolectamos informes y notas para darle contexto a la IA
-            const informesRef = await db.collection('informes').where('alumnoID', '==', hijoActivo.id).limit(10).get();
-            const contexto = informesRef.docs.map(d => d.data().detalle).join(". ");
-            const pregunta = input.value;
+            const pregunta = input.value.trim();
+            input.value = "";
+            box.innerHTML += `<div class="iosi-bubble bg-slate-200 text-slate-700 self-end rounded-tr-none">${pregunta}</div>`;
+            
+            const loadingId = "loading-" + Date.now();
+            box.innerHTML += `<div id="${loadingId}" class="iosi-bubble bg-indigo-50 text-indigo-400 self-start animate-pulse">Iosi está pensando...</div>`;
+            box.scrollTop = box.scrollHeight;
 
             try {
+                const informesRef = await db.collection('informes').where('alumnoID', '==', hijoActivo.id).limit(5).get();
+                const contexto = informesRef.docs.map(d => d.data().detalle).join(". ");
+                const notasRef = await db.collection('calificaciones').where('alumnoID', '==', hijoActivo.id).get();
+                let notasContexto = "";
+                if(!notasRef.empty) notasContexto = "Notas actuales: " + JSON.stringify(notasRef.docs[0].data().notas);
+
                 const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyATS0LI0XhWWyYEcVyncMWBkFutT-SlWQE', {
                     method: 'POST',
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Basado en esta info del alumno: ${contexto}. Responde de forma breve y amable: ${pregunta}` }] }]
+                        contents: [{ parts: [{ text: `Sos Iosi, asistente virtual de la escuela. Datos del alumno: ${contexto}. ${notasContexto}. Responde breve, amable y en español: ${pregunta}` }] }]
                     })
                 });
                 const data = await response.json();
-                box.innerHTML = `<p>${data.candidates[0].content.parts[0].text}</p>`;
-            } catch(e) { box.innerHTML = "No pude conectarme con el asistente IA."; }
+                const respuestaIA = data.candidates[0].content.parts[0].text;
+
+                document.getElementById(loadingId).remove();
+                box.innerHTML += `<div class="iosi-bubble bg-indigo-600 text-white self-start rounded-tl-none">${respuestaIA}</div>`;
+                box.scrollTop = box.scrollHeight;
+            } catch(e) {
+                document.getElementById(loadingId).innerText = "No pude conectarme. Reintentá en un momento.";
+            }
         }
 
-        // 4. CHAT FUNCIONAL
+        // 4. CHAT
         function escucharChat() {
             if(unsubChat) unsubChat();
             const email = localStorage.getItem('familiaEmail');
+            // Nota: Firebase requiere un índice compuesto para filtrar y ordenar. Revisar consola de Chrome.
             unsubChat = db.collection('mensajes').where('participantes', 'array-contains', email).orderBy('fecha', 'asc').onSnapshot(snap => {
                 const box = document.getElementById('chatBox');
                 box.innerHTML = "";
