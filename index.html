@@ -13,7 +13,6 @@
         .section-content { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Botones de asistencia rápidos y vibrantes */
         .btn-active-P { background-color: #10b981 !important; color: white !important; border-color: #059669 !important; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
         .btn-active-A { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
         .btn-active-T { background-color: #f59e0b !important; color: white !important; border-color: #d97706 !important; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
@@ -35,6 +34,12 @@
                 <input type="email" id="loginEmail" placeholder="Email institucional" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium">
                 <input type="password" id="loginPass" placeholder="Contraseña" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium">
                 <button onclick="loginManual()" id="btnLogin" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-blue-600 transition-all shadow-xl active:scale-95">Iniciar Sesión</button>
+                
+                <div class="text-center mt-4">
+                    <button onclick="resetPassword()" class="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">
+                        ¿Olvidaste tu contraseña?
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -42,7 +47,7 @@
     <div id="appScreen" class="hidden flex min-h-screen">
         <aside class="w-20 md:w-64 bg-slate-900 text-white flex flex-col transition-all sticky top-0 h-screen">
             <div class="p-8 text-center border-b border-slate-800/50">
-                <span class="text-xl font-black tracking-tighter hidden md:inline uppercase">Iosef Caro</span>
+                <span class="text-xl font-black tracking-tighter hidden md:inline uppercase text-blue-400">Iosef Caro</span>
                 <span class="text-xl font-black md:hidden">IC</span>
             </div>
             <nav class="flex-1 mt-8 px-4 space-y-3">
@@ -69,54 +74,46 @@
             </div>
         </aside>
 
-        <main class="flex-1 p-6 md:p-12 overflow-y-auto overflow-x-hidden">
+        <main class="flex-1 p-6 md:p-12 overflow-y-auto">
             
             <section id="sec-inicio" class="section-content">
                 <div class="max-w-5xl">
-                    <h2 class="text-4xl font-black text-slate-800 mb-2 tracking-tight">¡Hola, Docente!</h2>
+                    <h2 class="text-4xl font-black text-slate-800 mb-2 tracking-tight">Panel Docente</h2>
                     <p id="userMail" class="text-slate-400 mb-10 font-bold uppercase text-[10px] tracking-[0.2em]"></p>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-shadow">
+                        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
                             <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-users text-xl"></i></div>
                             <h4 class="text-4xl font-black text-slate-800 mb-1" id="countAlumnos">--</h4>
-                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Alumnos en Red</p>
+                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Alumnos Totales</p>
                         </div>
                         <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-check-double text-xl"></i></div>
-                            <h4 class="text-xl font-black text-slate-800" id="statusAsistencia">Verificando...</h4>
-                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">Estado de Asistencia</p>
+                            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-calendar-day text-xl"></i></div>
+                            <h4 class="text-xl font-black text-slate-800" id="statusAsistencia">Cargando...</h4>
+                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">Asistencia de Hoy</p>
                         </div>
                         <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                            <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-file-invoice text-xl"></i></div>
+                            <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-file-signature text-xl"></i></div>
                             <h4 class="text-4xl font-black text-slate-800 mb-1" id="countInformes">--</h4>
-                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Reportes de Conducta</p>
+                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Informes</p>
                         </div>
                     </div>
 
-                    <div class="bg-slate-900 p-10 rounded-[3rem] text-white overflow-hidden relative shadow-2xl">
-                        <div class="relative z-10">
-                            <h4 class="text-xs font-black text-blue-400 uppercase tracking-[0.3em] mb-4">Cursos a Cargo</h4>
-                            <div id="listaMisCursos" class="flex flex-wrap gap-4"></div>
-                        </div>
-                        <i class="fa-solid fa-shield-halved absolute -right-10 -bottom-10 text-white/5 text-[15rem]"></i>
+                    <div class="bg-slate-900 p-10 rounded-[3rem] text-white shadow-2xl">
+                        <h4 class="text-xs font-black text-blue-400 uppercase tracking-[0.3em] mb-4">Mis Cursos</h4>
+                        <div id="listaMisCursos" class="flex flex-wrap gap-4"></div>
                     </div>
                 </div>
             </section>
 
             <section id="sec-asistencia" class="section-content hidden">
                 <div class="max-w-2xl">
-                    <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Control Diario</h2>
+                    <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Pase de Lista</h2>
                     <div class="bg-white p-2 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col md:flex-row mb-8">
                         <input type="date" id="fechaAsistencia" onchange="cargarListaAlumnos()" class="flex-1 p-4 bg-transparent font-black text-slate-700 outline-none border-b md:border-b-0 md:border-r border-slate-100">
                         <select id="selectCurso" onchange="cargarListaAlumnos()" class="flex-1 p-4 bg-transparent font-black text-slate-700 outline-none"></select>
                     </div>
-                    <div id="listaAlumnos" class="space-y-4">
-                        <div class="text-center p-20 text-slate-300">
-                            <i class="fa-solid fa-arrow-up text-4xl mb-4 animate-bounce"></i>
-                            <p class="font-bold italic">Selecciona curso y fecha para empezar</p>
-                        </div>
-                    </div>
+                    <div id="listaAlumnos" class="space-y-4"></div>
                 </div>
             </section>
 
@@ -127,8 +124,8 @@
                     <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Nuevo Informe</h2>
                     <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 space-y-8">
                         <div>
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block px-2">Seleccionar Alumno</label>
-                            <input type="text" id="busquedaAlumno" onkeyup="buscarAlumnoInforme()" placeholder="Escribe el nombre..." class="w-full p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] outline-none focus:ring-4 focus:ring-blue-500/10 font-bold transition-all">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block px-2">Alumno</label>
+                            <input type="text" id="busquedaAlumno" onkeyup="buscarAlumnoInforme()" placeholder="Escribe el nombre..." class="w-full p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] outline-none font-bold">
                             <div id="sugerencias" class="bg-white shadow-2xl rounded-2xl mt-3 max-h-60 overflow-y-auto hidden border border-slate-100"></div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -140,45 +137,43 @@
                             </select>
                             <input type="number" id="cantInforme" value="1" class="w-full p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] text-center font-black text-xl outline-none">
                         </div>
-                        <textarea id="detalleInforme" rows="4" placeholder="Describe los hechos con detalle..." class="w-full p-6 bg-slate-50 border border-slate-100 rounded-[2rem] outline-none font-medium"></textarea>
-                        <button onclick="enviarInforme()" class="w-full bg-slate-900 text-white font-black py-5 rounded-[2rem] shadow-2xl hover:bg-blue-600 transition-all active:scale-95">Subir al Sistema</button>
+                        <textarea id="detalleInforme" rows="4" placeholder="Describe lo sucedido..." class="w-full p-6 bg-slate-50 border border-slate-100 rounded-[2rem] outline-none font-medium"></textarea>
+                        <button onclick="enviarInforme()" class="w-full bg-slate-900 text-white font-black py-5 rounded-[2rem] shadow-2xl hover:bg-blue-600 transition-all active:scale-95">Guardar Informe</button>
                     </div>
                 </div>
             </section>
 
             <section id="sec-legajos" class="section-content hidden">
                 <div class="max-w-5xl">
-                    <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Expedientes</h2>
-                    <input type="text" id="busquedaLegajo" onkeyup="buscarParaLegajo()" placeholder="Buscar alumno por nombre..." class="w-full p-6 bg-white shadow-xl rounded-[2rem] outline-none border border-slate-50 mb-10 font-bold">
-                    <div id="sugerenciasLegajo" class="hidden"></div>
-                    
+                    <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Legajos</h2>
+                    <input type="text" id="busquedaLegajo" onkeyup="buscarParaLegajo()" placeholder="Buscar alumno..." class="w-full p-6 bg-white shadow-xl rounded-[2rem] outline-none border border-slate-50 mb-10 font-bold">
+                    <div id="sugerenciasLegajo" class="hidden space-y-2 mb-8"></div>
                     <div id="contenidoLegajo" class="hidden">
-                        <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row items-center gap-8">
-                            <div class="w-24 h-24 bg-slate-900 text-white rounded-[2rem] flex items-center justify-center text-4xl font-black shadow-2xl" id="avatarAlumno"></div>
-                            <div class="text-center md:text-left">
+                        <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 mb-8 flex items-center gap-8">
+                            <div class="w-20 h-20 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center text-4xl font-black" id="avatarAlumno"></div>
+                            <div>
                                 <h3 class="text-3xl font-black text-slate-800" id="legajoNombre">--</h3>
-                                <p class="text-blue-600 font-black uppercase text-xs tracking-widest mt-1" id="legajoCurso">--</p>
+                                <p class="text-blue-600 font-black uppercase text-xs tracking-widest" id="legajoCurso">--</p>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100">
-                                <h4 class="font-black text-slate-800 mb-6 flex items-center gap-2"><i class="fa-solid fa-list-check text-blue-500"></i> Conducta</h4>
+                                <h4 class="font-black text-slate-800 mb-6">Conducta</h4>
                                 <div id="timelineInformes" class="space-y-4"></div>
                             </div>
                             <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100">
-                                <h4 class="font-black text-slate-800 mb-6 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-orange-500"></i> Asistencia</h4>
+                                <h4 class="font-black text-slate-800 mb-6">Últimas Asistencias</h4>
                                 <div id="timelineAsistencias" class="space-y-3"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
-
         </main>
     </div>
 
     <script>
-        // --- CONFIGURACIÓN FIREBASE ---
+        // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
             authDomain: "app-academica-interna.firebaseapp.com",
@@ -195,20 +190,27 @@
         let alumnoSeleccionadoParaBoletin = null;
         document.getElementById('fechaAsistencia').valueAsDate = new Date();
 
-        // --- NAVEGACIÓN ---
-        function showSection(id) {
-            document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
-            document.getElementById('sec-' + id).classList.remove('hidden');
-            if(id === 'inicio') actualizarDashboard();
-            if(id === 'boletines') prepararModuloBoletin();
+        // --- AUTH & RESET ---
+        async function loginManual() {
+            const e = document.getElementById('loginEmail').value;
+            const p = document.getElementById('loginPass').value;
+            try { await auth.signInWithEmailAndPassword(e, p); } catch(err) { alert("Usuario o clave incorrectos"); }
         }
 
-        // --- SESIÓN Y DASHBOARD ---
+        async function resetPassword() {
+            const email = document.getElementById('loginEmail').value;
+            if (!email) return alert("Ingresa tu email primero");
+            try {
+                await auth.sendPasswordResetEmail(email);
+                alert("✅ Mail de recuperación enviado. Revisa tu casilla.");
+            } catch (e) { alert("Error al enviar el mail."); }
+        }
+
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appScreen').classList.remove('hidden');
-                document.getElementById('userMail').innerText = `Docente: ${user.email}`;
+                document.getElementById('userMail').innerText = `DOCENTE: ${user.email}`;
                 inicializarCursosDocente().then(() => actualizarDashboard());
                 showSection('inicio');
             } else {
@@ -217,68 +219,238 @@
             }
         });
 
-        async function loginManual() {
-            const e = document.getElementById('loginEmail').value;
-            const p = document.getElementById('loginPass').value;
-            try { await auth.signInWithEmailAndPassword(e, p); } catch(err) { alert("Credenciales inválidas"); }
+        // --- NAVEGACIÓN ---
+        function showSection(id) {
+            document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
+            document.getElementById('sec-' + id).classList.remove('hidden');
+            if(id === 'inicio') actualizarDashboard();
+            if(id === 'boletines') prepararModuloBoletin();
         }
 
+        // --- LÓGICA DASHBOARD ---
         async function actualizarDashboard() {
-            try {
-                const snapAlum = await db.collection('alumnos').get();
-                document.getElementById('countAlumnos').innerText = snapAlum.size;
-                const snapInf = await db.collection('informes').get();
-                document.getElementById('countInformes').innerText = snapInf.size;
-                const hoy = new Date().toISOString().split('T')[0];
-                const snapAsis = await db.collection('asistencias').where('fecha', '==', hoy).limit(1).get();
-                const status = document.getElementById('statusAsistencia');
-                if(!snapAsis.empty) {
-                    status.innerText = "Día Registrado";
-                    status.className = "text-xl font-black text-green-600";
-                } else {
-                    status.innerText = "Pendiente Hoy";
-                    status.className = "text-xl font-black text-rose-500 animate-pulse";
-                }
-            } catch(e) {}
+            const snapAlum = await db.collection('alumnos').get();
+            document.getElementById('countAlumnos').innerText = snapAlum.size;
+            const snapInf = await db.collection('informes').get();
+            document.getElementById('countInformes').innerText = snapInf.size;
+            const hoy = new Date().toISOString().split('T')[0];
+            const snapAsis = await db.collection('asistencias').where('fecha', '==', hoy).limit(1).get();
+            const status = document.getElementById('statusAsistencia');
+            if(!snapAsis.empty) {
+                status.innerText = "Completada";
+                status.className = "text-xl font-black text-green-600";
+            } else {
+                status.innerText = "Pendiente";
+                status.className = "text-xl font-black text-rose-500 animate-pulse";
+            }
         }
 
         async function inicializarCursosDocente() {
             const select = document.getElementById('selectCurso');
-            const email = auth.currentUser.email.toLowerCase();
-            const userDoc = await db.collection('usuarios').doc(email).get();
+            const userDoc = await db.collection('usuarios').doc(auth.currentUser.email.toLowerCase()).get();
             if (userDoc.exists) {
                 cursosPermitidosDocente = userDoc.data().cursosPermitidos || [];
-                let options = '<option value="" disabled selected>Elegir curso...</option>';
+                let options = '<option value="" disabled selected>Curso...</option>';
                 const docs = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
                 const listaCursosDiv = document.getElementById('listaMisCursos');
                 listaCursosDiv.innerHTML = "";
                 docs.forEach(doc => { 
                     if (doc.exists) {
                         options += `<option value="${doc.id}">${doc.data().nombre}</option>`;
-                        listaCursosDiv.innerHTML += `<span class="bg-blue-500/20 text-blue-300 border border-blue-400/20 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest">${doc.data().nombre}</span>`;
+                        listaCursosDiv.innerHTML += `<span class="bg-blue-500/10 text-blue-400 border border-blue-400/20 px-6 py-3 rounded-2xl font-black text-xs uppercase">${doc.data().nombre}</span>`;
                     } 
                 });
                 select.innerHTML = options;
             }
         }
 
-        // --- ASISTENCIA INTELIGENTE ---
+        // --- ASISTENCIA Y SINCRONIZACIÓN FAMILIA ---
         async function cargarListaAlumnos() {
             const cursoID = document.getElementById('selectCurso').value;
             const fecha = document.getElementById('fechaAsistencia').value;
             const contenedor = document.getElementById('listaAlumnos');
             if (!cursoID || !fecha) return;
 
-            contenedor.innerHTML = '<div class="p-20 flex justify-center"><i class="fa-solid fa-spinner animate-spin text-blue-600 text-3xl"></i></div>';
-            const [snapAlumnos, snapAsis] = await Promise.all([
+            contenedor.innerHTML = '<div class="p-20 flex justify-center"><i class="fa-solid fa-circle-notch animate-spin text-blue-600 text-3xl"></i></div>';
+            const [snapAlu, snapAsis] = await Promise.all([
                 db.collection('alumnos').where('cursoID', '==', cursoID).get(),
                 db.collection('asistencias').where('cursoID', '==', cursoID).where('fecha', '==', fecha).get()
             ]);
             const historial = {};
             snapAsis.forEach(doc => historial[doc.data().alumnoID] = doc.data().estado);
-            contenedor.innerHTML = snapAlumnos.docs.map(doc => {
+            contenedor.innerHTML = snapAlu.docs.map(doc => {
                 const id = doc.id;
                 const estado = historial[id] || '';
                 return `
-                    <div class="bg-white p-5 rounded-[1.8rem] shadow-sm border border-slate-100 flex items-center justify-between group hover:border-blue-200 transition-all">
-                        <span class="font-black text-slate-700 text-sm">${doc.data(
+                    <div class="bg-white p-5 rounded-[1.8rem] border border-slate-100 flex items-center justify-between">
+                        <span class="font-black text-slate-700 text-sm">${doc.data().nombre}</span>
+                        <div class="flex bg-slate-50 p-1.5 rounded-[1.2rem] gap-2">
+                            <button onclick="marcar('${id}', 'P')" id="btn-${id}-P" class="w-12 h-12 rounded-xl text-xs font-black transition-all ${estado === 'P' ? 'btn-active-P' : 'text-slate-300'}">P</button>
+                            <button onclick="marcar('${id}', 'A')" id="btn-${id}-A" class="w-12 h-12 rounded-xl text-xs font-black transition-all ${estado === 'A' ? 'btn-active-A' : 'text-slate-300'}">A</button>
+                            <button onclick="marcar('${id}', 'T')" id="btn-${id}-T" class="w-12 h-12 rounded-xl text-xs font-black transition-all ${estado === 'T' ? 'btn-active-T' : 'text-slate-300'}">T</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        async function marcar(alumnoID, estado) {
+            const fecha = document.getElementById('fechaAsistencia').value;
+            const cursoID = document.getElementById('selectCurso').value;
+            
+            // UI Feedback
+            ['P', 'A', 'T'].forEach(b => document.getElementById(`btn-${alumnoID}-${b}`).className = "w-12 h-12 rounded-xl text-xs font-black text-slate-300");
+            document.getElementById(`btn-${alumnoID}-${estado}`).className = `w-12 h-12 rounded-xl text-xs font-black btn-active-${estado}`;
+
+            try {
+                await db.collection('asistencias').doc(`${fecha}_${alumnoID}`).set({
+                    alumnoID, cursoID, fecha, estado,
+                    autor: auth.currentUser.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Recalcular para Familia
+                const asisSnap = await db.collection('asistencias').where('alumnoID', '==', alumnoID).get();
+                let total = 0;
+                asisSnap.forEach(d => {
+                    if(d.data().estado === 'A') total += 1;
+                    if(d.data().estado === 'T') total += 0.5;
+                });
+                await db.collection('calificaciones').doc(alumnoID).set({
+                    alumnoID, inasistencias: total, ultimaActualizacion: new Date().toISOString()
+                }, { merge: true });
+            } catch(e) { console.error(e); }
+        }
+
+        // --- MÓDULO BOLETÍN ---
+        function prepararModuloBoletin() {
+            const sec = document.getElementById('sec-boletines');
+            sec.innerHTML = `
+                <div class="max-w-2xl">
+                    <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Carga de Notas</h2>
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl mb-8">
+                        <input type="text" id="busquedaBoletin" onkeyup="buscarParaBoletin()" placeholder="Buscar alumno..." class="w-full p-5 bg-slate-50 rounded-2xl outline-none font-bold">
+                        <div id="sugerenciasBoletin" class="mt-4 space-y-2"></div>
+                    </div>
+                    <div id="panelCalificacion" class="hidden bg-white p-10 rounded-[3rem] shadow-2xl border-t-8 border-indigo-600 transition-all">
+                        <div class="flex items-center gap-6 mb-10">
+                            <div id="bol-avatar" class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-lg"></div>
+                            <h3 id="bol-nombre" class="font-black text-slate-800 text-2xl tracking-tight"></h3>
+                        </div>
+                        <div id="listaMaterias" class="space-y-2 mb-10"></div>
+                        <button onclick="guardarBoletin()" class="w-full bg-slate-900 text-white font-black py-5 rounded-[1.8rem] hover:bg-indigo-600 transition-all">Sincronizar con Familia</button>
+                    </div>
+                </div>`;
+        }
+
+        async function buscarParaBoletin() {
+            const v = document.getElementById('busquedaBoletin').value.toLowerCase();
+            const sug = document.getElementById('sugerenciasBoletin');
+            if(v.length < 2) { sug.innerHTML = ""; return; }
+            const snap = await db.collection('alumnos').get();
+            const fil = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(v));
+            sug.innerHTML = fil.map(d => `
+                <div onclick="abrirBoletin('${d.id}', '${d.data().nombre}')" class="p-5 bg-slate-50 rounded-2xl cursor-pointer hover:bg-indigo-600 hover:text-white font-black transition-all">
+                    ${d.data().nombre}
+                </div>`).join('');
+        }
+
+        async function abrirBoletin(id, nombre) {
+            alumnoSeleccionadoParaBoletin = id;
+            document.getElementById('sugerenciasBoletin').innerHTML = "";
+            document.getElementById('panelCalificacion').classList.remove('hidden');
+            document.getElementById('bol-nombre').innerText = nombre;
+            document.getElementById('bol-avatar').innerText = nombre.charAt(0);
+            
+            const doc = await db.collection('calificaciones').doc(id).get();
+            const notas = doc.exists ? (doc.data().notas || {}) : {};
+            const mats = ["Matemática", "Lengua", "Inglés", "Cs. Sociales", "Cs. Naturales", "Const. Ciudadana", "Educación Física"];
+            
+            document.getElementById('listaMaterias').innerHTML = mats.map(m => `
+                <div class="flex justify-between items-center p-4 rounded-2xl hover:bg-slate-50">
+                    <span class="text-sm font-black text-slate-600 uppercase tracking-tight">${m}</span>
+                    <input type="number" step="0.1" class="nota-input w-24 p-3 bg-white border border-slate-200 rounded-xl text-center font-black text-indigo-600 outline-none" data-materia="${m}" value="${notas[m] || ''}">
+                </div>`).join('');
+        }
+
+        async function guardarBoletin() {
+            const inps = document.querySelectorAll('.nota-input');
+            let n = {};
+            inps.forEach(i => { if(i.value) n[i.getAttribute('data-materia')] = parseFloat(i.value); });
+            try {
+                await db.collection('calificaciones').doc(alumnoSeleccionadoParaBoletin).set({
+                    alumnoID: alumnoSeleccionadoParaBoletin, notas: n, ultimaActualizacion: new Date().toISOString()
+                }, { merge: true });
+                alert("✅ Boletín actualizado");
+                showSection('inicio');
+            } catch(e) { alert("Error al guardar"); }
+        }
+
+        // --- INFORMES Y LEGAJOS ---
+        async function buscarAlumnoInforme() {
+            const v = document.getElementById('busquedaAlumno').value.toLowerCase();
+            const sug = document.getElementById('sugerencias');
+            if(v.length < 2) { sug.classList.add('hidden'); return; }
+            const snap = await db.collection('alumnos').get();
+            const fil = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(v));
+            sug.classList.remove('hidden');
+            sug.innerHTML = fil.map(d => `<div onclick="selectAlu('${d.data().nombre}', '${d.id}')" class="p-4 hover:bg-blue-50 cursor-pointer font-bold border-b border-slate-50">${d.data().nombre}</div>`).join('');
+        }
+        function selectAlu(n, id) {
+            document.getElementById('busquedaAlumno').value = n;
+            document.getElementById('busquedaAlumno').dataset.id = id;
+            document.getElementById('sugerencias').classList.add('hidden');
+        }
+
+        async function enviarInforme() {
+            const aluId = document.getElementById('busquedaAlumno').dataset.id;
+            const det = document.getElementById('detalleInforme').value;
+            if(!aluId || !det) return alert("Completa los datos");
+            await db.collection('informes').add({
+                alumnoID: aluId, nombre: document.getElementById('busquedaAlumno').value,
+                tipo: document.getElementById('tipoInforme').value,
+                cantidad: parseInt(document.getElementById('cantInforme').value),
+                detalle: det, fecha: new Date().toISOString(), autor: auth.currentUser.email
+            });
+            alert("Informe enviado");
+            location.reload();
+        }
+
+        async function buscarParaLegajo() {
+            const v = document.getElementById('busquedaLegajo').value.toLowerCase();
+            const sug = document.getElementById('sugerenciasLegajo');
+            if(v.length < 2) { sug.classList.add('hidden'); return; }
+            const snap = await db.collection('alumnos').get();
+            const fil = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(v));
+            sug.classList.remove('hidden');
+            sug.innerHTML = fil.map(d => `<div onclick="verLegajo('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 cursor-pointer hover:border-blue-500 font-bold">${d.data().nombre}</div>`).join('');
+        }
+
+        async function verLegajo(id, nom, curso) {
+            document.getElementById('sugerenciasLegajo').classList.add('hidden');
+            document.getElementById('contenidoLegajo').classList.remove('hidden');
+            document.getElementById('legajoNombre').innerText = nom;
+            document.getElementById('avatarAlumno').innerText = nom.charAt(0);
+            document.getElementById('legajoCurso').innerText = curso;
+
+            const [infSnap, asisSnap] = await Promise.all([
+                db.collection('informes').where('alumnoID', '==', id).get(),
+                db.collection('asistencias').where('alumnoID', '==', id).orderBy('fecha', 'desc').limit(10).get()
+            ]);
+
+            document.getElementById('timelineInformes').innerHTML = infSnap.docs.map(d => `
+                <div class="p-4 bg-slate-50 rounded-2xl border-l-4 ${d.data().tipo.includes('Positiva') ? 'border-green-500' : 'border-rose-500'}">
+                    <p class="font-bold text-slate-700">${d.data().tipo}</p>
+                    <p class="text-xs text-slate-500">${d.data().detalle}</p>
+                </div>`).join('') || '<p class="text-slate-300 italic">Sin informes</p>';
+
+            document.getElementById('timelineAsistencias').innerHTML = asisSnap.docs.map(d => `
+                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                    <span class="text-xs font-bold text-slate-500">${d.data().fecha}</span>
+                    <span class="font-black text-xs ${d.data().estado === 'P' ? 'text-green-500' : 'text-rose-500'}">${d.data().estado}</span>
+                </div>`).join('') || '<p class="text-slate-300 italic">Sin historial</p>';
+        }
+
+        function logout() { auth.signOut(); }
+    </script>
+</body>
+</html>
