@@ -262,22 +262,67 @@
             return await ref.getDownloadURL();
         }
 
-        async function mejorarConIA(event) {
+       async function mejorarConIA(event) {
             const btn = event.currentTarget;
-            const text = document.getElementById('contenidoPost');
-            if(!text.value) return;
-            const original = btn.innerHTML;
+            const textInput = document.getElementById('contenidoPost');
+            const tituloInput = document.getElementById('tituloPost');
+            
+            if(!textInput.value) return alert("Escribí un borrador primero.");
+
+            const originalBtnText = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            // Prompt optimizado
+            const promptContexto = `Actúa como un directivo de una escuela profesional. 
+            Mejora el siguiente comunicado para que sea formal, cálido y claro para las familias. 
+            Responde únicamente con el texto mejorado.
+            Título: ${tituloInput.value}
+            Borrador: ${textInput.value}`;
+
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyATS0LI0XhWWyYEcVyncMWBkFutT-SlWQE`, {
+                const API_KEY = "AIzaSyATS0LI0XhWWyYEcVyncMWBkFutT-SlWQE";
+                // Usamos v1beta que es la versión más estable para peticiones directas
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+                
+                const response = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "Mejora este comunicado escolar de forma formal y breve: " + text.value }] }] })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: promptContexto }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 1024,
+                        }
+                    })
                 });
-                const data = await res.json();
-                text.value = data.candidates[0].content.parts[0].text.trim();
-            } catch (e) { alert("Error IA"); }
-            btn.innerHTML = original;
+
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error("Error de Google API:", data.error);
+                    throw new Error(data.error.message);
+                }
+
+                if (data.candidates && data.candidates[0].content) {
+                    textInput.value = data.candidates[0].content.parts[0].text.trim();
+                } else {
+                    throw new Error("La IA no devolvió resultados. Revisá los filtros de seguridad de tu API Key.");
+                }
+
+            } catch (e) {
+                console.error("Error detallado:", e);
+                alert("Error de conexión con la IA: " + e.message);
+            } finally {
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+            }
         }
 
         async function publicarFeed() {
