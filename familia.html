@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunicación Familiar - Mi Escuela</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .post-card { transition: transform 0.2s; }
+        .post-card:active { transform: scale(0.98); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
+        <div class="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center text-white">
+                    <i class="fa-solid fa-graduation-cap text-xs"></i>
+                </div>
+                <h1 class="font-black text-slate-800 tracking-tight">COMUNIDAD <span class="text-pink-500 text-xs">Escuela</span></h1>
+            </div>
+            <button onclick="cerrarSesion()" class="text-slate-400 hover:text-red-500 transition-colors">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 py-6 pb-24">
+        
+        <div id="perfilAlumno" class="mb-8 p-4 bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl text-white shadow-xl shadow-slate-200 hidden">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Familia de:</p>
+            <h2 id="nombreHijo" class="text-xl font-bold">Cargando...</h2>
+            <div class="flex gap-2 mt-3">
+                <span id="cursoHijo" class="bg-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold border border-white/20 uppercase tracking-tighter">Curso</span>
+                <span class="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-[10px] font-bold border border-blue-500/20">AÑO 2026</span>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-black text-slate-800 text-sm uppercase tracking-tighter">Novedades Recientes</h3>
+            <div class="h-[1px] flex-1 bg-slate-200 ml-4"></div>
+        </div>
+
+        <div id="feedFamilias" class="space-y-6">
+            <div class="animate-pulse space-y-4">
+                <div class="h-48 bg-slate-200 rounded-3xl"></div>
+                <div class="h-6 bg-slate-200 rounded-full w-2/3"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-xl border border-slate-200 rounded-full shadow-2xl h-16 flex items-center justify-around px-6 z-50">
+        <button class="text-pink-500"><i class="fa-solid fa-house text-lg"></i></button>
+        <button class="text-slate-400 hover:text-blue-500"><i class="fa-solid fa-calendar-check text-lg"></i></button>
+        <button class="text-slate-400 hover:text-blue-500"><i class="fa-solid fa-file-invoice text-lg"></i></button>
+        <button class="text-slate-400 hover:text-blue-500"><i class="fa-solid fa-gear text-lg"></i></button>
+    </nav>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
+            authDomain: "app-academica-interna.firebaseapp.com",
+            projectId: "app-academica-interna",
+            storageBucket: "app-academica-interna.firebasestorage.app",
+            messagingSenderId: "169882587504",
+            appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 1. Simulación de Sesión (Luego lo haremos con Auth real)
+        // Por ahora, busca el email que cargaste en el Admin
+        const userEmail = prompt("Ingresá tu email registrado:");
+
+        async function cargarDatosFamilia() {
+            const userDoc = await db.collection('usuarios').doc(userEmail).get();
+            
+            if (!userDoc.exists) {
+                alert("Email no encontrado");
+                return;
+            }
+
+            const userData = userDoc.data();
+            const hijoDoc = await db.collection('alumnos').doc(userData.hijoID).get();
+            const hijoData = hijoDoc.data();
+
+            document.getElementById('perfilAlumno').classList.remove('hidden');
+            document.getElementById('nombreHijo').innerText = hijoData.nombre;
+            document.getElementById('cursoHijo').innerText = hijoData.cursoID;
+
+            cargarFeed(hijoData.cursoID);
+        }
+
+        async function cargarFeed(cursoID) {
+            // Filtramos por fecha (que ya sea la hora de publicar) y por alcance
+            const ahora = new Date().toISOString();
+
+            db.collection('comunicados')
+                .where('fechaPublicacion', '<=', ahora)
+                .orderBy('fechaPublicacion', 'desc')
+                .onSnapshot(snap => {
+                    const feed = document.getElementById('feedFamilias');
+                    let html = "";
+
+                    snap.forEach(doc => {
+                        const post = doc.data();
+                        
+                        // Solo mostramos si es para TODOS o para el curso específico del hijo
+                        if(post.tag === "TODOS" || post.tag === cursoID) {
+                            html += `
+                                <article class="post-card bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                                    ${post.img ? `<img src="${post.img}" class="w-full h-56 object-cover">` : ''}
+                                    <div class="p-5">
+                                        <div class="flex items-center gap-2 mb-3">
+                                            <span class="text-[9px] font-black bg-pink-100 text-pink-600 px-2 py-0.5 rounded uppercase tracking-widest">${post.tag}</span>
+                                            <span class="text-[10px] text-slate-400 font-bold">${new Date(post.fechaPublicacion).toLocaleDateString()}</span>
+                                        </div>
+                                        <h4 class="text-lg font-bold text-slate-800 leading-tight mb-2">${post.titulo}</h4>
+                                        <p class="text-sm text-slate-600 leading-relaxed mb-4">${post.texto}</p>
+                                        
+                                        ${post.doc ? `
+                                            <a href="${post.doc}" target="_blank" class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group hover:bg-orange-50 transition-colors">
+                                                <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
+                                                    <i class="fa-solid fa-file-pdf"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <p class="text-xs font-bold text-slate-700">Documento Adjunto</p>
+                                                    <p class="text-[10px] text-slate-400">Toca para descargar o ver</p>
+                                                </div>
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                    <div class="px-5 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
+                                        <button onclick="darLike('${doc.id}')" class="text-slate-400 text-xs font-bold flex items-center gap-2 hover:text-pink-500 transition-colors">
+                                            <i class="fa-regular fa-heart"></i> ${post.likes || 0} Familias
+                                        </button>
+                                        <i class="fa-solid fa-share-nodes text-slate-300 cursor-pointer"></i>
+                                    </div>
+                                </article>
+                            `;
+                        }
+                    });
+                    
+                    feed.innerHTML = html || '<p class="text-center text-slate-400 text-sm py-10 italic">No hay comunicados para tu curso hoy.</p>';
+                });
+        }
+
+        async function darLike(id) {
+            const postRef = db.collection('comunicados').doc(id);
+            await postRef.update({
+                likes: firebase.firestore.FieldValue.increment(1)
+            });
+        }
+
+        function cerrarSesion() {
+            if(confirm("¿Querés salir?")) location.reload();
+        }
+
+        cargarDatosFamilia();
+    </script>
+</body>
+</html>
