@@ -216,34 +216,65 @@
         });
     }
 
-    // --- CEREBRO INTELIGENTE DE IOSI ---
+    // --- CEREBRO INTELIGENTE DE IOSI PRO (Actualizado) ---
     async function obtenerRespuestaIosi(mensaje) {
         const p = mensaje.toLowerCase();
-        if (!hijoActivo) return "No tengo datos del alumno.";
+        if (!hijoActivo) return "No tengo datos del alumno cargados.";
 
         const docRef = await db.collection('calificaciones').doc(hijoActivo.id).get();
         const data = docRef.exists ? docRef.data() : {};
         const notas = data.notas || {};
 
-        if (p.includes("nota") || p.includes("sacó") || p.includes("calificación")) {
+        // 1. Lógica de NOTAS (Busca materia específica)
+        if (p.includes("nota") || p.includes("sacó") || p.includes("calificación") || p.includes("cuánto tiene")) {
             const materias = Object.keys(notas);
             let materiaFound = materias.find(m => p.includes(m.toLowerCase()));
-            if (materiaFound) return `En **${materiaFound}** tiene un **${notas[materiaFound]}**.`;
-            return "Decime de qué materia querés saber la nota.";
+            
+            if (materiaFound) {
+                return `${hijoActivo.nombre} tiene un **${notas[materiaFound]}** en ${materiaFound}.`;
+            }
+            
+            let resumen = `Estas son las notas de ${hijoActivo.nombre}:<br>`;
+            Object.entries(notas).forEach(([m, v]) => resumen += `• ${m}: **${v}**<br>`);
+            return resumen;
         }
 
-        if (p.includes("falta") || p.includes("inasistencia") || p.includes("tarde")) {
-            if (p.includes("cuándo") || p.includes("qué día")) {
-                const snap = await db.collection('asistencias').where('alumnoID', '==', hijoActivo.id).where('estado', 'in', ['A', 'T']).orderBy('fecha', 'desc').limit(3).get();
-                if (snap.empty) return "No tiene faltas registradas.";
-                let list = "Últimos registros:";
-                snap.forEach(d => list += `\n• ${d.data().fecha} (${d.data().estado})`);
+        // 2. Lógica de ASISTENCIAS (Busca fechas exactas en Firebase)
+        if (p.includes("falta") || p.includes("inasistencia") || p.includes("tarde") || p.includes("faltó")) {
+            if (p.includes("cuándo") || p.includes("qué día") || p.includes("fecha")) {
+                const snap = await db.collection('asistencias')
+                    .where('alumnoID', '==', hijoActivo.id)
+                    .where('estado', 'in', ['A', 'T'])
+                    .orderBy('fecha', 'desc')
+                    .limit(5)
+                    .get();
+
+                if (snap.empty) return `${hijoActivo.nombre} no tiene faltas registradas.`;
+                
+                let list = "Últimos registros detallados:<br>";
+                snap.forEach(d => {
+                    const info = d.data();
+                    const tipo = info.estado === 'A' ? 'Ausente' : 'Tarde';
+                    list += `• **${info.fecha}**: ${tipo}<br>`;
+                });
                 return list;
             }
-            return `Tiene un total de **${data.inasistencias || 0}** faltas.`;
+            return `${hijoActivo.nombre} tiene un total de **${data.inasistencias || 0}** inasistencias en el boletín.`;
         }
 
-        return "Podés preguntarme '¿Qué nota tiene en Matemática?' o '¿Cuántas faltas lleva?'.";
+        // 3. Lógica de NOTICIAS / FEED
+        if (p.includes("novedad") || p.includes("noticia") || p.includes("pasó") || p.includes("comunicado")) {
+            if (noticiasGlobal.length === 0) return "No hay noticias recientes en el panel.";
+            
+            let ultimas = "Esto es lo último que se publicó:<br>";
+            // Tomamos las últimas 2 noticias
+            noticiasGlobal.slice(0, 2).forEach(n => {
+                ultimas += `• **${n.titulo}**: ${n.texto.substring(0, 60)}...<br>`;
+            });
+            return ultimas;
+        }
+
+        return "Soy Iosi. Podés preguntarme:<br>• <i>'¿Qué nota sacó en Matemática?'</i><br>• <i>'¿Qué días faltó esta semana?'</i><br>• <i>'¿Qué noticias hay hoy?'</i>";
     }
 
     async function analisisRapidoIosi() {
