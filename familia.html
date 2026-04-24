@@ -306,67 +306,63 @@
         }
 
         async function preguntarAIosi() {
-    const input = document.getElementById('preguntaIosi');
-    const box = document.getElementById('iosiContent');
-    if(!input.value.trim()) return;
+            const input = document.getElementById('preguntaIosi');
+            const box = document.getElementById('iosiContent');
+            if(!input.value.trim() || !hijoActivo) return;
 
-    const pregunta = input.value.trim();
-    input.value = "";
-    
-    // 1. Mostrar mensaje del usuario
-    box.innerHTML += `<div class="iosi-bubble bg-slate-200 text-slate-700 self-end rounded-tr-none">${pregunta}</div>`;
-    
-    const loadingId = "loading-" + Date.now();
-    box.innerHTML += `<div id="${loadingId}" class="iosi-bubble bg-indigo-50 text-indigo-400 self-start animate-pulse">Iosi está pensando...</div>`;
-    box.scrollTop = box.scrollHeight;
+            const pregunta = input.value.trim();
+            input.value = "";
+            
+            box.innerHTML += `<div class="iosi-bubble bg-slate-200 text-slate-700 self-end rounded-tr-none">${pregunta}</div>`;
+            
+            const loadingId = "loading-" + Date.now();
+            box.innerHTML += `<div id="${loadingId}" class="iosi-bubble bg-indigo-50 text-indigo-400 self-start animate-pulse">Iosi está pensando...</div>`;
+            box.scrollTop = box.scrollHeight;
 
-    try {
-        // 2. Obtener contexto (Informes y Notas)
-        const informesRef = await db.collection('informes').where('alumnoID', '==', hijoActivo.id).limit(5).get();
-        const contexto = informesRef.docs.map(d => d.data().detalle).join(". ");
-        
-        const notasRef = await db.collection('calificaciones').where('alumnoID', '==', hijoActivo.id).get();
-        let notasContexto = "";
-        if(!notasRef.empty) {
-            const n = notasRef.docs[0].data().notas;
-            notasContexto = "Notas actuales: " + Object.entries(n).map(([m, v]) => `${m}: ${v}`).join(", ");
+            try {
+                const informesRef = await db.collection('informes').where('alumnoID', '==', hijoActivo.id).limit(5).get();
+                const contexto = informesRef.docs.map(d => d.data().detalle).join(". ");
+                
+                const notasRef = await db.collection('calificaciones').where('alumnoID', '==', hijoActivo.id).get();
+                let notasContexto = "";
+                if(!notasRef.empty) {
+                    const n = notasRef.docs[0].data().notas;
+                    notasContexto = "Notas actuales: " + Object.entries(n).map(([m, v]) => `${m}: ${v}`).join(", ");
+                }
+
+                // REEMPLAZA ESTA KEY POR LA QUE GENERASTE EN AI STUDIO
+                const miApiKey = "AQ.Ab8RN6IfOgxhdgscaTR3xEVnE5bOUkX4M5Xe7N8Mg3Ll0CHj_w"; 
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${miApiKey}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Sos Iosi, asistente de la escuela. Contexto del alumno: ${contexto}. ${notasContexto}. Responde de forma muy breve (máximo 3 frases) a lo siguiente: ${pregunta}`
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error.message);
+
+                const respuestaIA = data.candidates[0].content.parts[0].text;
+                const loadingEl = document.getElementById(loadingId);
+                if(loadingEl) loadingEl.remove();
+                
+                box.innerHTML += `<div class="iosi-bubble bg-indigo-600 text-white self-start rounded-tl-none">${respuestaIA}</div>`;
+                box.scrollTop = box.scrollHeight;
+
+            } catch(e) {
+                console.error("Error Iosi:", e);
+                const loadingEl = document.getElementById(loadingId);
+                if(loadingEl) loadingEl.innerText = "Iosi no puede responder ahora.";
+            }
         }
-
-        // 3. Llamada a la API (Estructura corregida)
-        const response = await fetch( const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AQ.Ab8RN6IfOgxhdgscaTR3xEVnE5bOUkX4M5Xe7N8Mg3Ll0CHj_w`;, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: `Sos Iosi, asistente de la escuela. Contexto del alumno: ${contexto}. ${notasContexto}. Responde de forma muy breve (máximo 3 frases) a lo siguiente: ${pregunta}`
-                    }]
-                }]
-            })
-        });
-
-        const data = await response.json();
-        
-        // 4. Manejo de error de cuota o API
-        if (data.error) {
-            throw new Error(data.error.message);
-        }
-
-        const respuestaIA = data.candidates[0].content.parts[0].text;
-
-        // 5. Mostrar respuesta
-        const loadingEl = document.getElementById(loadingId);
-        if(loadingEl) loadingEl.remove();
-        
-        box.innerHTML += `<div class="iosi-bubble bg-indigo-600 text-white self-start rounded-tl-none">${respuestaIA}</div>`;
-        box.scrollTop = box.scrollHeight;
-
-    } catch(e) {
-        console.error("Error Iosi:", e);
-        const loadingEl = document.getElementById(loadingId);
-        if(loadingEl) loadingEl.innerText = "No pude conectarme (Verifica tu conexión o API Key).";
-    }
-}
 
         // 4. CHAT
         function escucharChat() {
