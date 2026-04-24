@@ -185,21 +185,70 @@
             if(id === 'mensajes') cargarListaChats();
         }
 
-        // --- CALENDARIO (FIXED) ---
-        async function crearEvento() {
-            const fecha = document.getElementById('fechaEvento').value;
-            const titulo = document.getElementById('tituloEvento').value;
-            const curso = document.getElementById('cursoEvento').value;
-            if(!fecha || !titulo) return alert("Faltan datos");
-            await db.collection('eventos').add({ 
-                fecha, 
-                titulo, 
-                curso, 
-                creadoEn: new Date().toISOString() 
-            });
-            document.getElementById('tituloEvento').value = "";
-            alert("Evento agendado");
-        }
+       // --- CALENDARIO + AUTO FEED (REVISADO) ---
+async function crearEvento() {
+    const fecha = document.getElementById('fechaEvento').value;
+    const titulo = document.getElementById('tituloEvento').value;
+    const curso = document.getElementById('cursoEvento').value;
+    
+    if(!fecha || !titulo) return alert("Faltan datos");
+
+    try {
+        // 1. Guardar en Calendario
+        await db.collection('eventos').add({ 
+            fecha, 
+            titulo, 
+            curso, 
+            creadoEn: new Date().toISOString() 
+        });
+
+        // 2. Publicar automáticamente en el Feed/Muro
+        await db.collection('comunicados').add({
+            titulo: `NUEVO EVENTO: ${titulo}`,
+            texto: `Se ha programado un nuevo evento para el día ${fecha}. Destinado a: ${curso}`,
+            tag: curso,
+            img: "", 
+            doc: "",
+            fechaPublicacion: new Date().toISOString(),
+            creadoEn: new Date().toISOString(),
+            likes: 0,
+            tipo: "evento_automatico" // Para diferenciarlo si querés
+        });
+
+        document.getElementById('tituloEvento').value = "";
+        alert("Evento agendado y publicado en el muro");
+    } catch(e) { console.error(e); }
+}
+
+// --- MENSAJERÍA (CHAT REAL) ---
+function abrirChat(email) {
+    chatActivoEmail = email;
+    document.getElementById('chat-header').innerText = "Chat con: " + email;
+    
+    // Escucha en tiempo real de la conversación entre estos dos participantes
+    db.collection('mensajes')
+      .where('participantes', 'array-contains', email)
+      .orderBy('fecha', 'asc') // IMPORTANTE: Requiere índice en Firebase si falla
+      .onSnapshot(snap => {
+          const box = document.getElementById('admin-chat-box');
+          box.innerHTML = ""; // Limpiamos para repintar la historia
+          
+          snap.forEach(doc => {
+              const m = doc.data();
+              const esSecretaria = m.emisorID === "secretaria_primaria";
+              
+              const msgDiv = document.createElement('div');
+              msgDiv.className = `max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${
+                  esSecretaria 
+                  ? 'bg-blue-600 text-white self-end rounded-tr-none' 
+                  : 'bg-white border text-slate-700 self-start rounded-tl-none'
+              }`;
+              msgDiv.innerText = m.texto;
+              box.appendChild(msgDiv);
+          });
+          box.scrollTop = box.scrollHeight; // Auto-scroll al último mensaje
+      });
+}
 
         function escucharEventos() {
             db.collection('eventos').orderBy('fecha', 'asc').onSnapshot(snap => {
