@@ -200,22 +200,23 @@
        async function mejorarConIA(event) {
             const tituloInput = document.getElementById('tituloPost');
             const contenidoInput = document.getElementById('contenidoPost');
-            // Usamos event.currentTarget para asegurarnos de capturar el botón
             const btnIA = event.currentTarget; 
 
-            if (!contenidoInput.value) return alert("Escribí algo en el contenido primero.");
+            if (!contenidoInput.value) return alert("Escribí algo primero.");
 
             const textoOriginalBtn = btnIA.innerHTML;
-            btnIA.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Procesando...';
+            btnIA.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Puliendo...';
             btnIA.disabled = true;
 
             const prompt = `Actúa como un directivo escolar. Mejora este comunicado para que sea formal y cordial. 
             Responde SOLO con el texto mejorado.
-            Borrador: ${contenidoInput.value}`;
+            Título actual: ${tituloInput.value}
+            Borrador a mejorar: ${contenidoInput.value}`;
 
             try {
                 const API_KEY = "AIzaSyATS0LI0XhWWyYEcVyncMWBkFutT-SlWQE"; 
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+                // Cambiamos a v1 y usamos gemini-1.5-flash
+                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -227,18 +228,19 @@
 
                 const data = await response.json();
                 
-                // Si la API devuelve un error, lo capturamos aquí
                 if (data.error) {
-                    console.error("Error de la API:", data.error);
                     throw new Error(data.error.message);
                 }
 
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
-                    contenidoInput.value = data.candidates[0].content.parts[0].text.trim();
+                if (data.candidates && data.candidates.length > 0) {
+                    const textoMejorado = data.candidates[0].content.parts[0].text;
+                    contenidoInput.value = textoMejorado.trim();
+                } else {
+                    throw new Error("No se pudo generar el contenido. Intenta de nuevo.");
                 }
 
             } catch (e) {
-                console.error("Error completo:", e);
+                console.error("Error detallado:", e);
                 alert("Error: " + e.message);
             } finally {
                 btnIA.innerHTML = textoOriginalBtn;
