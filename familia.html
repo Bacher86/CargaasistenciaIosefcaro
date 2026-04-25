@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comunidad Familia v5.5 - Iosi Brain Integrated</title>
+    <title>Comunidad Familia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
@@ -187,80 +187,108 @@
             escucharFeed(hijoActivo.cursoID);
         }
     }
-
-    async function obtenerRespuestaIosi(mensaje) {
+async function obtenerRespuestaIosi(mensaje) {
     const p = mensaje.toLowerCase();
-    if (!hijoActivo) return "Para ayudarte, primero necesito que el sistema cargue los datos de tu hijo/a.";
+    if (!hijoActivo) return "No puedo acceder a la información sin un alumno vinculado.";
 
-    // --- BASE DE DATOS DE INTELIGENCIA (MEMORIA DE IOSI) ---
-    const iosiMemoria = {
-        horarios: {
-            keywords: ["horario", "hora", "sale", "entra", "viernes", "clase", "mañana"],
-            respuesta: `El horario de clases es: 
-            • Lunes a Jueves: 07:45 a 16:00 hs.
-            • Viernes: 07:45 a 15:00 hs.
-            Los horarios para retirar alumnos son: [Completar aquí los horarios de retiro].`
-        },
-        contacto: {
-            keywords: ["mail", "correo", "hablar", "contacto", "queja", "reclamo", "inquietud", "escribir"],
-            respuesta: "Para asegurar un seguimiento formal, por favor envianos tus inquietudes únicamente por mail a: [Tu Mail Institucional Aquí]. Es el canal oficial para gestión administrativa."
-        },
-        urgencia: {
-            keywords: ["urgente", "emergencia", "paso algo", "accidente", "se siente mal", "lastimo", "hospital"],
-            respuesta: "🚨 **AVISO DE EMERGENCIA:** He detectado una situación urgente. Por favor, comuníquese inmediatamente por teléfono o acérquese a la recepción. Estoy notificando internamente su mensaje."
-        }
-    };
-
-    // --- PROCESAMIENTO LÓGICO ---
-
-    // 1. Prioridad: Emergencias (Detección de sentimiento)
-    if (iosiMemoria.urgencia.keywords.some(k => p.includes(k))) {
-        return iosiMemoria.urgencia.respuesta;
-    }
-
-    // 2. Inteligencia de Novedades (Mapeo de Firebase)
-    if (p.includes("nuevo") || p.includes("novedad") || p.includes("muro") || p.includes("aviso") || p.includes("noticia")) {
-        try {
+    try {
+        // --- 1. LÓGICA DE NOVEDADES (MURO) ---
+        if (p.includes("novedad") || p.includes("muro") || p.includes("noticia") || p.includes("pasó") || p.includes("aviso")) {
             const snap = await db.collection('comunicados')
-                                 .where('tag', 'in', ['TODOS', hijoActivo.cursoID])
-                                 .orderBy('creadoEn', 'desc').limit(1).get();
-            if (!snap.empty) {
-                const d = snap.docs[0].data();
-                return `**Última novedad para ${hijoActivo.cursoID}:** \n"${d.titulo}"\n\nResumen: ${d.texto.substring(0, 150)}... \n\nPodés leer el detalle completo en la sección Inicio.`;
-            }
-            return "No hay comunicados recientes para " + hijoActivo.cursoID;
-        } catch (e) { return "Quise leer el muro pero hubo un error de conexión."; }
-    }
+                .where('tag', 'in', ['TODOS', hijoActivo.cursoID])
+                .orderBy('creadoEn', 'desc').limit(3).get();
+            
+            if (snap.empty) return "No hay novedades recientes para el curso " + hijoActivo.cursoID;
+            
+            let res = `📢 **Últimas novedades para ${hijoActivo.cursoID}:**\n`;
+            snap.forEach(doc => {
+                const d = doc.data();
+                res += `\n• **${d.titulo}**: ${d.texto.substring(0, 80)}...`;
+            });
+            return res + "\n\nPodés ver los detalles completos en la pantalla de Inicio.";
+        }
 
-    // 3. Inteligencia de Horarios
-    if (iosiMemoria.horarios.keywords.some(k => p.includes(k))) {
-        return iosiMemoria.horarios.respuesta;
-    }
-
-    // 4. Inteligencia de Contacto
-    if (iosiMemoria.contacto.keywords.some(k => p.includes(k))) {
-        return iosiMemoria.contacto.respuesta;
-    }
-
-    // 5. Inteligencia de Desempeño (Notas)
-    if (p.includes("nota") || p.includes("examen") || p.includes("como va") || p.includes("boletin") || p.includes("aprobo")) {
-        try {
+        // --- 2. LÓGICA DE FALTAS POR DÍA (DETALLE) ---
+        if (p.includes("falta") || p.includes("asistencia") || p.includes("inasistencia") || p.includes("faltó")) {
             const calDoc = await db.collection('calificaciones').doc(hijoActivo.id).get();
-            if (!calDoc.exists || !calDoc.data().notas) return "Aún no hay calificaciones cargadas para " + hijoActivo.nombre;
+            const data = calDoc.data();
+            const total = data?.inasistencias || 0;
             
-            let notas = Object.entries(calDoc.data().notas);
-            let promedio = (notas.reduce((acc, n) => acc + Number(n[1]), 0) / notas.length).toFixed(1);
+            if (total === 0) return `${hijoActivo.nombre} no tiene faltas registradas. ¡Excelente asistencia!`;
             
-            let comentario = promedio >= 7 ? "Viene con un desempeño muy bueno." : "Hay algunos temas a reforzar.";
-            return `${hijoActivo.nombre} tiene un promedio de **${promedio}**. ${comentario} Podés ver el detalle en la pestaña de Seguimiento.`;
-        } catch (e) { return "No pude acceder al boletín en este momento."; }
+            // Si tenés las fechas guardadas en un array 'fechasInasistencias' (opcional según tu db)
+            let detalle = `\n${hijoActivo.nombre} tiene un total de **${total} faltas**.`;
+            if (total > 15) detalle += "\n⚠️ Atención: Se está acercando al límite de faltas permitidas.";
+            
+            return detalle + "\n\nRecordá que podés justificar las faltas enviando el certificado por mail.";
+        }
+
+        // --- 3. LÓGICA DE RESUMEN DE MATERIAS (PROMEDIOS) ---
+        if (p.includes("materia") || p.includes("nota") || p.includes("resumen") || p.includes("boletin") || p.includes("desempeño")) {
+            const calDoc = await db.collection('calificaciones').doc(hijoActivo.id).get();
+            if (!calDoc.exists || !calDoc.data().notas) return "Aún no hay notas cargadas en el sistema.";
+            
+            const notas = Object.entries(calDoc.data().notas);
+            if (notas.length === 0) return "El boletín está vacío por ahora.";
+
+            let suma = 0;
+            let res = `📊 **Resumen Académico de ${hijoActivo.nombre}:**\n`;
+            
+            notas.forEach(([materia, nota]) => {
+                suma += Number(nota);
+                let emoji = nota >= 7 ? "✅" : "⚠️";
+                res += `\n${emoji} **${materia}**: ${nota}`;
+            });
+
+            let promedio = (suma / notas.length).toFixed(1);
+            res += `\n\n📈 **Promedio General: ${promedio}**`;
+            res += promedio >= 8 ? "\n✨ ¡Un desempeño brillante!" : "\n💡 Sigamos reforzando para el próximo periodo.";
+            
+            return res;
+        }
+
+        // --- 4. LÓGICA DE CALENDARIO / EVENTOS ---
+        if (p.includes("calendario") || p.includes("cuando") || p.includes("fecha") || p.includes("evento") || p.includes("reunion")) {
+            const hoy = new Date().toISOString().split('T')[0];
+            const snap = await db.collection('eventos')
+                .where('visibilidad', 'in', ['TODOS', hijoActivo.cursoID])
+                .where('fecha', '>=', hoy)
+                .orderBy('fecha', 'asc').limit(3).get();
+
+            if (snap.empty) return "No hay eventos o exámenes programados para las próximas fechas.";
+
+            let res = `📅 **Próximos eventos en agenda:**\n`;
+            snap.forEach(doc => {
+                const e = doc.data();
+                const [y, m, d] = e.fecha.split('-');
+                res += `\n• **${d}/${m}**: ${e.titulo}`;
+            });
+            return res;
+        }
+
+        // --- 5. HORARIOS Y CONTACTO (ESTÁTICO PRO) ---
+        if (p.includes("horario") || p.includes("hora") || p.includes("sale") || p.includes("entra")) {
+            return `⏰ **Horarios de Clase:**\n\n• **Lunes a Jueves:** 07:45 a 16:00 hs.\n• **Viernes:** 07:45 a 15:00 hs.\n\nLos retiros anticipados deben ser comunicados previamente por el cuaderno de comunicaciones o mail.`;
+        }
+
+        if (p.includes("mail") || p.includes("contacto") || p.includes("escribir") || p.includes("queja")) {
+            return `📧 **Canal Oficial de Comunicación:**\n\nPor favor, para inquietudes pedagógicas o administrativas, escribinos a **[TU-MAIL-AQUÍ]**.\n\n*Respondemos todas las consultas en un plazo de 24/48hs hábiles.*`;
+        }
+
+        // --- 6. URGENCIA DETECTADA ---
+        if (p.includes("urgente") || p.includes("emergencia") || p.includes("pasó algo")) {
+            return "🚨 **PROTOCOLO DE EMERGENCIA:**\n\nHe detectado un mensaje de urgencia. Por favor, comuníquese telefónicamente al colegio de inmediato. Si es un aviso de retiro urgente, el personal de portería ya está siendo notificado de su inquietud en el panel.";
+        }
+
+    } catch (error) {
+        console.error(error);
+        return "Lo siento, tuve un problema al consultar la base de datos. Por favor, intentá de nuevo en un momento.";
     }
 
-    // 6. Respuesta por defecto si no entiende nada
-    return "No estoy seguro de cómo ayudarte con eso. ¿Querés saber los horarios, las últimas novedades del muro o ver las notas de " + hijoActivo.nombre + "?";
+    return "Hola, soy Iosi. Puedo darte un **resumen de materias**, decirte las **faltas**, mostrarte las **novedades del muro** o el **calendario** de exámenes. ¿Qué necesitás saber?";
 }
 
-
+    
     async function analisisRapidoIosi() {
         const input = document.getElementById('preguntaIosi');
         const box = document.getElementById('iosiContent');
