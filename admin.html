@@ -317,3 +317,64 @@
                 document.getElementById('listaEventos').innerHTML = snap.docs.map(doc => `
                     <div class="bg-white p-4 rounded-2xl border flex justify-between shadow-sm">
                         <div><p class="font-bold">${doc.data().titulo}</p><p class="text-[10px] te
+                        xt-indigo-500">${doc.data().fecha} - ${doc.data().cursoID}</p></div>
+                        <button onclick="borrar('eventos','${doc.id}')" class="text-red-300">🗑️</button>
+                    </div>`).join('');
+            });
+        }
+
+        // --- MENSAJERÍA ---
+        function cargarListaChats() {
+            db.collection('mensajes').onSnapshot(snap => {
+                const lista = document.getElementById('lista-chats');
+                const emails = [...new Set(snap.docs.map(doc => doc.data().participantes).flat())].filter(e => e !== "secretaria_primaria");
+                lista.innerHTML = '<p class="text-xs font-black text-slate-400 uppercase mb-4 px-2">Conversaciones</p>' + 
+                    emails.map(email => `<div onclick="abrirChat('${email}')" class="p-3 mb-2 rounded-xl bg-white border cursor-pointer hover:bg-blue-50 transition-all ${chatActivoEmail === email ? 'border-blue-500 bg-blue-50' : ''}"><p class="text-xs font-bold">${email}</p></div>`).join('');
+            });
+        }
+
+        function abrirChat(email) {
+            chatActivoEmail = email;
+            document.getElementById('chat-header').innerText = "Chat con: " + email;
+            db.collection('mensajes').where('participantes', 'array-contains', email).orderBy('fecha', 'asc').onSnapshot(snap => {
+                const box = document.getElementById('admin-chat-box');
+                box.innerHTML = snap.docs.map(doc => {
+                    const esSecretaria = doc.data().emisorID === "secretaria_primaria";
+                    return `<div class="max-w-[80%] p-3 rounded-2xl text-sm ${esSecretaria ? 'bg-blue-600 text-white self-end' : 'bg-white border text-slate-700 self-start'} shadow-sm">${doc.data().texto}</div>`;
+                }).join('');
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+
+        async function enviarRespuestaAdmin() {
+            const input = document.getElementById('admin-reply-input');
+            if(!input.value.trim() || !chatActivoEmail) return;
+            await db.collection('mensajes').add({
+                emisorID: "secretaria_primaria", receptorID: chatActivoEmail,
+                participantes: [chatActivoEmail, "secretaria_primaria"],
+                texto: input.value, fecha: new Date().toISOString()
+            });
+            input.value = "";
+        }
+
+        // --- UTILIDADES ---
+        async function borrar(col, id) {
+            if(confirm("¿Estás seguro de eliminar este registro?")) {
+                try {
+                    await db.collection(col).doc(id).delete();
+                } catch(e) { alert("Error al borrar"); }
+            }
+        }
+
+        // --- INICIALIZACIÓN DE ESCUCHAS ---
+        escucharCursos();
+        escucharAlumnos();
+        escucharDocentes();
+        escucharFamilias();
+        escucharEventos();
+        escucharFeed();
+
+    </script>
+</body>
+</html>
+
