@@ -112,11 +112,9 @@
 
         <section id="tab-cursos" class="admin-tab hidden">
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Configuración de Cursos</h2>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
-                <div class="flex gap-4">
-                    <input type="text" id="nombreCurso" placeholder="Ej: 1° Año A" class="flex-1 p-3 bg-slate-50 border rounded-xl outline-none text-center font-bold">
-                    <button onclick="crearCurso()" class="bg-green-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-green-700">Crear Curso</button>
-                </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8 flex gap-4">
+                <input type="text" id="nombreCurso" placeholder="Ej: 1° Año A" class="flex-1 p-3 bg-slate-50 border rounded-xl outline-none font-bold text-center">
+                <button onclick="crearCurso()" class="bg-green-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-green-700">Crear Curso</button>
             </div>
             <div id="listaCursos" class="grid grid-cols-1 md:grid-cols-4 gap-4"></div>
         </section>
@@ -152,6 +150,7 @@
     </main>
 
     <script>
+        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
             authDomain: "app-academica-interna.firebaseapp.com",
@@ -164,100 +163,17 @@
         const db = firebase.firestore();
         let chatActivoEmail = null;
 
+        // NAVEGACIÓN
         function tab(id) {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
             document.getElementById('tab-' + id).classList.remove('hidden');
             document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
             const btn = document.querySelector(`button[onclick="tab('${id}')"]`);
             if(btn) btn.classList.add('active');
-            
             if(id === 'mensajes') cargarListaChats();
         }
 
-        // --- FUNCIONES COMUNICACIÓN ---
-        async function publicarFeed() {
-            const titulo = document.getElementById('tituloPost').value;
-            const texto = document.getElementById('contenidoPost').value;
-            const tag = document.getElementById('tagPost').value;
-            if(!titulo || !texto) return alert("Completa título y texto");
-            
-            await db.collection('comunicados').add({
-                titulo, texto, tag,
-                creadoEn: new Date().toISOString(),
-                interacciones: {}
-            });
-            document.getElementById('tituloPost').value = "";
-            document.getElementById('contenidoPost').value = "";
-            alert("Publicado con éxito");
-        }
-
-        function escucharFeed() {
-            db.collection('comunicados').orderBy('creadoEn', 'desc').onSnapshot(snap => {
-                const container = document.getElementById('previewFeed');
-                container.innerHTML = snap.docs.map(doc => `
-                    <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                        <div class="flex justify-between"><span class="text-[9px] font-black text-pink-500 uppercase">${doc.data().tag}</span><button onclick="borrar('comunicados','${doc.id}')" class="text-red-400">×</button></div>
-                        <h4 class="font-bold text-slate-800">${doc.data().titulo}</h4>
-                        <p class="text-xs text-slate-500">${doc.data().texto.substring(0,100)}...</p>
-                    </div>
-                `).join('');
-            });
-        }
-
-        // --- FUNCIONES DOCENTES ---
-        async function registrarDocente() {
-            const nombre = document.getElementById('nombreDocente').value;
-            const email = document.getElementById('emailDocente').value.toLowerCase().trim();
-            if(!nombre || !email) return alert("Faltan datos");
-            
-            await db.collection('usuarios').doc(email).set({
-                nombre, rol: 'docente', email
-            });
-            alert("Docente registrado");
-            document.getElementById('nombreDocente').value = "";
-            document.getElementById('emailDocente').value = "";
-        }
-
-        function escucharDocentes() {
-            db.collection('usuarios').where('rol', '==', 'docente').onSnapshot(snap => {
-                const t = document.getElementById('tablaDocentes');
-                let html = '<table class="w-full text-sm text-left"><thead><tr class="bg-slate-50"><th class="p-4">Nombre</th><th class="p-4">Email</th><th class="p-4">Eliminar</th></tr></thead>';
-                snap.forEach(doc => {
-                    html += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}</td><td class="p-4">${doc.id}</td><td class="p-4"><button onclick="borrar('usuarios','${doc.id}')">🗑️</button></td></tr>`;
-                });
-                t.innerHTML = html + '</table>';
-            });
-        }
-
-        // --- FUNCIONES FAMILIAS ---
-        async function registrarFamilia() {
-            const email = document.getElementById('emailFamilia').value.toLowerCase().trim();
-            const nombre = document.getElementById('nombreFamilia').value;
-            const select = document.getElementById('selectHijo');
-            const hijosIDs = Array.from(select.selectedOptions).map(opt => opt.value);
-            
-            if(!email || hijosIDs.length === 0) return alert("Email e hijos son obligatorios");
-            
-            await db.collection('usuarios').doc(email).set({
-                nombre, email, rol: 'familia', hijoID: hijosIDs
-            });
-            alert("Familia creada correctamente");
-            document.getElementById('emailFamilia').value = "";
-            document.getElementById('nombreFamilia').value = "";
-        }
-
-        function escucharFamilias() {
-            db.collection('usuarios').where('rol', '==', 'familia').onSnapshot(snap => {
-                const t = document.getElementById('tablaFamilias');
-                let html = '<table class="w-full text-sm text-left"><thead><tr class="bg-slate-50"><th class="p-4">Tutor</th><th class="p-4">Hijos (IDs)</th><th class="p-4">Eliminar</th></tr></thead>';
-                snap.forEach(doc => {
-                    html += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}<br><span class="text-[10px] text-slate-400">${doc.id}</span></td><td class="p-4 text-[10px]">${doc.data().hijoID.join(', ')}</td><td class="p-4"><button onclick="borrar('usuarios','${doc.id}')">🗑️</button></td></tr>`;
-                });
-                t.innerHTML = html + '</table>';
-            });
-        }
-
-        // --- RESTO DE FUNCIONES ---
+        // --- GESTIÓN DE CURSOS ---
         async function crearCurso() {
             const n = document.getElementById('nombreCurso').value.toUpperCase().trim();
             if(n) await db.collection('cursos').doc(n).set({ nombre: n });
@@ -268,7 +184,7 @@
             db.collection('cursos').onSnapshot(snap => {
                 let h = "", opts = '<option value="TODOS">Toda la Escuela</option>';
                 snap.forEach(doc => {
-                    h += `<div class="bg-white p-4 rounded-2xl border flex justify-between font-bold"><span>${doc.id}</span><button onclick="borrar('cursos', '${doc.id}')" class="text-red-400">×</button></div>`;
+                    h += `<div class="bg-white p-4 rounded-2xl border flex justify-between font-bold shadow-sm"><span>${doc.id}</span><button onclick="borrar('cursos', '${doc.id}')" class="text-red-400">×</button></div>`;
                     opts += `<option value="${doc.id}">${doc.id}</option>`;
                 });
                 document.getElementById('listaCursos').innerHTML = h;
@@ -278,23 +194,22 @@
             });
         }
 
+        // --- GESTIÓN DE ALUMNOS ---
         async function crearAlumno() {
             const n = document.getElementById('nombreAlumno').value;
             const c = document.getElementById('cursoAlumno').value;
-            if(n && c) {
-                const docRef = await db.collection('alumnos').add({ nombre: n, cursoID: c });
-                // Inicializar boletín vacío
-                await db.collection('calificaciones').doc(docRef.id).set({ inasistencias: 0, notas: {} });
-            }
+            if(!n || !c) return alert("Faltan datos");
+            const res = await db.collection('alumnos').add({ nombre: n, cursoID: c });
+            await db.collection('calificaciones').doc(res.id).set({ inasistencias: 0, notas: {} });
             document.getElementById('nombreAlumno').value = "";
         }
 
         function escucharAlumnos() {
             db.collection('alumnos').onSnapshot(snap => {
-                let h = '<table class="w-full text-left text-sm"><thead><tr class="bg-slate-50"><th class="p-4">Nombre</th><th class="p-4">Curso</th><th class="p-4">ID Alumno</th><th class="p-4">Acción</th></tr></thead>';
+                let h = '<table class="w-full text-left text-sm"><thead><tr class="bg-slate-50"><th class="p-4">Nombre</th><th class="p-4">Curso</th><th class="p-4 text-center">Acción</th></tr></thead>';
                 let selectOpts = "";
                 snap.forEach(doc => {
-                    h += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}</td><td class="p-4">${doc.data().cursoID}</td><td class="p-4 text-[10px] text-slate-400">${doc.id}</td><td class="p-4"><button onclick="borrar('alumnos', '${doc.id}')">🗑️</button></td></tr>`;
+                    h += `<tr class="border-t hover:bg-slate-50"><td class="p-4 font-bold">${doc.data().nombre}</td><td class="p-4">${doc.data().cursoID}</td><td class="p-4 text-center"><button onclick="borrar('alumnos', '${doc.id}')">🗑️</button></td></tr>`;
                     selectOpts += `<option value="${doc.id}">${doc.data().nombre} (${doc.data().cursoID})</option>`;
                 });
                 document.getElementById('tablaAlumnos').innerHTML = h + '</table>';
@@ -302,13 +217,56 @@
             });
         }
 
+        // --- GESTIÓN DE DOCENTES ---
+        async function registrarDocente() {
+            const n = document.getElementById('nombreDocente').value;
+            const e = document.getElementById('emailDocente').value.toLowerCase().trim();
+            if(!n || !e) return alert("Faltan datos");
+            await db.collection('usuarios').doc(e).set({ nombre: n, email: e, rol: 'docente' });
+            alert("Docente registrado");
+            document.getElementById('nombreDocente').value = ""; document.getElementById('emailDocente').value = "";
+        }
+
+        function escucharDocentes() {
+            db.collection('usuarios').where('rol', '==', 'docente').onSnapshot(snap => {
+                let h = '<table class="w-full text-sm text-left"><thead><tr class="bg-slate-50"><th class="p-4">Nombre</th><th class="p-4">Email</th><th class="p-4">Acción</th></tr></thead>';
+                snap.forEach(doc => {
+                    h += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}</td><td class="p-4">${doc.id}</td><td class="p-4"><button onclick="borrar('usuarios','${doc.id}')">🗑️</button></td></tr>`;
+                });
+                document.getElementById('tablaDocentes').innerHTML = h + '</table>';
+            });
+        }
+
+        // --- GESTIÓN DE FAMILIAS ---
+        async function registrarFamilia() {
+            const email = document.getElementById('emailFamilia').value.toLowerCase().trim();
+            const nombre = document.getElementById('nombreFamilia').value;
+            const select = document.getElementById('selectHijo');
+            const hijos = Array.from(select.selectedOptions).map(opt => opt.value);
+            if(!email || hijos.length === 0) return alert("Email e hijos son obligatorios");
+            await db.collection('usuarios').doc(email).set({ nombre, email, rol: 'familia', hijoID: hijos });
+            alert("Cuenta de familia creada");
+            document.getElementById('emailFamilia').value = ""; document.getElementById('nombreFamilia').value = "";
+        }
+
+        function escucharFamilias() {
+            db.collection('usuarios').where('rol', '==', 'familia').onSnapshot(snap => {
+                let h = '<table class="w-full text-sm text-left"><thead><tr class="bg-slate-50"><th class="p-4">Tutor</th><th class="p-4 text-xs">IDs Hijos</th><th class="p-4">Acción</th></tr></thead>';
+                snap.forEach(doc => {
+                    h += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}<br><span class="text-[10px] font-normal text-slate-400">${doc.id}</span></td><td class="p-4 text-[9px] text-slate-400">${doc.data().hijoID.join(', ')}</td><td class="p-4"><button onclick="borrar('usuarios','${doc.id}')">🗑️</button></td></tr>`;
+                });
+                document.getElementById('tablaFamilias').innerHTML = h + '</table>';
+            });
+        }
+
+        // --- CALENDARIO Y EVENTOS ---
         async function crearEvento() {
             const fecha = document.getElementById('fechaEvento').value;
             const titulo = document.getElementById('tituloEvento').value;
             const curso = document.getElementById('cursoEvento').value;
             if(!fecha || !titulo) return alert("Faltan datos");
             await db.collection('eventos').add({ fecha, titulo, cursoID: curso });
-            alert("Evento creado");
+            alert("Evento agendado");
             document.getElementById('tituloEvento').value = "";
         }
 
@@ -316,9 +274,29 @@
             db.collection('eventos').orderBy('fecha', 'asc').onSnapshot(snap => {
                 document.getElementById('listaEventos').innerHTML = snap.docs.map(doc => `
                     <div class="bg-white p-4 rounded-2xl border flex justify-between shadow-sm">
-                        <div><p class="font-bold">${doc.data().titulo}</p><p class="text-[10px] te
-                        xt-indigo-500">${doc.data().fecha} - ${doc.data().cursoID}</p></div>
-                        <button onclick="borrar('eventos','${doc.id}')" class="text-red-300">🗑️</button>
+                        <div><p class="font-bold text-slate-700">${doc.data().titulo}</p><p class="text-[10px] font-black text-indigo-500 uppercase">${doc.data().fecha} - ${doc.data().cursoID}</p></div>
+                        <button onclick="borrar('eventos','${doc.id}')" class="text-red-300 hover:text-red-500">🗑️</button>
+                    </div>`).join('');
+            });
+        }
+
+        // --- COMUNICACIÓN (MURO) ---
+        async function publicarFeed() {
+            const titulo = document.getElementById('tituloPost').value;
+            const texto = document.getElementById('contenidoPost').value;
+            const tag = document.getElementById('tagPost').value;
+            if(!titulo || !texto) return alert("Completa los campos");
+            await db.collection('comunicados').add({ titulo, texto, tag, creadoEn: new Date().toISOString() });
+            document.getElementById('tituloPost').value = ""; document.getElementById('contenidoPost').value = "";
+        }
+
+        function escucharFeed() {
+            db.collection('comunicados').orderBy('creadoEn', 'desc').onSnapshot(snap => {
+                document.getElementById('previewFeed').innerHTML = snap.docs.map(doc => `
+                    <div class="bg-white p-4 rounded-2xl border shadow-sm">
+                        <div class="flex justify-between items-center mb-2"><span class="text-[9px] font-black text-pink-500 uppercase">${doc.data().tag}</span><button onclick="borrar('comunicados','${doc.id}')" class="text-red-300">×</button></div>
+                        <h4 class="font-bold text-slate-800 leading-tight">${doc.data().titulo}</h4>
+                        <p class="text-xs text-slate-500 mt-1">${doc.data().texto.substring(0,100)}...</p>
                     </div>`).join('');
             });
         }
@@ -326,21 +304,20 @@
         // --- MENSAJERÍA ---
         function cargarListaChats() {
             db.collection('mensajes').onSnapshot(snap => {
-                const lista = document.getElementById('lista-chats');
                 const emails = [...new Set(snap.docs.map(doc => doc.data().participantes).flat())].filter(e => e !== "secretaria_primaria");
-                lista.innerHTML = '<p class="text-xs font-black text-slate-400 uppercase mb-4 px-2">Conversaciones</p>' + 
-                    emails.map(email => `<div onclick="abrirChat('${email}')" class="p-3 mb-2 rounded-xl bg-white border cursor-pointer hover:bg-blue-50 transition-all ${chatActivoEmail === email ? 'border-blue-500 bg-blue-50' : ''}"><p class="text-xs font-bold">${email}</p></div>`).join('');
+                document.getElementById('lista-chats').innerHTML = '<p class="text-[10px] font-black text-slate-400 uppercase mb-4 px-2">Chats Recientes</p>' + 
+                    emails.map(email => `<div onclick="abrirChat('${email}')" class="p-3 mb-2 rounded-xl bg-slate-50 border cursor-pointer hover:bg-blue-50 font-bold text-xs">${email}</div>`).join('');
             });
         }
 
         function abrirChat(email) {
             chatActivoEmail = email;
-            document.getElementById('chat-header').innerText = "Chat con: " + email;
+            document.getElementById('chat-header').innerText = "Respondiendo a: " + email;
             db.collection('mensajes').where('participantes', 'array-contains', email).orderBy('fecha', 'asc').onSnapshot(snap => {
                 const box = document.getElementById('admin-chat-box');
                 box.innerHTML = snap.docs.map(doc => {
                     const esSecretaria = doc.data().emisorID === "secretaria_primaria";
-                    return `<div class="max-w-[80%] p-3 rounded-2xl text-sm ${esSecretaria ? 'bg-blue-600 text-white self-end' : 'bg-white border text-slate-700 self-start'} shadow-sm">${doc.data().texto}</div>`;
+                    return `<div class="max-w-[85%] p-3 rounded-2xl text-xs ${esSecretaria ? 'bg-blue-600 text-white self-end' : 'bg-white border text-slate-700 self-start shadow-sm'}">${doc.data().texto}</div>`;
                 }).join('');
                 box.scrollTop = box.scrollHeight;
             });
@@ -359,14 +336,10 @@
 
         // --- UTILIDADES ---
         async function borrar(col, id) {
-            if(confirm("¿Estás seguro de eliminar este registro?")) {
-                try {
-                    await db.collection(col).doc(id).delete();
-                } catch(e) { alert("Error al borrar"); }
-            }
+            if(confirm("¿Seguro que querés borrar este registro?")) await db.collection(col).doc(id).delete();
         }
 
-        // --- INICIALIZACIÓN DE ESCUCHAS ---
+        // INICIALIZACIÓN GENERAL
         escucharCursos();
         escucharAlumnos();
         escucharDocentes();
@@ -377,4 +350,4 @@
     </script>
 </body>
 </html>
-
+            
