@@ -3,144 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin Pro - Sistema Educativo</title>
+    <title>Admin Maestro - Sincronizado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        .tab-content { display: none; padding-bottom: 80px; }
-        .tab-content.active { display: block; animation: fadeIn 0.2s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Estilos para el Bottom Nav en Mobile */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; padding: 10px 0; z-index: 50; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 10px; font-weight: 600; transition: 0.2s; }
-        .nav-item.active { color: #2563eb; }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; }
-
-        @media (min-width: 768px) {
-            .bottom-nav { display: none; }
-            .tab-content { padding-bottom: 20px; margin-left: 260px; }
-            .sidebar { display: flex !important; }
-        }
-
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; padding-bottom: 90px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .nav-active { color: #2563eb !important; border-top: 3px solid #2563eb; background: #eff6ff; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body>
 
-    <aside class="sidebar hidden fixed left-0 top-0 bottom-0 w-64 bg-white border-r flex-col p-6 z-40">
-        <h1 class="text-xl font-bold text-blue-600 mb-8 px-2">EduAdmin <span class="text-slate-400 text-xs">v3.0</span></h1>
-        <nav class="space-y-1">
-            <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center p-3 rounded-xl hover:bg-slate-50 font-semibold text-slate-500 active" data-tab="dashboard">
-                <i class="fa-solid fa-house mr-3"></i> Dashboard
-            </button>
-            <button onclick="switchTab('alumnos')" class="nav-btn w-full flex items-center p-3 rounded-xl hover:bg-slate-50 font-semibold text-slate-500" data-tab="alumnos">
-                <i class="fa-solid fa-user-graduate mr-3"></i> Alumnos
-            </button>
-            <button onclick="switchTab('familias')" class="nav-btn w-full flex items-center p-3 rounded-xl hover:bg-slate-50 font-semibold text-slate-500" data-tab="familias">
-                <i class="fa-solid fa-users mr-3"></i> Familias
-            </button>
-            <button onclick="switchTab('comunicaciones')" class="nav-btn w-full flex items-center p-3 rounded-xl hover:bg-slate-50 font-semibold text-slate-500" data-tab="comunicaciones">
-                <i class="fa-solid fa-bullhorn mr-3"></i> Muro
-            </button>
-            <button onclick="switchTab('calendario')" class="nav-btn w-full flex items-center p-3 rounded-xl hover:bg-slate-50 font-semibold text-slate-500" data-tab="calendario">
-                <i class="fa-solid fa-calendar mr-3"></i> Agenda
-            </button>
-        </nav>
-    </aside>
+    <header class="bg-white p-4 border-b flex justify-between items-center sticky top-0 z-40">
+        <h1 class="font-800 text-lg tracking-tight">EDU<span class="text-blue-600">ADMIN</span></h1>
+        <div id="conn-status" class="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-1 rounded-full font-bold">CONECTADO</div>
+    </header>
 
-    <nav class="bottom-nav md:hidden">
-        <button onclick="switchTab('dashboard')" class="nav-item active" data-tab="dashboard"><i class="fa-solid fa-house"></i>Inicio</button>
-        <button onclick="switchTab('alumnos')" class="nav-item" data-tab="alumnos"><i class="fa-solid fa-user-graduate"></i>Alumnos</button>
-        <button onclick="switchTab('comunicaciones')" class="nav-item" data-tab="comunicaciones"><i class="fa-solid fa-bullhorn"></i>Muro</button>
-        <button onclick="switchTab('calendario')" class="nav-item" data-tab="calendario"><i class="fa-solid fa-calendar"></i>Agenda</button>
-        <button onclick="switchTab('mensajes')" class="nav-item" data-tab="mensajes"><i class="fa-solid fa-message"></i>Chats</button>
-    </nav>
-
-    <main class="p-4 md:p-10">
+    <main class="p-4 max-w-lg mx-auto">
         
-        <section id="tab-dashboard" class="tab-content active">
-            <header class="mb-6">
-                <h2 class="text-2xl font-bold">Resumen Diario</h2>
-                <p class="text-slate-500 text-sm">Control de sincronización</p>
-            </header>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="bg-white p-4 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase">Alumnos</p><h3 id="stat-a" class="text-2xl font-bold">--</h3></div>
-                <div class="bg-white p-4 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase">Familias</p><h3 id="stat-f" class="text-2xl font-bold">--</h3></div>
-                <div class="bg-blue-600 p-4 rounded-2xl text-white shadow-md"><p class="text-[10px] font-bold opacity-80 uppercase">Mensajes</p><h3 id="stat-m" class="text-2xl font-bold">--</h3></div>
-                <div class="bg-white p-4 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase">Cursos</p><h3 id="stat-c" class="text-2xl font-bold">--</h3></div>
+        <section id="t-inicio" class="tab-content active">
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-white p-5 rounded-3xl border shadow-sm text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Alumnos</p>
+                    <h2 id="count-alu" class="text-3xl font-800 text-slate-800">0</h2>
+                </div>
+                <div class="bg-white p-5 rounded-3xl border shadow-sm text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Familias</p>
+                    <h2 id="count-fam" class="text-3xl font-800 text-slate-800">0</h2>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-[2rem] border shadow-sm">
+                <h3 class="font-bold mb-2">Central de Datos</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">Este panel alimenta a la <b>App Docentes</b> (notas/asistencia) y a la <b>App Familias</b> (comunicados/agenda). Los cambios son instantáneos.</p>
             </div>
         </section>
 
-        <section id="tab-alumnos" class="tab-content">
-            <h2 class="text-xl font-bold mb-4">Gestión de Alumnos</h2>
-            <div class="bg-white p-5 rounded-2xl border shadow-sm mb-6 space-y-3">
-                <input type="text" id="alu-nombre" placeholder="Nombre completo" class="w-full p-3 bg-slate-50 rounded-xl outline-none border focus:border-blue-500">
+        <section id="t-alumnos" class="tab-content">
+            <div class="bg-white p-6 rounded-[2rem] border shadow-sm mb-4">
+                <h3 class="font-bold mb-4">Alta de Alumno</h3>
+                <input type="text" id="alu-nom" placeholder="Nombre completo" class="w-full p-4 bg-slate-50 rounded-2xl mb-3 outline-none border-none font-semibold">
                 <div class="flex gap-2">
-                    <select id="alu-curso" class="flex-1 p-3 bg-slate-50 rounded-xl outline-none border"></select>
-                    <button onclick="crearAlumno()" class="bg-blue-600 text-white px-6 rounded-xl font-bold">Alta</button>
+                    <select id="alu-cur" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-600 border-none"></select>
+                    <button onclick="addAlumno()" class="bg-blue-600 text-white px-6 rounded-2xl font-bold"><i class="fa-solid fa-plus"></i></button>
                 </div>
             </div>
             <div id="list-alu" class="space-y-2"></div>
         </section>
 
-        <section id="tab-familias" class="tab-content">
-            <h2 class="text-xl font-bold mb-4">Vincular Cuentas</h2>
-            <div class="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
-                <input type="text" id="fam-nombre" placeholder="Nombre del Tutor" class="w-full p-3 border rounded-xl">
-                <input type="email" id="fam-email" placeholder="Email (Usuario App Familias)" class="w-full p-3 border rounded-xl">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 ml-1">SELECCIONAR HIJOS</label>
-                    <select id="fam-hijos" multiple class="w-full p-3 border rounded-xl h-32 mt-1"></select>
-                </div>
-                <button onclick="crearFamilia()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold">Guardar Familia</button>
+        <section id="t-familias" class="tab-content">
+            <div class="bg-white p-6 rounded-[2rem] border shadow-sm mb-4">
+                <h3 class="font-bold mb-4">Cuenta para Familia</h3>
+                <input type="text" id="fam-nom" placeholder="Nombre del Padre/Madre" class="w-full p-4 bg-slate-50 rounded-2xl mb-3 outline-none">
+                <input type="email" id="fam-mail" placeholder="Correo electrónico" class="w-full p-4 bg-slate-50 rounded-2xl mb-4 outline-none">
+                
+                <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase ml-2">Vincular con Alumno/s:</p>
+                <select id="fam-hijos" multiple class="w-full p-4 bg-slate-50 rounded-2xl h-40 border-none font-bold text-slate-600 mb-4"></select>
+                
+                <button onclick="addFamilia()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-800">SINCRONIZAR FAMILIA</button>
             </div>
-            <div id="list-fam" class="mt-6 space-y-2"></div>
+            <div id="list-fam" class="space-y-2"></div>
         </section>
 
-        <section id="tab-comunicaciones" class="tab-content">
-            <h2 class="text-xl font-bold mb-4">Publicar Comunicado</h2>
-            <div class="bg-white p-5 rounded-2xl border shadow-sm mb-6 space-y-3">
-                <input type="text" id="post-tit" placeholder="Título" class="w-full p-3 border rounded-xl font-bold">
-                <textarea id="post-msg" rows="3" placeholder="Mensaje para las familias..." class="w-full p-3 border rounded-xl"></textarea>
-                <select id="post-tag" class="w-full p-3 border rounded-xl"></select>
-                <button onclick="publicarMuro()" class="w-full bg-pink-500 text-white py-3 rounded-xl font-bold">Publicar en App Familias</button>
+        <section id="t-muro" class="tab-content">
+            <div class="bg-white p-6 rounded-[2rem] border shadow-sm mb-4 space-y-3">
+                <input type="text" id="post-tit" placeholder="Título" class="w-full p-4 bg-slate-50 rounded-2xl border-none font-bold">
+                <textarea id="post-msg" rows="4" placeholder="Escribe el comunicado..." class="w-full p-4 bg-slate-50 rounded-2xl border-none"></textarea>
+                <select id="post-tag" class="w-full p-4 bg-slate-50 rounded-2xl border-none font-bold text-slate-500"></select>
+                <button onclick="addPost()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-bold">PUBLICAR EN MURO</button>
             </div>
-            <div id="list-muro" class="space-y-4"></div>
-        </section>
-
-        <section id="tab-calendario" class="tab-content">
-            <h2 class="text-xl font-bold mb-4">Agenda Institucional</h2>
-            <div class="bg-indigo-900 p-5 rounded-2xl text-white mb-6 space-y-3">
-                <input type="date" id="cal-fec" class="w-full p-3 rounded-xl text-slate-900">
-                <input type="text" id="cal-tit" placeholder="Nombre del Evento" class="w-full p-3 rounded-xl text-slate-900">
-                <button onclick="crearEvento()" class="w-full bg-white text-indigo-900 py-3 rounded-xl font-bold">Sincronizar Fecha</button>
-            </div>
-            <div id="list-cal" class="space-y-2"></div>
-        </section>
-
-        <section id="tab-mensajes" class="tab-content">
-            <div class="bg-white border rounded-2xl overflow-hidden shadow-sm flex flex-col h-[75vh]">
-                <div id="chat-list" class="flex overflow-x-auto p-3 bg-slate-50 border-b gap-2 custom-scroll"></div>
-                <div id="chat-header" class="p-3 text-xs font-bold text-blue-600 border-b bg-white">Selecciona un chat</div>
-                <div id="chat-msgs" class="flex-1 p-4 overflow-y-auto flex flex-col gap-2 bg-slate-50/50"></div>
-                <div class="p-3 border-t flex gap-2 bg-white">
-                    <input type="text" id="chat-in" placeholder="Responder..." class="flex-1 border p-2 rounded-lg text-sm outline-none">
-                    <button onclick="enviarChat()" class="bg-blue-600 text-white px-4 rounded-lg"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
+            <div id="list-muro" class="space-y-3"></div>
         </section>
 
     </main>
 
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 z-50">
+        <button onclick="nav('inicio')" id="b-inicio" class="flex flex-col items-center p-2 nav-active text-slate-400 w-full">
+            <i class="fa-solid fa-house-chimney text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Inicio</span>
+        </button>
+        <button onclick="nav('alumnos')" id="b-alumnos" class="flex flex-col items-center p-2 text-slate-400 w-full">
+            <i class="fa-solid fa-user-graduate text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Alumnos</span>
+        </button>
+        <button onclick="nav('familias')" id="b-familias" class="flex flex-col items-center p-2 text-slate-400 w-full">
+            <i class="fa-solid fa-users text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Familias</span>
+        </button>
+        <button onclick="nav('muro')" id="b-muro" class="flex flex-col items-center p-2 text-slate-400 w-full">
+            <i class="fa-solid fa-message-captions text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Muro</span>
+        </button>
+    </nav>
+
     <script>
-        // CONFIGURACIÓN CENTRALIZADA
+        // CONFIGURACIÓN (Verificada)
         const firebaseConfig = {
             apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
             authDomain: "app-academica-interna.firebaseapp.com",
@@ -151,164 +108,110 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        let selChat = null;
 
-        // NAVEGACIÓN RESPONSIVE
-        function switchTab(id) {
+        // NAVEGACIÓN
+        function nav(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item, .nav-btn').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById('tab-' + id).classList.add('active');
-            document.querySelectorAll(`[data-tab="${id}"]`).forEach(el => el.classList.add('active'));
-            
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
+            document.getElementById('t-' + id).classList.add('active');
+            document.getElementById('b-' + id).classList.add('nav-active');
             window.scrollTo(0,0);
-            if(id === 'mensajes') syncChatList();
         }
 
-        // --- LÓGICA DE DATOS ---
+        // 1. CURSOS (Sincronización automática)
+        db.collection('cursos').onSnapshot(snap => {
+            let opts = '<option value="TODOS">Toda la Escuela</option>';
+            snap.forEach(doc => opts += `<option value="${doc.id}">${doc.id}</option>`);
+            document.getElementById('alu-cur').innerHTML = opts;
+            document.getElementById('post-tag').innerHTML = opts;
+        });
 
-        // ALUMNOS & CURSOS
-        function syncCursos() {
-            db.collection('cursos').onSnapshot(snap => {
-                let opts = '<option value="TODOS">Toda la Escuela</option>';
-                snap.forEach(doc => opts += `<option value="${doc.id}">${doc.id}</option>`);
-                document.getElementById('alu-curso').innerHTML = opts;
-                document.getElementById('post-tag').innerHTML = opts;
-                document.getElementById('stat-c').innerText = snap.size;
+        // 2. ALUMNOS (Crea el vínculo para Docentes)
+        async function addAlumno() {
+            const nom = document.getElementById('alu-nom').value.trim();
+            const cur = document.getElementById('alu-cur').value;
+            if(!nom) return;
+            
+            // Creamos el alumno
+            const res = await db.collection('alumnos').add({
+                nombre: nom,
+                cursoID: cur,
+                creadoEn: firebase.firestore.FieldValue.serverTimestamp()
             });
-        }
 
-        async function crearAlumno() {
-            const n = document.getElementById('alu-nombre').value.trim();
-            const c = document.getElementById('alu-curso').value;
-            if(!n) return;
-            const res = await db.collection('alumnos').add({ nombre: n, cursoID: c, timestamp: new Date() });
-            await db.collection('calificaciones').doc(res.id).set({ notas: {}, inasistencias: 0 });
-            document.getElementById('alu-nombre').value = "";
-        }
-
-        function syncAlumnos() {
-            db.collection('alumnos').orderBy('timestamp','desc').onSnapshot(snap => {
-                let html = "", opts = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    html += `<div class="bg-white p-3 rounded-xl border flex justify-between items-center text-sm shadow-sm">
-                        <div><p class="font-bold">${d.nombre}</p><p class="text-[10px] text-slate-400 font-bold uppercase">${d.cursoID}</p></div>
-                        <button onclick="borrar('alumnos','${doc.id}')" class="text-slate-300"><i class="fa-solid fa-trash text-xs"></i></button>
-                    </div>`;
-                    opts += `<option value="${doc.id}">${d.nombre} (${d.cursoID})</option>`;
-                });
-                document.getElementById('list-alu').innerHTML = html;
-                document.getElementById('fam-hijos').innerHTML = opts;
-                document.getElementById('stat-a').innerText = snap.size;
+            // VÍNCULO DOCENTE: Creamos el documento de notas con el MISMO ID
+            await db.collection('calificaciones').doc(res.id).set({
+                inasistencias: 0,
+                notas: {},
+                nombreAlumno: nom // redundancia para facilitar búsqueda
             });
+
+            document.getElementById('alu-nom').value = "";
         }
 
-        // FAMILIAS
-        async function crearFamilia() {
-            const e = document.getElementById('fam-email').value.toLowerCase().trim();
-            const n = document.getElementById('fam-nombre').value.trim();
-            const h = Array.from(document.getElementById('fam-hijos').selectedOptions).map(o => o.value);
-            if(!e || h.length === 0) return alert("Email e hijos obligatorios");
-            await db.collection('usuarios').doc(e).set({ nombre: n, email: e, rol: 'familia', hijoID: h });
-            alert("Familia Sincronizada");
-        }
-
-        function syncFamilias() {
-            db.collection('usuarios').where('rol','==','familia').onSnapshot(snap => {
-                document.getElementById('list-fam').innerHTML = snap.docs.map(doc => `
-                    <div class="bg-white p-3 rounded-xl border flex justify-between text-xs">
-                        <div><p class="font-bold">${doc.data().nombre}</p><p class="text-slate-400">${doc.id}</p></div>
-                        <button onclick="borrar('usuarios','${doc.id}')" class="text-red-200">×</button>
-                    </div>`).join('');
-                document.getElementById('stat-f').innerText = snap.size;
+        db.collection('alumnos').orderBy('nombre').onSnapshot(snap => {
+            let html = "", opts = "";
+            snap.forEach(doc => {
+                html += `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm">
+                    <div><p class="font-bold text-sm text-slate-700">${doc.data().nombre}</p><p class="text-[9px] font-black text-blue-500 uppercase">${doc.data().cursoID}</p></div>
+                    <button onclick="borrar('alumnos','${doc.id}')" class="text-slate-200"><i class="fa-solid fa-trash"></i></button>
+                </div>`;
+                opts += `<option value="${doc.id}">${doc.data().nombre} (${doc.data().cursoID})</option>`;
             });
+            document.getElementById('list-alu').innerHTML = html;
+            document.getElementById('fam-hijos').innerHTML = opts;
+            document.getElementById('count-alu').innerText = snap.size;
+        });
+
+        // 3. FAMILIAS (Vínculo para App Familias)
+        async function addFamilia() {
+            const mail = document.getElementById('fam-mail').value.toLowerCase().trim();
+            const nom = document.getElementById('fam-nom').value.trim();
+            const hijos = Array.from(document.getElementById('fam-hijos').selectedOptions).map(o => o.value);
+
+            if(!mail || hijos.length === 0) return alert("Email e hijos son obligatorios");
+
+            await db.collection('usuarios').doc(mail).set({
+                nombre: nom,
+                email: mail,
+                rol: 'familia',
+                hijoID: hijos // Esto es lo que la App Familias usa para filtrar
+            });
+            alert("Familia conectada correctamente");
         }
 
-        // MURO (Colección: comunicados)
-        async function publicarMuro() {
+        db.collection('usuarios').where('rol','==','familia').onSnapshot(snap => {
+            document.getElementById('count-fam').innerText = snap.size;
+        });
+
+        // 4. MURO (Vínculo para App Familias)
+        async function addPost() {
             const tit = document.getElementById('post-tit').value;
             const msg = document.getElementById('post-msg').value;
             const tag = document.getElementById('post-tag').value;
             if(!tit || !msg) return;
-            await db.collection('comunicados').add({ titulo: tit, texto: msg, tag: tag, creadoEn: new Date().toISOString() });
-            document.getElementById('post-tit').value = ""; document.getElementById('post-msg').value = "";
-        }
 
-        function syncMuro() {
-            db.collection('comunicados').orderBy('creadoEn','desc').onSnapshot(snap => {
-                document.getElementById('list-muro').innerHTML = snap.docs.map(doc => `
-                    <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                        <span class="text-[8px] font-black bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full uppercase">${doc.data().tag}</span>
-                        <h4 class="font-bold text-sm mt-1">${doc.data().titulo}</h4>
-                        <p class="text-[11px] text-slate-500 mt-1">${doc.data().texto}</p>
-                    </div>`).join('');
+            await db.collection('comunicados').add({
+                titulo: tit,
+                texto: msg,
+                tag: tag,
+                creadoEn: new Date().toISOString() // La App Familias suele leer ISOStrings
             });
+            document.getElementById('post-tit').value = "";
+            document.getElementById('post-msg').value = "";
         }
 
-        // CALENDARIO (Colección: eventos)
-        async function crearEvento() {
-            const f = document.getElementById('cal-fec').value;
-            const t = document.getElementById('cal-tit').value.trim();
-            if(!f || !t) return;
-            await db.collection('eventos').add({ fecha: f, titulo: t });
-            document.getElementById('cal-tit').value = "";
-        }
-
-        function syncAgenda() {
-            db.collection('eventos').orderBy('fecha','asc').onSnapshot(snap => {
-                document.getElementById('list-cal').innerHTML = snap.docs.map(doc => `
-                    <div class="bg-white p-3 rounded-xl border flex justify-between items-center text-xs">
-                        <div class="flex items-center gap-3"><span class="bg-indigo-100 text-indigo-600 p-2 rounded-lg font-bold">${doc.data().fecha.split('-')[2]}</span><p class="font-bold">${doc.data().titulo}</p></div>
-                        <button onclick="borrar('eventos','${doc.id}')" class="text-slate-300">×</button>
-                    </div>`).join('');
-                document.getElementById('stat-e').innerText = snap.size;
-            });
-        }
-
-        // CHAT
-        function syncChatList() {
-            db.collection('mensajes').onSnapshot(snap => {
-                const par = [...new Set(snap.docs.map(d => d.data().participantes || []).flat())].filter(e => e !== 'secretaria_primaria');
-                document.getElementById('chat-list').innerHTML = par.map(e => `<button onclick="loadChat('${e}')" class="whitespace-nowrap px-4 py-2 bg-white rounded-full border text-[10px] font-bold shadow-sm">${e.split('@')[0]}</button>`).join('');
-                document.getElementById('stat-m').innerText = par.length;
-            });
-        }
-
-        function loadChat(email) {
-            selChat = email;
-            document.getElementById('chat-header').innerText = email;
-            db.collection('mensajes').where('participantes','array-contains',email).orderBy('fecha','asc').onSnapshot(snap => {
-                const box = document.getElementById('chat-msgs');
-                box.innerHTML = snap.docs.map(doc => {
-                    const esAdm = doc.data().emisorID === 'secretaria_primaria';
-                    return `<div class="max-w-[85%] p-3 rounded-2xl text-[11px] font-bold ${esAdm ? 'bg-blue-600 text-white self-end rounded-tr-none' : 'bg-white border self-start rounded-tl-none'}">${doc.data().texto}</div>`;
-                }).join('');
-                box.scrollTop = box.scrollHeight;
-            });
-        }
-
-        async function enviarChat() {
-            const i = document.getElementById('chat-in');
-            if(!i.value || !selChat) return;
-            await db.collection('mensajes').add({
-                emisorID: 'secretaria_primaria', receptorID: selChat,
-                participantes: [selChat, 'secretaria_primaria'],
-                texto: i.value, fecha: new Date().toISOString()
-            });
-            i.value = "";
-        }
+        db.collection('comunicados').orderBy('creadoEn', 'desc').onSnapshot(snap => {
+            document.getElementById('list-muro').innerHTML = snap.docs.map(doc => `
+                <div class="bg-white p-5 rounded-3xl border shadow-sm">
+                    <span class="text-[8px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded-full uppercase">${doc.data().tag}</span>
+                    <h4 class="font-bold text-sm mt-2">${doc.data().titulo}</h4>
+                    <p class="text-[11px] text-slate-500 mt-1">${doc.data().texto}</p>
+                </div>`).join('');
+        });
 
         async function borrar(col, id) { if(confirm("¿Eliminar?")) await db.collection(col).doc(id).delete(); }
 
-        // START
-        window.onload = () => {
-            syncCursos();
-            syncAlumnos();
-            syncFamilias();
-            syncMuro();
-            syncAgenda();
-        };
     </script>
 </body>
 </html>
