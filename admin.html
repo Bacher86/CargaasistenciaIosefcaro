@@ -1,19 +1,20 @@
-                   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Panel de Control Escolar</title>
+    <title>Admin - Panel Escolar Directo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .admin-tab { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .sidebar-btn.active { background: #1e293b; border-left: 4px solid #3b82f6; }
+        .admin-tab { display: none; }
+        .admin-tab.active { display: block; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .sidebar-btn.active { background: #1e293b; border-left: 4px solid #3b82f6; color: #60a5fa; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex">
@@ -24,140 +25,98 @@
             <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Gestión Institucional</p>
         </div>
         <nav class="space-y-2">
-            <button onclick="tab('alumnos')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all active">
-                <i class="fa-solid fa-graduation-cap mr-3 text-blue-400 w-5"></i> Alumnos
+            <button onclick="tab('alumnos')" id="btn-alumnos" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl active">
+                <i class="fa-solid fa-graduation-cap mr-3 w-5"></i> Alumnos
             </button>
-            <button onclick="tab('cursos')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
-                <i class="fa-solid fa-chalkboard mr-3 text-green-400 w-5"></i> Cursos
+            <button onclick="tab('cursos')" id="btn-cursos" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl">
+                <i class="fa-solid fa-chalkboard mr-3 w-5"></i> Cursos
             </button>
-            <button onclick="tab('docentes')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
-                <i class="fa-solid fa-user-tie mr-3 text-purple-400 w-5"></i> Docentes
+            <button onclick="tab('docentes')" id="btn-docentes" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl">
+                <i class="fa-solid fa-user-tie mr-3 w-5"></i> Docentes
             </button>
-            <button onclick="tab('familias')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
-                <i class="fa-solid fa-people-group mr-3 text-orange-400 w-5"></i> Familias
+            <button onclick="tab('familias')" id="btn-familias" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl">
+                <i class="fa-solid fa-people-group mr-3 w-5"></i> Familias
             </button>
-            <button onclick="tab('mensajes')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
-                <i class="fa-solid fa-comments mr-3 text-cyan-400 w-5"></i> Mensajería
+            <button onclick="tab('comunicacion')" id="btn-comunicacion" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl">
+                <i class="fa-solid fa-bullhorn mr-3 w-5"></i> Muro Escolar
             </button>
-            <div class="border-t border-slate-800 my-4"></div>
-            <button onclick="tab('calendario')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
-                <i class="fa-solid fa-calendar-days mr-3 text-indigo-400 w-5"></i> Calendario
-            </button>
-            <button onclick="tab('comunicacion')" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl transition-all">
-                <i class="fa-solid fa-bullhorn mr-3 text-pink-400 w-5"></i> Comunicación
+            <button onclick="tab('mensajes')" id="btn-mensajes" class="sidebar-btn flex items-center w-full p-3 hover:bg-slate-800 rounded-xl">
+                <i class="fa-solid fa-comments mr-3 w-5"></i> Mensajes
             </button>
         </nav>
     </aside>
 
     <main class="flex-1 p-8 overflow-y-auto">
         
-        <section id="tab-alumnos" class="admin-tab">
+        <section id="tab-alumnos" class="admin-tab active">
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Gestión de Alumnos</h2>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="nombreAlumno" placeholder="Nombre Completo" class="p-3 bg-slate-50 border rounded-xl outline-none">
-                    <select id="cursoAlumno" class="p-3 bg-slate-50 border rounded-xl outline-none font-bold text-slate-600">
-                        <option value="">Cargando cursos...</option>
-                    </select>
-                    <button onclick="crearAlumno()" class="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700">Registrar Alumno</button>
-                </div>
+            <div class="bg-white p-6 rounded-3xl border mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 shadow-sm">
+                <input type="text" id="nombreAlumno" placeholder="Nombre completo" class="p-3 border rounded-xl outline-none">
+                <select id="cursoAlumno" class="p-3 border rounded-xl outline-none font-bold text-slate-600">
+                    <option value="">Cargando cursos...</option>
+                </select>
+                <button onclick="crearAlumno()" class="bg-blue-600 text-white font-bold py-3 rounded-xl">Registrar Alumno</button>
             </div>
             <div id="tablaAlumnos" class="bg-white rounded-3xl border overflow-hidden shadow-sm"></div>
         </section>
 
-        <section id="tab-mensajes" class="admin-tab hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-6">Centro de Mensajería</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[600px] bg-white rounded-3xl shadow-sm border p-4">
-                <div class="border-r pr-4 overflow-y-auto" id="lista-chats">
-                    <p class="text-xs font-black text-slate-400 uppercase mb-4 px-2 tracking-widest">Conversaciones</p>
-                </div>
-                <div class="md:col-span-2 flex flex-col h-full">
-                    <div id="chat-header" class="p-4 border-b font-bold text-slate-700 bg-slate-50 rounded-t-2xl">Seleccioná una familia</div>
-                    <div id="admin-chat-box" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-slate-50/30"></div>
-                    <div class="p-4 border-t flex gap-2">
-                        <input type="text" id="admin-reply-input" placeholder="Escribir respuesta..." class="flex-1 border rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
-                        <button onclick="enviarRespuestaAdmin()" class="bg-blue-600 text-white px-6 rounded-xl hover:bg-blue-700 shadow-lg">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
+        <section id="tab-cursos" class="admin-tab">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Configuración de Cursos</h2>
+            <div class="bg-white p-6 rounded-3xl border mb-8 flex gap-4 shadow-sm">
+                <input type="text" id="nombreCurso" placeholder="Ej: 1° AÑO A" class="flex-1 p-3 border rounded-xl font-bold uppercase">
+                <button onclick="crearCurso()" class="bg-green-600 text-white font-bold px-8 rounded-xl">Crear Curso</button>
             </div>
+            <div id="listaCursos" class="grid grid-cols-1 md:grid-cols-4 gap-4"></div>
         </section>
 
-        <section id="tab-calendario" class="admin-tab hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-6">Agenda de Eventos</h2>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <input type="date" id="fechaEvento" class="p-3 bg-slate-50 border rounded-xl outline-none">
-                    <input type="text" id="tituloEvento" placeholder="Ej: Examen de Matemática" class="p-3 bg-slate-50 border rounded-xl outline-none">
-                    <select id="cursoEvento" class="p-3 bg-slate-50 border rounded-xl outline-none font-bold text-slate-600">
-                        <option value="TODOS">Toda la Escuela</option>
-                    </select>
-                    <button onclick="crearEvento()" class="bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700">Agendar Evento</button>
-                </div>
-            </div>
-            <div id="listaEventos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </section>
-
-        <section id="tab-comunicacion" class="admin-tab hidden">
+        <section id="tab-comunicacion" class="admin-tab">
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Muro de Comunicación</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 space-y-4 h-fit">
-                    <input type="text" id="tituloPost" placeholder="Título del comunicado" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-bold">
-                    <textarea id="contenidoPost" rows="4" placeholder="¿Qué está pasando?" class="w-full p-3 bg-slate-50 border rounded-xl outline-none"></textarea>
-                    
-                    <div class="grid grid-cols-1 gap-2">
-                        <input type="text" id="linkImagen" placeholder="Link de Imagen (ImgBB)" class="w-full p-3 bg-white border rounded-xl text-xs outline-none">
-                        <input type="text" id="linkPDF" placeholder="Link de PDF (Drive/Dropbox)" class="w-full p-3 bg-white border rounded-xl text-xs outline-none">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="datetime-local" id="fechaProgramada" class="w-full p-2 bg-slate-50 border rounded-xl text-xs outline-none">
-                        <select id="tagPost" class="w-full p-2 bg-slate-50 border rounded-xl text-xs outline-none font-bold"></select>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button onclick="mejorarConIA(event)" class="flex-1 bg-indigo-50 text-indigo-600 py-3 rounded-xl font-bold text-xs hover:bg-indigo-100">IA Pulir</button>
-                        <button onclick="publicarFeed()" class="flex-[2] bg-pink-500 text-white font-bold py-3 rounded-xl hover:bg-pink-600 shadow-lg">Publicar Ahora</button>
-                    </div>
+                <div class="bg-white p-6 rounded-3xl border space-y-4 shadow-sm h-fit">
+                    <input type="text" id="tituloPost" placeholder="Título del comunicado" class="w-full p-3 border rounded-xl font-bold outline-none">
+                    <textarea id="contenidoPost" rows="5" placeholder="Escribe el mensaje para las familias..." class="w-full p-3 border rounded-xl outline-none"></textarea>
+                    <select id="tagPost" class="w-full p-3 border rounded-xl font-bold text-slate-500"></select>
+                    <button onclick="publicarFeed()" class="w-full bg-pink-500 text-white font-bold py-3 rounded-xl shadow-md">Publicar Ahora</button>
                 </div>
                 <div id="previewFeed" class="space-y-4"></div>
             </div>
         </section>
 
-        <section id="tab-cursos" class="admin-tab hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-6">Configuración de Cursos</h2>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
-                <div class="flex gap-4">
-                    <input type="text" id="nombreCurso" placeholder="Ej: 1° Año A" class="flex-1 p-3 bg-slate-50 border rounded-xl outline-none text-center font-bold">
-                    <button onclick="crearCurso()" class="bg-green-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-green-700">Crear Curso</button>
-                </div>
-            </div>
-            <div id="listaCursos" class="grid grid-cols-1 md:grid-cols-4 gap-4"></div>
-        </section>
-
-        <section id="tab-docentes" class="admin-tab hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-6">Gestión de Docentes</h2>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="nombreDocente" placeholder="Nombre" class="p-3 bg-slate-50 border rounded-xl outline-none">
-                    <input type="email" id="emailDocente" placeholder="email@escuela.com" class="p-3 bg-slate-50 border rounded-xl outline-none">
-                    <button onclick="registrarDocente()" class="bg-purple-600 text-white font-bold py-3 rounded-xl">Alta Docente</button>
-                </div>
+        <section id="tab-docentes" class="admin-tab">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Docentes</h2>
+            <div class="bg-white p-6 rounded-3xl border mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 shadow-sm">
+                <input type="text" id="nombreDocente" placeholder="Nombre" class="p-3 border rounded-xl">
+                <input type="email" id="emailDocente" placeholder="email@escuela.com" class="p-3 border rounded-xl">
+                <button onclick="registrarDocente()" class="bg-purple-600 text-white font-bold py-3 rounded-xl">Alta Docente</button>
             </div>
             <div id="tablaDocentes" class="bg-white rounded-3xl border overflow-hidden shadow-sm"></div>
         </section>
 
-        <section id="tab-familias" class="admin-tab hidden">
+        <section id="tab-familias" class="admin-tab">
             <h2 class="text-2xl font-bold text-slate-800 mb-6">Vinculación de Familias</h2>
-            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-2xl">
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="email" id="emailFamilia" placeholder="Email responsable" class="w-full p-3 bg-slate-50 border rounded-xl">
-                        <input type="text" id="nombreFamilia" placeholder="Nombre Tutor" class="w-full p-3 bg-slate-50 border rounded-xl">
+            <div class="bg-white p-6 rounded-3xl border max-w-xl shadow-sm space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="nombreFamilia" placeholder="Nombre Tutor" class="p-3 border rounded-xl">
+                    <input type="email" id="emailFamilia" placeholder="Email Tutor" class="p-3 border rounded-xl">
+                </div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Hijos (Ctrl + Click para varios)</p>
+                <select id="selectHijo" multiple class="w-full p-3 border rounded-xl h-40 font-bold text-slate-600"></select>
+                <button onclick="registrarFamilia()" class="w-full bg-orange-500 text-white font-bold py-4 rounded-xl">Crear Cuenta</button>
+            </div>
+            <div id="tablaFamilias" class="mt-8 bg-white rounded-3xl border overflow-hidden shadow-sm"></div>
+        </section>
+
+        <section id="tab-mensajes" class="admin-tab">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Mensajería</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[500px] bg-white rounded-3xl border overflow-hidden shadow-sm">
+                <div class="border-r bg-slate-50 overflow-y-auto" id="lista-chats"></div>
+                <div class="md:col-span-2 flex flex-col">
+                    <div id="chat-header" class="p-4 border-b font-bold text-blue-600 bg-white">Selecciona un chat</div>
+                    <div id="admin-chat-box" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3"></div>
+                    <div class="p-4 border-t flex gap-2 bg-white">
+                        <input type="text" id="admin-reply-input" placeholder="Responder..." class="flex-1 border p-3 rounded-xl outline-none">
+                        <button onclick="enviarRespuestaAdmin()" class="bg-blue-600 text-white px-6 rounded-xl"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
-                    <select id="selectHijo" class="w-full p-3 bg-slate-50 border rounded-xl font-bold text-slate-600"></select>
-                    <button onclick="registrarFamilia()" class="w-full bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg">Crear Cuenta Familia</button>
                 </div>
             </div>
         </section>
@@ -165,6 +124,7 @@
     </main>
 
     <script>
+        // FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
             authDomain: "app-academica-interna.firebaseapp.com",
@@ -177,149 +137,16 @@
         const db = firebase.firestore();
         let chatActivoEmail = null;
 
+        // TABS
         function tab(id) {
-            document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
-            document.getElementById('tab-' + id).classList.remove('hidden');
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-            if(event) event.currentTarget.classList.add('active');
+            document.getElementById('tab-' + id).classList.add('active');
+            document.getElementById('btn-' + id).classList.add('active');
             if(id === 'mensajes') cargarListaChats();
         }
 
-       // --- CALENDARIO + AUTO FEED (REVISADO) ---
-async function crearEvento() {
-    const fecha = document.getElementById('fechaEvento').value;
-    const titulo = document.getElementById('tituloEvento').value;
-    const curso = document.getElementById('cursoEvento').value;
-    
-    if(!fecha || !titulo) return alert("Faltan datos");
-
-    try {
-        // 1. Guardar en Calendario
-        await db.collection('eventos').add({ 
-            fecha, 
-            titulo, 
-            curso, 
-            creadoEn: new Date().toISOString() 
-        });
-
-        // 2. Publicar automáticamente en el Feed/Muro
-        await db.collection('comunicados').add({
-            titulo: `NUEVO EVENTO: ${titulo}`,
-            texto: `Se ha programado un nuevo evento para el día ${fecha}. Destinado a: ${curso}`,
-            tag: curso,
-            img: "", 
-            doc: "",
-            fechaPublicacion: new Date().toISOString(),
-            creadoEn: new Date().toISOString(),
-            likes: 0,
-            tipo: "evento_automatico" // Para diferenciarlo si querés
-        });
-
-        document.getElementById('tituloEvento').value = "";
-        alert("Evento agendado y publicado en el muro");
-    } catch(e) { console.error(e); }
-}
-
-// --- MENSAJERÍA (CHAT REAL) ---
-function abrirChat(email) {
-    chatActivoEmail = email;
-    document.getElementById('chat-header').innerText = "Chat con: " + email;
-    
-    // Escucha en tiempo real de la conversación entre estos dos participantes
-    db.collection('mensajes')
-      .where('participantes', 'array-contains', email)
-      .orderBy('fecha', 'asc') // IMPORTANTE: Requiere índice en Firebase si falla
-      .onSnapshot(snap => {
-          const box = document.getElementById('admin-chat-box');
-          box.innerHTML = ""; // Limpiamos para repintar la historia
-          
-          snap.forEach(doc => {
-              const m = doc.data();
-              const esSecretaria = m.emisorID === "secretaria_primaria";
-              
-              const msgDiv = document.createElement('div');
-              msgDiv.className = `max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${
-                  esSecretaria 
-                  ? 'bg-blue-600 text-white self-end rounded-tr-none' 
-                  : 'bg-white border text-slate-700 self-start rounded-tl-none'
-              }`;
-              msgDiv.innerText = m.texto;
-              box.appendChild(msgDiv);
-          });
-          box.scrollTop = box.scrollHeight; // Auto-scroll al último mensaje
-      });
-}
-
-        function escucharEventos() {
-            db.collection('eventos').orderBy('fecha', 'asc').onSnapshot(snap => {
-                const lista = document.getElementById('listaEventos');
-                lista.innerHTML = snap.docs.map(doc => `
-                    <div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm">
-                        <div>
-                            <span class="text-[10px] font-black text-indigo-500 uppercase">${doc.data().fecha}</span>
-                            <p class="font-bold text-slate-700">${doc.data().titulo} <span class="text-[10px] font-normal text-slate-400">(${doc.data().curso})</span></p>
-                        </div>
-                        <button onclick="borrar('eventos', '${doc.id}')" class="text-red-300 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
-                    </div>`).join('');
-            });
-        }
-
-        // --- MENSAJERÍA ---
-        function cargarListaChats() {
-            db.collection('mensajes').onSnapshot(snap => {
-                const lista = document.getElementById('lista-chats');
-                const emails = [...new Set(snap.docs.map(doc => doc.data().participantes).flat())].filter(e => e !== "secretaria_primaria");
-                lista.innerHTML = '<p class="text-xs font-black text-slate-400 uppercase mb-4 px-2">Conversaciones</p>' + 
-                    emails.map(email => `<div onclick="abrirChat('${email}')" class="p-3 mb-2 rounded-xl bg-white border cursor-pointer hover:bg-blue-50 transition-all ${chatActivoEmail === email ? 'border-blue-500 bg-blue-50' : ''}"><p class="text-xs font-bold">${email}</p></div>`).join('');
-            });
-        }
-
-        function abrirChat(email) {
-            chatActivoEmail = email;
-            document.getElementById('chat-header').innerText = "Chat con: " + email;
-            db.collection('mensajes').where('participantes', 'array-contains', email).orderBy('fecha', 'asc').onSnapshot(snap => {
-                const box = document.getElementById('admin-chat-box');
-                box.innerHTML = snap.docs.map(doc => {
-                    const esSecretaria = doc.data().emisorID === "secretaria_primaria";
-                    return `<div class="max-w-[80%] p-3 rounded-2xl text-sm ${esSecretaria ? 'bg-blue-600 text-white self-end' : 'bg-white border text-slate-700 self-start'} shadow-sm">${doc.data().texto}</div>`;
-                }).join('');
-                box.scrollTop = box.scrollHeight;
-            });
-        }
-
-        async function enviarRespuestaAdmin() {
-            const input = document.getElementById('admin-reply-input');
-            if(!input.value.trim() || !chatActivoEmail) return;
-            await db.collection('mensajes').add({
-                emisorID: "secretaria_primaria", receptorID: chatActivoEmail,
-                participantes: [chatActivoEmail, "secretaria_primaria"],
-                texto: input.value, fecha: new Date().toISOString()
-            });
-            input.value = "";
-        }
-
-        // --- IA GEMINI ---
-        async function mejorarConIA(event) {
-            const btn = event.currentTarget;
-            const textInput = document.getElementById('contenidoPost');
-            const tituloInput = document.getElementById('tituloPost');
-            if(!textInput.value) return alert("Escribí un borrador.");
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-spin fa-solid fa-spinner"></i>';
-            try {
-                const API_KEY = "AIzaSyATS0LI0XhWWyYEcVyncMWBkFutT-SlWQE";
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: `Actúa como directivo escolar. Mejora este comunicado (hazlo profesional y cálido): Título: ${tituloInput.value}. Texto: ${textInput.value}` }] }] })
-                });
-                const data = await response.json();
-                textInput.value = data.candidates[0].content.parts[0].text;
-            } catch (e) { alert("Error IA"); }
-            btn.innerHTML = originalText;
-        }
-
-        // --- FUNCIONES CORE ---
+        // CURSOS
         async function crearCurso() {
             const n = document.getElementById('nombreCurso').value.toUpperCase().trim();
             if(n) await db.collection('cursos').doc(n).set({ nombre: n });
@@ -330,21 +157,24 @@ function abrirChat(email) {
             db.collection('cursos').onSnapshot(snap => {
                 let h = "", opts = '<option value="TODOS">Toda la Escuela</option>';
                 snap.forEach(doc => {
-                    h += `<div class="bg-white p-4 rounded-2xl border flex justify-between font-bold"><span>${doc.id}</span><button onclick="borrar('cursos', '${doc.id}')" class="text-red-400">×</button></div>`;
+                    h += `<div class="bg-white p-4 rounded-xl border flex justify-between font-bold shadow-sm"><span>${doc.id}</span><button onclick="borrar('cursos', '${doc.id}')" class="text-red-400">×</button></div>`;
                     opts += `<option value="${doc.id}">${doc.id}</option>`;
                 });
                 document.getElementById('listaCursos').innerHTML = h;
                 document.getElementById('cursoAlumno').innerHTML = opts;
-                document.getElementById('cursoEvento').innerHTML = opts;
                 document.getElementById('tagPost').innerHTML = opts;
             });
         }
 
+        // ALUMNOS
         async function crearAlumno() {
             const n = document.getElementById('nombreAlumno').value;
             const c = document.getElementById('cursoAlumno').value;
-            if(n && c) await db.collection('alumnos').add({ nombre: n, cursoID: c });
-            document.getElementById('nombreAlumno').value = "";
+            if(n && c) {
+                const res = await db.collection('alumnos').add({ nombre: n, cursoID: c });
+                await db.collection('calificaciones').doc(res.id).set({ inasistencias: 0, notas: {} });
+                document.getElementById('nombreAlumno').value = "";
+            }
         }
 
         function escucharAlumnos() {
@@ -352,7 +182,7 @@ function abrirChat(email) {
                 let h = '<table class="w-full text-left text-sm"><thead><tr class="bg-slate-50"><th class="p-4">Nombre</th><th class="p-4">Curso</th><th class="p-4">Acción</th></tr></thead>';
                 let opts = "";
                 snap.forEach(doc => {
-                    h += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}</td><td class="p-4">${doc.data().cursoID}</td><td class="p-4"><button onclick="borrar('alumnos', '${doc.id}')">🗑️</button></td></tr>`;
+                    h += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}</td><td class="p-4">${doc.data().cursoID}</td><td class="p-4"><button onclick="borrar('alumnos','${doc.id}')">🗑️</button></td></tr>`;
                     opts += `<option value="${doc.id}">${doc.data().nombre} (${doc.data().cursoID})</option>`;
                 });
                 document.getElementById('tablaAlumnos').innerHTML = h + '</table>';
@@ -360,60 +190,118 @@ function abrirChat(email) {
             });
         }
 
+        // MURO (COMUNICACIÓN) - MANUAL
+        async function publicarFeed() {
+            const t = document.getElementById('tituloPost').value;
+            const c = document.getElementById('contenidoPost').value;
+            const g = document.getElementById('tagPost').value;
+            if(!t || !c) return alert("Completa los campos");
+            
+            try {
+                await db.collection('comunicados').add({
+                    titulo: t,
+                    texto: c,
+                    tag: g,
+                    creadoEn: new Date().toISOString()
+                });
+                document.getElementById('tituloPost').value = "";
+                document.getElementById('contenidoPost').value = "";
+            } catch(e) { console.error(e); }
+        }
+
         function escucharFeed() {
             db.collection('comunicados').orderBy('creadoEn', 'desc').onSnapshot(snap => {
                 document.getElementById('previewFeed').innerHTML = snap.docs.map(doc => `
-                    <div class="bg-white p-4 rounded-2xl border relative shadow-sm">
-                        <span class="absolute top-2 right-2 text-[8px] bg-slate-100 p-1 rounded font-bold">${doc.data().tag}</span>
-                        <h4 class="font-bold text-sm text-slate-800">${doc.data().titulo}</h4>
-                        ${doc.data().img ? `<img src="${doc.data().img}" class="w-full h-24 object-cover rounded-lg mt-2">` : ''}
-                        <button onclick="borrar('comunicados', '${doc.id}')" class="text-red-400 text-[10px] mt-2 font-bold uppercase">Eliminar</button>
+                    <div class="bg-white p-4 rounded-2xl border shadow-sm relative">
+                        <button onclick="borrar('comunicados','${doc.id}')" class="absolute top-2 right-2 text-slate-300 hover:text-red-500">×</button>
+                        <span class="text-[9px] font-black text-pink-500 uppercase">${doc.data().tag}</span>
+                        <h4 class="font-bold text-slate-800">${doc.data().titulo}</h4>
+                        <p class="text-xs text-slate-500 mt-1 whitespace-pre-wrap">${doc.data().texto}</p>
                     </div>`).join('');
             });
         }
 
-        async function publicarFeed() {
-            const t = document.getElementById('tituloPost').value;
-            const c = document.getElementById('contenidoPost').value;
-            const tag = document.getElementById('tagPost').value;
-            const img = document.getElementById('linkImagen').value;
-            const doc = document.getElementById('linkPDF').value;
-            if(!t || !c) return alert("Faltan datos");
-            await db.collection('comunicados').add({
-                titulo: t, texto: c, tag: tag, img: img, doc: doc,
-                fechaPublicacion: new Date().toISOString(), creadoEn: new Date().toISOString(), likes: 0
-            });
-            alert("Publicado");
-            document.getElementById('tituloPost').value = ""; document.getElementById('contenidoPost').value = "";
-        }
-
+        // DOCENTES
         async function registrarDocente() {
             const n = document.getElementById('nombreDocente').value;
-            const e = document.getElementById('emailDocente').value.toLowerCase();
-            await db.collection('usuarios').doc(e).set({ nombre: n, rol: 'docente' });
-            alert("Docente registrado");
+            const e = document.getElementById('emailDocente').value.toLowerCase().trim();
+            if(n && e) {
+                await db.collection('usuarios').doc(e).set({ nombre: n, email: e, rol: 'docente' });
+                document.getElementById('nombreDocente').value = ""; document.getElementById('emailDocente').value = "";
+            }
         }
 
         function escucharDocentes() {
             db.collection('usuarios').where('rol', '==', 'docente').onSnapshot(snap => {
-                let h = '<table class="w-full text-left text-sm"><thead><tr class="bg-slate-50"><th class="p-4">Nombre</th><th class="p-4">Email</th></tr></thead>';
-                snap.forEach(doc => h += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}</td><td class="p-4">${doc.id}</td></tr>`);
+                let h = '<table class="w-full text-left text-sm"><thead><tr class="bg-slate-50"><th class="p-4">Nombre</th><th class="p-4">Email</th><th class="p-4">Acción</th></tr></thead>';
+                snap.forEach(doc => {
+                    h += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}</td><td class="p-4">${doc.id}</td><td class="p-4"><button onclick="borrar('usuarios','${doc.id}')">🗑️</button></td></tr>`;
+                });
                 document.getElementById('tablaDocentes').innerHTML = h + '</table>';
             });
         }
 
+        // FAMILIAS
         async function registrarFamilia() {
-            const e = document.getElementById('emailFamilia').value.toLowerCase();
+            const e = document.getElementById('emailFamilia').value.toLowerCase().trim();
             const n = document.getElementById('nombreFamilia').value;
-            const h = document.getElementById('selectHijo').value;
-            await db.collection('usuarios').doc(e).set({ nombre: n, rol: 'familia', hijoID: h });
-            alert("Vínculo creado");
+            const h = Array.from(document.getElementById('selectHijo').selectedOptions).map(o => o.value);
+            if(e && h.length > 0) {
+                await db.collection('usuarios').doc(e).set({ nombre: n, email: e, rol: 'familia', hijoID: h });
+                alert("Guardado");
+            }
         }
 
-        async function borrar(col, id) { if(confirm("¿Borrar?")) await db.collection(col).doc(id).delete(); }
+        function escucharFamilias() {
+            db.collection('usuarios').where('rol', '==', 'familia').onSnapshot(snap => {
+                let h = '<table class="w-full text-left text-sm"><thead><tr class="bg-slate-50"><th class="p-4">Tutor</th><th class="p-4">Hijos</th><th class="p-4">Acción</th></tr></thead>';
+                snap.forEach(doc => {
+                    h += `<tr class="border-t"><td class="p-4 font-bold">${doc.data().nombre}<br><span class="text-[9px] font-normal text-slate-400">${doc.id}</span></td><td class="p-4 text-[9px] text-slate-400">${doc.data().hijoID.join(', ')}</td><td class="p-4"><button onclick="borrar('usuarios','${doc.id}')">🗑️</button></td></tr>`;
+                });
+                document.getElementById('tablaFamilias').innerHTML = h + '</table>';
+            });
+        }
 
-        // Inicio de escuchas
-        escucharCursos(); escucharAlumnos(); escucharEventos(); escucharFeed(); escucharDocentes();
+        // MENSAJERÍA
+        function cargarListaChats() {
+            db.collection('mensajes').onSnapshot(snap => {
+                const emails = [...new Set(snap.docs.map(d => d.data().participantes).flat())].filter(e => e !== "secretaria_primaria");
+                document.getElementById('lista-chats').innerHTML = emails.map(e => `<div onclick="abrirChat('${e}')" class="p-4 border-b cursor-pointer hover:bg-blue-50 font-bold text-xs">${e}</div>`).join('');
+            });
+        }
+
+        function abrirChat(email) {
+            chatActivoEmail = email;
+            document.getElementById('chat-header').innerText = "Chat con: " + email;
+            db.collection('mensajes').where('participantes', 'array-contains', email).orderBy('fecha', 'asc').onSnapshot(snap => {
+                const box = document.getElementById('admin-chat-box');
+                box.innerHTML = snap.docs.map(doc => {
+                    const esSec = doc.data().emisorID === "secretaria_primaria";
+                    return `<div class="max-w-[85%] p-3 rounded-2xl text-xs ${esSec ? 'bg-blue-600 text-white self-end' : 'bg-slate-100 self-start'}">${doc.data().texto}</div>`;
+                }).join('');
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+
+        async function enviarRespuestaAdmin() {
+            const input = document.getElementById('admin-reply-input');
+            if(!input.value || !chatActivoEmail) return;
+            await db.collection('mensajes').add({
+                emisorID: "secretaria_primaria", receptorID: chatActivoEmail,
+                participantes: [chatActivoEmail, "secretaria_primaria"],
+                texto: input.value, fecha: new Date().toISOString()
+            });
+            input.value = "";
+        }
+
+        async function borrar(col, id) { if(confirm("¿Seguro?")) await db.collection(col).doc(id).delete(); }
+
+        // START
+        escucharCursos();
+        escucharAlumnos();
+        escucharDocentes();
+        escucharFamilias();
+        escucharFeed();
     </script>
 </body>
 </html>
