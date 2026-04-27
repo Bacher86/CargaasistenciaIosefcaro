@@ -2,178 +2,97 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma Iosef Caro - Docentes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Docentes Pro - Iosef Caro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .section-content { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; padding-bottom: 110px; }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; } to { transform: translateY(0); } }
         
-        .btn-active-P { background-color: #10b981 !important; color: white !important; border-color: #059669 !important; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
-        .btn-active-A { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
-        .btn-active-T { background-color: #f59e0b !important; color: white !important; border-color: #d97706 !important; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+        .btn-status { transition: all 0.2s ease; border: 2px solid transparent; }
+        .btn-active-P { background: #10b981 !important; color: white !important; border-color: #059669; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+        .btn-active-A { background: #f43f5e !important; color: white !important; border-color: #e11d48; box-shadow: 0 4px 10px rgba(244, 63, 94, 0.3); }
+        .btn-active-T { background: #f59e0b !important; color: white !important; border-color: #d97706; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); }
         
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .nav-active { color: #10b981 !important; border-top: 3px solid #10b981; background: #f0fdf4; }
+        input, select, textarea { background: #f1f5f9 !important; border: none !important; border-radius: 1rem !important; padding: 0.75rem 1rem !important; font-size: 0.875rem !important; font-weight: 600 !important; outline: none; }
+        .card-alumno { background: white; border-radius: 2rem; border: 1px solid #f1f5f9; transition: transform 0.2s; }
+        .card-alumno:active { transform: scale(0.98); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans">
+<body>
 
-    <div id="loginScreen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-6 text-center">
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-slate-100">
-            <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white text-3xl">
-                <i class="fa-solid fa-graduation-cap"></i>
+    <header class="bg-white p-6 rounded-b-[2.5rem] shadow-sm border-b mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="font-black text-2xl text-slate-800 tracking-tighter">Docente</h1>
+                <p id="materiaLabel" class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1 italic">Cargando materia...</p>
             </div>
-            <h1 class="text-3xl font-black text-slate-800 mb-1">Iosef Caro</h1>
-            <p class="text-slate-400 mb-8 font-bold uppercase text-[10px] tracking-widest">Portal del Docente</p>
-            <div class="space-y-4 text-left">
-                <input type="email" id="loginEmail" placeholder="Email institucional" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium">
-                <input type="password" id="loginPass" placeholder="Contraseña" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium">
-                <button onclick="loginManual()" id="btnLogin" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-blue-600 transition-all shadow-xl active:scale-95">Iniciar Sesión</button>
-                
-                <div class="text-center mt-4">
-                    <button onclick="resetPassword()" class="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">
-                        ¿Olvidaste tu contraseña?
-                    </button>
-                </div>
-            </div>
+            <div class="bg-emerald-50 p-3 rounded-2xl text-emerald-600"><i class="fas fa-book-open"></i></div>
         </div>
-    </div>
 
-    <div id="appScreen" class="hidden flex min-h-screen">
-        <aside class="w-20 md:w-64 bg-slate-900 text-white flex flex-col transition-all sticky top-0 h-screen">
-            <div class="p-8 text-center border-b border-slate-800/50">
-                <span class="text-xl font-black tracking-tighter hidden md:inline uppercase text-blue-400">Iosef Caro</span>
-                <span class="text-xl font-black md:hidden">IC</span>
+        <div class="mt-4 grid grid-cols-2 gap-2">
+            <select id="sel-curso" onchange="actualizarFiltros()" class="w-full shadow-inner">
+                <option value="1A">1° Año A</option>
+                <option value="KINDER">Kinder</option>
+            </select>
+            <input type="text" id="busqueda" onkeyup="actualizarFiltros()" placeholder="Buscar alumno..." class="w-full shadow-inner">
+        </div>
+    </header>
+
+    <main class="px-4 max-w-md mx-auto">
+        
+        <section id="view-asistencia" class="view-section active">
+            <div class="flex justify-between items-center mb-4 ml-2">
+                <h2 class="font-black text-slate-800">Pase de Lista</h2>
+                <span class="text-[10px] font-black bg-slate-100 px-2 py-1 rounded-lg text-slate-500 uppercase" id="fechaHoy"></span>
             </div>
-            <nav class="flex-1 mt-8 px-4 space-y-3">
-                <button onclick="showSection('inicio')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-white/5 transition-all group">
-                    <i class="fa-solid fa-house text-lg opacity-50 group-hover:opacity-100"></i> <span class="hidden md:inline font-bold">Inicio</span>
-                </button>
-                <button onclick="showSection('asistencia')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-white/5 transition-all group">
-                    <i class="fa-solid fa-clipboard-user text-lg opacity-50 group-hover:opacity-100"></i> <span class="hidden md:inline font-bold">Asistencia</span>
-                </button>
-                <button onclick="showSection('boletines')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-white/5 transition-all group text-indigo-400">
-                    <i class="fa-solid fa-star text-lg opacity-100"></i> <span class="hidden md:inline font-bold">Boletines</span>
-                </button>
-                <button onclick="showSection('legajos')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-white/5 transition-all group">
-                    <i class="fa-solid fa-id-card-clip text-lg opacity-50 group-hover:opacity-100"></i> <span class="hidden md:inline font-bold">Legajos</span>
-                </button>
-                <button onclick="showSection('informes')" class="flex items-center gap-4 w-full p-4 rounded-2xl hover:bg-white/5 transition-all group">
-                    <i class="fa-solid fa-triangle-exclamation text-lg opacity-50 group-hover:opacity-100"></i> <span class="hidden md:inline font-bold">Informes</span>
-                </button>
-            </nav>
-            <div class="p-6 border-t border-slate-800/50">
-                <button onclick="logout()" class="flex items-center gap-4 w-full p-4 rounded-2xl text-rose-400 hover:bg-rose-500/10 transition-all font-bold">
-                    <i class="fa-solid fa-power-off"></i> <span class="hidden md:inline">Salir</span>
-                </button>
+            <div id="lista-asistencia" class="grid gap-3"></div>
+        </section>
+
+        <section id="view-notas" class="view-section">
+            <h2 class="font-black text-slate-800 mb-4 ml-2">Trimestres</h2>
+            <div id="lista-notas" class="grid gap-3"></div>
+        </section>
+
+        <section id="view-informes" class="view-section">
+            <h2 class="font-black text-slate-800 mb-4 ml-2">Informes de Seguimiento</h2>
+            <div class="bg-white p-6 rounded-[2rem] border shadow-sm mb-6">
+                <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Alumno</label>
+                <select id="inf-alumno" class="w-full mb-3"></select>
+                <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Tipo de Informe</label>
+                <select id="inf-tipo" class="w-full mb-3">
+                    <option value="Observación Positiva">🟢 Observación Positiva</option>
+                    <option value="Llamado de atención">🟡 Llamado de atención</option>
+                    <option value="Incumplimiento de Tarea">🔴 Tarea incompleta</option>
+                </select>
+                <textarea id="inf-detalle" class="w-full h-24 mb-3" placeholder="Detalle del informe..."></textarea>
+                <button onclick="guardarInforme()" class="w-full bg-slate-800 text-white p-4 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all">Guardar Informe</button>
             </div>
-        </aside>
+            <div id="historial-informes" class="grid gap-3"></div>
+        </section>
 
-        <main class="flex-1 p-6 md:p-12 overflow-y-auto">
-            
-            <section id="sec-inicio" class="section-content">
-                <div class="max-w-5xl">
-                    <h2 class="text-4xl font-black text-slate-800 mb-2 tracking-tight">Panel Docente</h2>
-                    <p id="userMail" class="text-slate-400 mb-10 font-bold uppercase text-[10px] tracking-[0.2em]"></p>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-users text-xl"></i></div>
-                            <h4 class="text-4xl font-black text-slate-800 mb-1" id="countAlumnos">--</h4>
-                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Alumnos Totales</p>
-                        </div>
-                        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-calendar-day text-xl"></i></div>
-                            <h4 class="text-xl font-black text-slate-800" id="statusAsistencia">Cargando...</h4>
-                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">Asistencia de Hoy</p>
-                        </div>
-                        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                            <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-file-signature text-xl"></i></div>
-                            <h4 class="text-4xl font-black text-slate-800 mb-1" id="countInformes">--</h4>
-                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Informes</p>
-                        </div>
-                    </div>
+    </main>
 
-                    <div class="bg-slate-900 p-10 rounded-[3rem] text-white shadow-2xl">
-                        <h4 class="text-xs font-black text-blue-400 uppercase tracking-[0.3em] mb-4">Mis Cursos</h4>
-                        <div id="listaMisCursos" class="flex flex-wrap gap-4"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="sec-asistencia" class="section-content hidden">
-                <div class="max-w-2xl">
-                    <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Pase de Lista</h2>
-                    <div class="bg-white p-2 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col md:flex-row mb-8">
-                        <input type="date" id="fechaAsistencia" onchange="cargarListaAlumnos()" class="flex-1 p-4 bg-transparent font-black text-slate-700 outline-none border-b md:border-b-0 md:border-r border-slate-100">
-                        <select id="selectCurso" onchange="cargarListaAlumnos()" class="flex-1 p-4 bg-transparent font-black text-slate-700 outline-none"></select>
-                    </div>
-                    <div id="listaAlumnos" class="space-y-4"></div>
-                </div>
-            </section>
-
-            <section id="sec-boletines" class="section-content hidden"></section>
-
-            <section id="sec-informes" class="section-content hidden">
-                <div class="max-w-2xl">
-                    <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Nuevo Informe</h2>
-                    <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 space-y-8">
-                        <div>
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block px-2">Alumno</label>
-                            <input type="text" id="busquedaAlumno" onkeyup="buscarAlumnoInforme()" placeholder="Escribe el nombre..." class="w-full p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] outline-none font-bold">
-                            <div id="sugerencias" class="bg-white shadow-2xl rounded-2xl mt-3 max-h-60 overflow-y-auto hidden border border-slate-100"></div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <select id="tipoInforme" class="w-full p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] font-bold outline-none">
-                                <option value="Sanción Disciplinaria">Sanción Disciplinaria</option>
-                                <option value="Falta de Atención">Falta de Atención</option>
-                                <option value="Uniforme / Material">Uniforme / Material</option>
-                                <option value="Nota Positiva">⭐ Nota Positiva</option>
-                            </select>
-                            <input type="number" id="cantInforme" value="1" class="w-full p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] text-center font-black text-xl outline-none">
-                        </div>
-                        <textarea id="detalleInforme" rows="4" placeholder="Describe lo sucedido..." class="w-full p-6 bg-slate-50 border border-slate-100 rounded-[2rem] outline-none font-medium"></textarea>
-                        <button onclick="enviarInforme()" class="w-full bg-slate-900 text-white font-black py-5 rounded-[2rem] shadow-2xl hover:bg-blue-600 transition-all active:scale-95">Guardar Informe</button>
-                    </div>
-                </div>
-            </section>
-
-            <section id="sec-legajos" class="section-content hidden">
-                <div class="max-w-5xl">
-                    <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Legajos</h2>
-                    <input type="text" id="busquedaLegajo" onkeyup="buscarParaLegajo()" placeholder="Buscar alumno..." class="w-full p-6 bg-white shadow-xl rounded-[2rem] outline-none border border-slate-50 mb-10 font-bold">
-                    <div id="sugerenciasLegajo" class="hidden space-y-2 mb-8"></div>
-                    <div id="contenidoLegajo" class="hidden">
-                        <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 mb-8 flex items-center gap-8">
-                            <div class="w-20 h-20 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center text-4xl font-black" id="avatarAlumno"></div>
-                            <div>
-                                <h3 class="text-3xl font-black text-slate-800" id="legajoNombre">--</h3>
-                                <p class="text-blue-600 font-black uppercase text-xs tracking-widest" id="legajoCurso">--</p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100">
-                                <h4 class="font-black text-slate-800 mb-6">Conducta</h4>
-                                <div id="timelineInformes" class="space-y-4"></div>
-                            </div>
-                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100">
-                                <h4 class="font-black text-slate-800 mb-6">Últimas Asistencias</h4>
-                                <div id="timelineAsistencias" class="space-y-3"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center h-20 shadow-2xl z-50 rounded-t-[2.5rem]">
+        <button onclick="switchView('asistencia')" id="btn-asistencia" class="nav-btn nav-active flex flex-col items-center flex-1 py-2">
+            <i class="fas fa-calendar-check"></i><span class="text-[8px] font-bold mt-1 uppercase">Presente</span>
+        </button>
+        <button onclick="switchView('notas')" id="btn-notas" class="nav-btn text-slate-300 flex flex-col items-center flex-1 py-2">
+            <i class="fas fa-graduation-cap"></i><span class="text-[8px] font-bold mt-1 uppercase">Notas</span>
+        </button>
+        <button onclick="switchView('informes')" id="btn-informes" class="nav-btn text-slate-300 flex flex-col items-center flex-1 py-2">
+            <i class="fas fa-clipboard-list"></i><span class="text-[8px] font-bold mt-1 uppercase">Informes</span>
+        </button>
+    </nav>
 
     <script>
-        // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
             authDomain: "app-academica-interna.firebaseapp.com",
@@ -184,273 +103,141 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const auth = firebase.auth();
 
-        let cursosPermitidosDocente = [];
-        let alumnoSeleccionadoParaBoletin = null;
-        document.getElementById('fechaAsistencia').valueAsDate = new Date();
+        // 1. CONFIGURACIÓN INICIAL
+        let materiaActual = "Matemática"; // Esto vendría del login del docente
+        let todosLosAlumnos = [];
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('fechaHoy').innerText = hoy;
+        document.getElementById('materiaLabel').innerText = materiaActual;
 
-        // --- AUTH & RESET ---
-        async function loginManual() {
-            const e = document.getElementById('loginEmail').value;
-            const p = document.getElementById('loginPass').value;
-            try { await auth.signInWithEmailAndPassword(e, p); } catch(err) { alert("Usuario o clave incorrectos"); }
+        function switchView(id) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => { b.classList.add('text-slate-300'); b.classList.remove('nav-active'); });
+            document.getElementById('view-' + id).classList.add('active');
+            document.getElementById('btn-' + id).classList.add('nav-active');
+            document.getElementById('btn-' + id).classList.remove('text-slate-300');
+            if(id === 'informes') cargarHistorialInformes();
         }
 
-        async function resetPassword() {
-            const email = document.getElementById('loginEmail').value;
-            if (!email) return alert("Ingresa tu email primero");
-            try {
-                await auth.sendPasswordResetEmail(email);
-                alert("✅ Mail de recuperación enviado. Revisa tu casilla.");
-            } catch (e) { alert("Error al enviar el mail."); }
-        }
-
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('appScreen').classList.remove('hidden');
-                document.getElementById('userMail').innerText = `DOCENTE: ${user.email}`;
-                inicializarCursosDocente().then(() => actualizarDashboard());
-                showSection('inicio');
-            } else {
-                document.getElementById('loginScreen').classList.remove('hidden');
-                document.getElementById('appScreen').classList.add('hidden');
-            }
+        // 2. CARGA DE DATOS
+        db.collection('alumnos').onSnapshot(snap => {
+            todosLosAlumnos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            actualizarFiltros();
+            
+            // Llenar select de informes
+            document.getElementById('inf-alumno').innerHTML = todosLosAlumnos.map(a => `<option value="${a.id}">${a.nombre} (${a.curso})</option>`).join('');
         });
 
-        // --- NAVEGACIÓN ---
-        function showSection(id) {
-            document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
-            document.getElementById('sec-' + id).classList.remove('hidden');
-            if(id === 'inicio') actualizarDashboard();
-            if(id === 'boletines') prepararModuloBoletin();
-        }
-
-        // --- LÓGICA DASHBOARD ---
-        async function actualizarDashboard() {
-            const snapAlum = await db.collection('alumnos').get();
-            document.getElementById('countAlumnos').innerText = snapAlum.size;
-            const snapInf = await db.collection('informes').get();
-            document.getElementById('countInformes').innerText = snapInf.size;
-            const hoy = new Date().toISOString().split('T')[0];
-            const snapAsis = await db.collection('asistencias').where('fecha', '==', hoy).limit(1).get();
-            const status = document.getElementById('statusAsistencia');
-            if(!snapAsis.empty) {
-                status.innerText = "Completada";
-                status.className = "text-xl font-black text-green-600";
-            } else {
-                status.innerText = "Pendiente";
-                status.className = "text-xl font-black text-rose-500 animate-pulse";
-            }
-        }
-
-        async function inicializarCursosDocente() {
-            const select = document.getElementById('selectCurso');
-            const userDoc = await db.collection('usuarios').doc(auth.currentUser.email.toLowerCase()).get();
-            if (userDoc.exists) {
-                cursosPermitidosDocente = userDoc.data().cursosPermitidos || [];
-                let options = '<option value="" disabled selected>Curso...</option>';
-                const docs = await Promise.all(cursosPermitidosDocente.map(id => db.collection('cursos').doc(id).get()));
-                const listaCursosDiv = document.getElementById('listaMisCursos');
-                listaCursosDiv.innerHTML = "";
-                docs.forEach(doc => { 
-                    if (doc.exists) {
-                        options += `<option value="${doc.id}">${doc.data().nombre}</option>`;
-                        listaCursosDiv.innerHTML += `<span class="bg-blue-500/10 text-blue-400 border border-blue-400/20 px-6 py-3 rounded-2xl font-black text-xs uppercase">${doc.data().nombre}</span>`;
-                    } 
-                });
-                select.innerHTML = options;
-            }
-        }
-
-        // --- ASISTENCIA Y SINCRONIZACIÓN FAMILIA ---
-        async function cargarListaAlumnos() {
-            const cursoID = document.getElementById('selectCurso').value;
-            const fecha = document.getElementById('fechaAsistencia').value;
-            const contenedor = document.getElementById('listaAlumnos');
-            if (!cursoID || !fecha) return;
-
-            contenedor.innerHTML = '<div class="p-20 flex justify-center"><i class="fa-solid fa-circle-notch animate-spin text-blue-600 text-3xl"></i></div>';
-            const [snapAlu, snapAsis] = await Promise.all([
-                db.collection('alumnos').where('cursoID', '==', cursoID).get(),
-                db.collection('asistencias').where('cursoID', '==', cursoID).where('fecha', '==', fecha).get()
-            ]);
-            const historial = {};
-            snapAsis.forEach(doc => historial[doc.data().alumnoID] = doc.data().estado);
-            contenedor.innerHTML = snapAlu.docs.map(doc => {
-                const id = doc.id;
-                const estado = historial[id] || '';
-                return `
-                    <div class="bg-white p-5 rounded-[1.8rem] border border-slate-100 flex items-center justify-between">
-                        <span class="font-black text-slate-700 text-sm">${doc.data().nombre}</span>
-                        <div class="flex bg-slate-50 p-1.5 rounded-[1.2rem] gap-2">
-                            <button onclick="marcar('${id}', 'P')" id="btn-${id}-P" class="w-12 h-12 rounded-xl text-xs font-black transition-all ${estado === 'P' ? 'btn-active-P' : 'text-slate-300'}">P</button>
-                            <button onclick="marcar('${id}', 'A')" id="btn-${id}-A" class="w-12 h-12 rounded-xl text-xs font-black transition-all ${estado === 'A' ? 'btn-active-A' : 'text-slate-300'}">A</button>
-                            <button onclick="marcar('${id}', 'T')" id="btn-${id}-T" class="w-12 h-12 rounded-xl text-xs font-black transition-all ${estado === 'T' ? 'btn-active-T' : 'text-slate-300'}">T</button>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-
-        async function marcar(alumnoID, estado) {
-            const fecha = document.getElementById('fechaAsistencia').value;
-            const cursoID = document.getElementById('selectCurso').value;
+        function actualizarFiltros() {
+            const curso = document.getElementById('sel-curso').value;
+            const buscar = document.getElementById('busqueda').value.toLowerCase();
+            const filtrados = todosLosAlumnos.filter(a => a.curso === curso && a.nombre.toLowerCase().includes(buscar));
             
-            // UI Feedback
-            ['P', 'A', 'T'].forEach(b => document.getElementById(`btn-${alumnoID}-${b}`).className = "w-12 h-12 rounded-xl text-xs font-black text-slate-300");
-            document.getElementById(`btn-${alumnoID}-${estado}`).className = `w-12 h-12 rounded-xl text-xs font-black btn-active-${estado}`;
-
-            try {
-                await db.collection('asistencias').doc(`${fecha}_${alumnoID}`).set({
-                    alumnoID, cursoID, fecha, estado,
-                    autor: auth.currentUser.email,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // Recalcular para Familia
-                const asisSnap = await db.collection('asistencias').where('alumnoID', '==', alumnoID).get();
-                let total = 0;
-                asisSnap.forEach(d => {
-                    if(d.data().estado === 'A') total += 1;
-                    if(d.data().estado === 'T') total += 0.5;
-                });
-                await db.collection('calificaciones').doc(alumnoID).set({
-                    alumnoID, inasistencias: total, ultimaActualizacion: new Date().toISOString()
-                }, { merge: true });
-            } catch(e) { console.error(e); }
+            renderAsistencia(filtrados);
+            renderNotas(filtrados);
         }
 
-        // --- MÓDULO BOLETÍN ---
-        function prepararModuloBoletin() {
-            const sec = document.getElementById('sec-boletines');
-            sec.innerHTML = `
-                <div class="max-w-2xl">
-                    <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight">Carga de Notas</h2>
-                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl mb-8">
-                        <input type="text" id="busquedaBoletin" onkeyup="buscarParaBoletin()" placeholder="Buscar alumno..." class="w-full p-5 bg-slate-50 rounded-2xl outline-none font-bold">
-                        <div id="sugerenciasBoletin" class="mt-4 space-y-2"></div>
+        // 3. LÓGICA ASISTENCIA (P/A/T)
+        async function renderAsistencia(alumnos) {
+            const container = document.getElementById('lista-asistencia');
+            // Obtener asistencia de hoy para marcar botones
+            const asisHoy = await db.collection('asistencias').where('fecha', '==', hoy).get();
+            const registrosHoy = {};
+            asisHoy.forEach(d => registrosHoy[d.data().alumnoID] = d.data().estado);
+
+            container.innerHTML = alumnos.map(a => `
+                <div class="card-alumno p-5 flex justify-between items-center shadow-sm">
+                    <p class="font-bold text-sm text-slate-700">${a.nombre}</p>
+                    <div class="flex gap-2">
+                        <button onclick="marcarAsistencia('${a.id}', 'P')" class="btn-status w-10 h-10 rounded-xl bg-slate-50 text-slate-400 font-black text-xs ${registrosHoy[a.id] === 'P' ? 'btn-active-P' : ''}">P</button>
+                        <button onclick="marcarAsistencia('${a.id}', 'A')" class="btn-status w-10 h-10 rounded-xl bg-slate-50 text-slate-400 font-black text-xs ${registrosHoy[a.id] === 'A' ? 'btn-active-A' : ''}">A</button>
+                        <button onclick="marcarAsistencia('${a.id}', 'T')" class="btn-status w-10 h-10 rounded-xl bg-slate-50 text-slate-400 font-black text-xs ${registrosHoy[a.id] === 'T' ? 'btn-active-T' : ''}">T</button>
                     </div>
-                    <div id="panelCalificacion" class="hidden bg-white p-10 rounded-[3rem] shadow-2xl border-t-8 border-indigo-600 transition-all">
-                        <div class="flex items-center gap-6 mb-10">
-                            <div id="bol-avatar" class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-lg"></div>
-                            <h3 id="bol-nombre" class="font-black text-slate-800 text-2xl tracking-tight"></h3>
-                        </div>
-                        <div id="listaMaterias" class="space-y-2 mb-10"></div>
-                        <button onclick="guardarBoletin()" class="w-full bg-slate-900 text-white font-black py-5 rounded-[1.8rem] hover:bg-indigo-600 transition-all">Sincronizar con Familia</button>
-                    </div>
-                </div>`;
+                </div>
+            `).join('');
         }
 
-        async function buscarParaBoletin() {
-            const v = document.getElementById('busquedaBoletin').value.toLowerCase();
-            const sug = document.getElementById('sugerenciasBoletin');
-            if(v.length < 2) { sug.innerHTML = ""; return; }
-            const snap = await db.collection('alumnos').get();
-            const fil = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(v));
-            sug.innerHTML = fil.map(d => `
-                <div onclick="abrirBoletin('${d.id}', '${d.data().nombre}')" class="p-5 bg-slate-50 rounded-2xl cursor-pointer hover:bg-indigo-600 hover:text-white font-black transition-all">
-                    ${d.data().nombre}
-                </div>`).join('');
-        }
-
-        async function abrirBoletin(id, nombre) {
-            alumnoSeleccionadoParaBoletin = id;
-            document.getElementById('sugerenciasBoletin').innerHTML = "";
-            document.getElementById('panelCalificacion').classList.remove('hidden');
-            document.getElementById('bol-nombre').innerText = nombre;
-            document.getElementById('bol-avatar').innerText = nombre.charAt(0);
-            
-            const doc = await db.collection('calificaciones').doc(id).get();
-            const notas = doc.exists ? (doc.data().notas || {}) : {};
-            const mats = ["Matemática", "Lengua", "Inglés", "Cs. Sociales", "Cs. Naturales", "Const. Ciudadana", "Educación Física"];
-            
-            document.getElementById('listaMaterias').innerHTML = mats.map(m => `
-                <div class="flex justify-between items-center p-4 rounded-2xl hover:bg-slate-50">
-                    <span class="text-sm font-black text-slate-600 uppercase tracking-tight">${m}</span>
-                    <input type="number" step="0.1" class="nota-input w-24 p-3 bg-white border border-slate-200 rounded-xl text-center font-black text-indigo-600 outline-none" data-materia="${m}" value="${notas[m] || ''}">
-                </div>`).join('');
-        }
-
-        async function guardarBoletin() {
-            const inps = document.querySelectorAll('.nota-input');
-            let n = {};
-            inps.forEach(i => { if(i.value) n[i.getAttribute('data-materia')] = parseFloat(i.value); });
-            try {
-                await db.collection('calificaciones').doc(alumnoSeleccionadoParaBoletin).set({
-                    alumnoID: alumnoSeleccionadoParaBoletin, notas: n, ultimaActualizacion: new Date().toISOString()
-                }, { merge: true });
-                alert("✅ Boletín actualizado");
-                showSection('inicio');
-            } catch(e) { alert("Error al guardar"); }
-        }
-
-        // --- INFORMES Y LEGAJOS ---
-        async function buscarAlumnoInforme() {
-            const v = document.getElementById('busquedaAlumno').value.toLowerCase();
-            const sug = document.getElementById('sugerencias');
-            if(v.length < 2) { sug.classList.add('hidden'); return; }
-            const snap = await db.collection('alumnos').get();
-            const fil = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(v));
-            sug.classList.remove('hidden');
-            sug.innerHTML = fil.map(d => `<div onclick="selectAlu('${d.data().nombre}', '${d.id}')" class="p-4 hover:bg-blue-50 cursor-pointer font-bold border-b border-slate-50">${d.data().nombre}</div>`).join('');
-        }
-        function selectAlu(n, id) {
-            document.getElementById('busquedaAlumno').value = n;
-            document.getElementById('busquedaAlumno').dataset.id = id;
-            document.getElementById('sugerencias').classList.add('hidden');
-        }
-
-        async function enviarInforme() {
-            const aluId = document.getElementById('busquedaAlumno').dataset.id;
-            const det = document.getElementById('detalleInforme').value;
-            if(!aluId || !det) return alert("Completa los datos");
-            await db.collection('informes').add({
-                alumnoID: aluId, nombre: document.getElementById('busquedaAlumno').value,
-                tipo: document.getElementById('tipoInforme').value,
-                cantidad: parseInt(document.getElementById('cantInforme').value),
-                detalle: det, fecha: new Date().toISOString(), autor: auth.currentUser.email
+        async function marcarAsistencia(id, estado) {
+            const docID = `${hoy}_${id}`;
+            await db.collection('asistencias').doc(docID).set({
+                alumnoID: id,
+                fecha: hoy,
+                estado: estado,
+                materia: materiaActual
             });
-            alert("Informe enviado");
-            location.reload();
+            // Si es Ausente (A), también lo mandamos a la colección centralizada para la app de familia
+            if(estado === 'A') {
+                await db.collection('calificaciones').doc(id).set({
+                    fechasFaltas: firebase.firestore.FieldValue.arrayUnion(hoy)
+                }, { merge: true });
+            }
         }
 
-        async function buscarParaLegajo() {
-            const v = document.getElementById('busquedaLegajo').value.toLowerCase();
-            const sug = document.getElementById('sugerenciasLegajo');
-            if(v.length < 2) { sug.classList.add('hidden'); return; }
-            const snap = await db.collection('alumnos').get();
-            const fil = snap.docs.filter(d => d.data().nombre.toLowerCase().includes(v));
-            sug.classList.remove('hidden');
-            sug.innerHTML = fil.map(d => `<div onclick="verLegajo('${d.id}', '${d.data().nombre}', '${d.data().cursoID}')" class="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 cursor-pointer hover:border-blue-500 font-bold">${d.data().nombre}</div>`).join('');
+        // 4. LÓGICA NOTAS (CON PERSISTENCIA)
+        async function renderNotas(alumnos) {
+            const container = document.getElementById('lista-notas');
+            container.innerHTML = alumnos.map(a => `
+                <div class="card-alumno p-6 shadow-sm">
+                    <p class="font-black text-xs text-slate-400 uppercase mb-3">${a.nombre}</p>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="text-[8px] font-bold text-slate-400 ml-1">1° TRIM</label>
+                            <input type="number" onchange="guardarNota('${a.id}', '1Trim', this.value)" class="w-full text-center py-3 bg-slate-50 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="text-[8px] font-bold text-slate-400 ml-1">2° TRIM</label>
+                            <input type="number" onchange="guardarNota('${a.id}', '2Trim', this.value)" class="w-full text-center py-3 bg-slate-50 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="text-[8px] font-bold text-slate-400 ml-1">3° TRIM</label>
+                            <input type="number" onchange="guardarNota('${a.id}', '3Trim', this.value)" class="w-full text-center py-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        async function verLegajo(id, nom, curso) {
-            document.getElementById('sugerenciasLegajo').classList.add('hidden');
-            document.getElementById('contenidoLegajo').classList.remove('hidden');
-            document.getElementById('legajoNombre').innerText = nom;
-            document.getElementById('avatarAlumno').innerText = nom.charAt(0);
-            document.getElementById('legajoCurso').innerText = curso;
-
-            const [infSnap, asisSnap] = await Promise.all([
-                db.collection('informes').where('alumnoID', '==', id).get(),
-                db.collection('asistencias').where('alumnoID', '==', id).orderBy('fecha', 'desc').limit(10).get()
-            ]);
-
-            document.getElementById('timelineInformes').innerHTML = infSnap.docs.map(d => `
-                <div class="p-4 bg-slate-50 rounded-2xl border-l-4 ${d.data().tipo.includes('Positiva') ? 'border-green-500' : 'border-rose-500'}">
-                    <p class="font-bold text-slate-700">${d.data().tipo}</p>
-                    <p class="text-xs text-slate-500">${d.data().detalle}</p>
-                </div>`).join('') || '<p class="text-slate-300 italic">Sin informes</p>';
-
-            document.getElementById('timelineAsistencias').innerHTML = asisSnap.docs.map(d => `
-                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-                    <span class="text-xs font-bold text-slate-500">${d.data().fecha}</span>
-                    <span class="font-black text-xs ${d.data().estado === 'P' ? 'text-green-500' : 'text-rose-500'}">${d.data().estado}</span>
-                </div>`).join('') || '<p class="text-slate-300 italic">Sin historial</p>';
+        async function guardarNota(id, trim, valor) {
+            if(!valor) return;
+            const ref = db.collection('calificaciones').doc(id);
+            await ref.set({
+                notas: { [materiaActual]: { [trim]: parseInt(valor) } }
+            }, { merge: true });
         }
 
-        function logout() { auth.signOut(); }
+        // 5. INFORMES CONDUCTA
+        async function guardarInforme() {
+            const id = document.getElementById('inf-alumno').value;
+            const tipo = document.getElementById('inf-tipo').value;
+            const det = document.getElementById('inf-detalle').value;
+            if(!det) return alert("Escribe el detalle");
+
+            await db.collection('informes').add({
+                alumnoID: id,
+                tipo: tipo,
+                detalle: det,
+                fecha: hoy,
+                docente: "Prof. Iosef Caro"
+            });
+            alert("Informe guardado y enviado a familia");
+            document.getElementById('inf-detalle').value = "";
+            cargarHistorialInformes();
+        }
+
+        function cargarHistorialInformes() {
+            db.collection('informes').orderBy('fecha', 'desc').limit(10).onSnapshot(snap => {
+                document.getElementById('historial-informes').innerHTML = snap.docs.map(doc => `
+                    <div class="bg-white p-4 rounded-2xl border-l-4 ${doc.data().tipo.includes('Positiva') ? 'border-emerald-500' : 'border-rose-500'} shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <h4 class="text-xs font-black text-slate-800">${doc.data().tipo}</h4>
+                            <span class="text-[8px] font-bold text-slate-300 uppercase">${doc.data().fecha}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">${doc.data().detalle}</p>
+                    </div>
+                `).join('');
+            });
+        }
     </script>
 </body>
 </html>
