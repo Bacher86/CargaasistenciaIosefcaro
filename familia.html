@@ -2,231 +2,354 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Comunidad Familia - Iosef Caro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunidad Familia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; }
-        .nav-active { color: #db2777 !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
+        .nav-active { color: #db2777 !important; transform: scale(1.1); }
         .nav-active i { background: #fdf2f8; padding: 12px; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(219, 39, 119, 0.2); }
-        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #login-screen { position: fixed; inset: 0; background: white; z-index: 5000; display: flex; flex-direction: column; justify-content: center; padding: 2rem; }
-        .ios-input { background: #f1f5f9; border: none; border-radius: 1.5rem; padding: 1.2rem; font-weight: 700; width: 100%; outline: none; }
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .card-not-read { border-left: 6px solid #db2777; }
+        .card-read { border-left: 6px solid #e2e8f0; opacity: 0.8; }
+        .ios-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-scroll::-webkit-scrollbar { display: none; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-open { animation: slideUp 0.3s ease-out; }
     </style>
 </head>
-<body class="pb-32">
+<body class="bg-[#F8FAFC] min-h-screen text-slate-900">
 
-    <div id="login-screen" class="hidden">
-        <div class="max-w-md mx-auto w-full text-center">
-            <div class="w-20 h-20 bg-pink-50 text-pink-500 rounded-[2.5rem] flex items-center justify-center text-3xl mx-auto mb-8 shadow-sm"><i class="fas fa-heart"></i></div>
-            <h1 class="font-black text-4xl text-slate-800 tracking-tighter mb-2">Hola,</h1>
-            <p class="text-slate-400 font-bold mb-10 text-sm">Ingresá tu correo de familia para continuar.</p>
-            <input type="email" id="loginEmail" placeholder="ejemplo@correo.com" class="ios-input mb-4 text-center">
-            <button onclick="login()" class="w-full bg-slate-900 text-white p-5 rounded-[1.8rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Ingresar al Panel</button>
-            <p id="loginError" class="text-rose-500 text-[10px] font-black mt-6 hidden uppercase tracking-widest text-center">Usuario no encontrado</p>
+    <div id="loadingOverlay" class="fixed inset-0 z-[150] bg-white flex flex-col items-center justify-center">
+        <div class="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 font-black text-pink-500 text-[10px] uppercase tracking-[0.3em]">Sincronizando Sistema...</p>
+    </div>
+
+    <div id="loginScreen" class="fixed inset-0 z-[110] bg-white flex flex-col items-center justify-center px-10">
+        <div class="w-full max-w-xs text-center">
+            <div class="w-20 h-20 bg-slate-900 rounded-[2.2rem] shadow-2xl flex items-center justify-center text-white text-3xl mb-8 mx-auto rotate-3">
+                <i class="fa-solid fa-house-lock"></i>
+            </div>
+            <h1 class="text-3xl font-black mb-10 tracking-tight">Comunidad Familia</h1>
+            <input type="email" id="emailAcceso" placeholder="correo@ejemplo.com" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-5 mb-4 outline-none focus:border-pink-500 font-bold transition-all">
+            <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest text-xs">Entrar al Panel</button>
         </div>
     </div>
 
-    <div id="app">
-        <header class="p-8 pb-4">
-            <div class="flex justify-between items-start mb-6">
+    <div id="mainPanel" class="hidden">
+        <header class="glass sticky top-0 z-50 px-6 py-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-lg"><i class="fa-solid fa-user-tie"></i></div>
                 <div>
-                    <h1 id="userName" class="font-black text-3xl text-slate-800 tracking-tighter leading-none">Cargando...</h1>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">Comunidad Educativa</p>
+                    <p id="nombreTutor" class="font-black text-slate-800 text-sm">...</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Familia Responsable</p>
                 </div>
-                <button onclick="cerrarSesion()" class="w-12 h-12 bg-white rounded-2xl border flex items-center justify-center text-slate-300 shadow-sm"><i class="fas fa-power-off"></i></button>
             </div>
-
-            <div id="selectorContainer" class="hidden animate-pulse">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-2 mb-1 block">Alumno seleccionado:</label>
-                <select id="selectHijo" onchange="cambiarHijo(this.value)" class="ios-input !py-3 !text-sm"></select>
-            </div>
+            <button onclick="cerrarSesion()" class="text-slate-300"><i class="fa-solid fa-arrow-right-from-bracket text-xl"></i></button>
         </header>
 
-        <main class="px-6 max-w-md mx-auto">
-            <section id="section-muro" class="view-section active space-y-4"></section>
-
-            <section id="section-academico" class="view-section space-y-4">
-                <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-xl flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inasistencias Totales</p>
-                        <h3 id="countFaltas" class="text-5xl font-black mt-1">0</h3>
-                    </div>
-                    <div class="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center text-2xl"><i class="fas fa-user-clock"></i></div>
+        <main class="max-w-md mx-auto px-6 pt-6 pb-40">
+            <div id="selectorHijosContainer" class="mb-8 hidden">
+                <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center">
+                    <div class="bg-indigo-600 text-white px-3 py-2 rounded-xl font-black text-[9px] uppercase tracking-tighter">Alumno/a</div>
+                    <select id="selectorHijos" onchange="cargarDatosHijo(this.value)" class="flex-1 bg-transparent px-3 font-bold text-slate-700 outline-none appearance-none"></select>
                 </div>
-                <div id="notasContainer" class="bg-white p-6 rounded-[2.5rem] border shadow-sm space-y-3"></div>
-            </section>
+            </div>
 
-            <section id="section-agenda" class="view-section space-y-3"></section>
+            <div id="section-home" class="view-section">
+                <h3 class="font-black text-2xl mb-6 tracking-tighter">Novedades</h3>
+                <div id="feedFamilias" class="space-y-6"></div>
+            </div>
+
+            <div id="section-calendar" class="view-section hidden">
+                <h3 class="font-black text-2xl mb-6 tracking-tighter">Calendario Escolar</h3>
+                <div id="calendarFeed" class="space-y-4"></div>
+            </div>
+
+            <div id="section-boletin" class="view-section hidden">
+                <h3 class="font-black text-2xl mb-6 tracking-tighter">Seguimiento Académico</h3>
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-slate-900 p-6 rounded-[2.5rem] text-white shadow-xl">
+                        <p class="text-[9px] font-bold opacity-50 uppercase tracking-widest">Asistencia</p>
+                        <p id="b-asist" class="text-3xl font-black">0%</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-[2.5rem] border border-slate-100">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Faltas</p>
+                        <p id="b-inasist" class="text-3xl font-black text-slate-800">0</p>
+                    </div>
+                </div>
+                <div id="tabla-notas" class="space-y-2 mb-8"></div>
+                <div id="lista-informes" class="space-y-4"></div>
+            </div>
+
+            <div id="section-chat" class="view-section hidden">
+                <h3 class="font-black text-2xl mb-6 tracking-tighter">Mensajería</h3>
+                <div id="contactList" class="flex gap-4 overflow-x-auto ios-scroll mb-8"></div>
+                <div class="bg-white rounded-[2.5rem] border border-slate-100 h-96 flex flex-col overflow-hidden shadow-sm">
+                    <div id="chatHeader" class="p-4 border-b bg-slate-50 text-[10px] font-black text-slate-400 uppercase">Selecciona contacto</div>
+                    <div id="chatMessages" class="flex-1 p-5 overflow-y-auto space-y-4 ios-scroll"></div>
+                    <div class="p-4 border-t flex gap-2">
+                        <input type="text" id="msgInput" placeholder="Escribir mensaje..." class="flex-1 bg-slate-100 rounded-2xl px-4 py-2 text-sm outline-none">
+                        <button onclick="enviarMensaje()" class="bg-indigo-600 text-white w-10 h-10 rounded-xl shadow-lg"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
         </main>
+
+        <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm glass rounded-[2.8rem] shadow-2xl h-20 flex items-center justify-around px-6 z-50 border border-white/50">
+            <button onclick="switchTab('home')" class="nav-btn nav-active" id="btn-home"><i class="fa-solid fa-house-chimney text-xl"></i></button>
+            <button onclick="switchTab('calendar')" class="nav-btn text-slate-300" id="btn-calendar"><i class="fa-solid fa-calendar-check text-xl"></i></button>
+            <button onclick="switchTab('boletin')" class="nav-btn text-slate-300" id="btn-boletin"><i class="fa-solid fa-graduation-cap text-xl"></i></button>
+            <button onclick="switchTab('chat')" class="nav-btn text-slate-300" id="btn-chat"><i class="fa-solid fa-comments text-xl"></i></button>
+        </nav>
+
+        <div id="btn-iosi" onclick="toggleIosi()" class="fixed bottom-32 right-8 w-14 h-14 bg-slate-900 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[100] border-4 border-white rotate-3 cursor-pointer">
+            <i class="fa-solid fa-bolt-lightning text-yellow-400 text-xl"></i>
+        </div>
+
+        <div id="window-iosi" class="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-md hidden flex items-end justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden modal-open">
+                <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center"><i class="fa-solid fa-robot text-xs"></i></div>
+                        <p class="font-black text-xs uppercase tracking-widest">Iosi AI v5.5</p>
+                    </div>
+                    <button onclick="toggleIosi()"><i class="fa-solid fa-circle-xmark text-xl opacity-40"></i></button>
+                </div>
+                <div id="iosiContent" class="h-80 overflow-y-auto p-6 space-y-4 bg-slate-50 text-[11px] font-medium leading-relaxed ios-scroll">
+                    <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">Hola. Soy Iosi. Tengo acceso al muro de novedades, notas y calendario. ¿En qué te ayudo?</div>
+                </div>
+                <div class="p-4 bg-white border-t flex gap-2">
+                    <input type="text" id="preguntaIosi" placeholder="Preguntar novedades o notas..." class="flex-1 bg-slate-100 rounded-2xl px-5 py-3 text-sm outline-none">
+                    <button onclick="analisisRapidoIosi()" class="bg-indigo-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div id="window-iosi" class="hidden fixed inset-x-6 bottom-32 bg-white rounded-[2.5rem] shadow-2xl border z-[4000] flex flex-col overflow-hidden">
-        <div class="p-6 bg-indigo-600 text-white flex justify-between items-center">
-            <div class="flex items-center gap-3"><i class="fas fa-robot"></i><span class="font-black text-sm uppercase">Iosi Asistente</span></div>
-            <button onclick="toggleIosi()"><i class="fas fa-times"></i></button>
-        </div>
-        <div id="iosi-chat" class="h-80 p-6 overflow-y-auto bg-slate-50 text-[11px] font-bold text-slate-600">
-            <div class="bg-white p-4 rounded-2xl rounded-tl-none border shadow-sm mb-2 max-w-[80%]">¡Hola! Soy Iosi. ¿Qué necesitás saber sobre las notas o eventos?</div>
-        </div>
-        <div class="p-4 border-t bg-white flex gap-2">
-            <input type="text" placeholder="Escribí acá..." class="ios-input !p-3 !text-xs">
-            <button class="bg-indigo-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-paper-plane"></i></button>
-        </div>
-    </div>
-    <button onclick="toggleIosi()" class="fixed bottom-32 right-6 w-16 h-16 bg-indigo-600 text-white rounded-[2rem] shadow-2xl z-[3000] flex items-center justify-center animate-bounce-subtle border-4 border-white"><i class="fas fa-robot text-2xl"></i></button>
+<script>
+    // (Firebase config y variables globales se mantienen igual)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
+        authDomain: "app-academica-interna.firebaseapp.com",
+        projectId: "app-academica-interna",
+        storageBucket: "app-academica-interna.firebasestorage.app",
+        messagingSenderId: "169882587504",
+        appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t flex justify-around items-center h-28 px-6 z-[2000]">
-        <button onclick="switchTab('muro')" id="btn-muro" class="nav-btn nav-active flex flex-col items-center flex-1 transition-all"><i class="fas fa-th-large text-xl"></i><span class="text-[9px] font-black mt-2 uppercase">Inicio</span></button>
-        <button onclick="switchTab('academico')" id="btn-academico" class="nav-btn text-slate-300 flex flex-col items-center flex-1 transition-all"><i class="fas fa-address-book text-xl"></i><span class="text-[9px] font-black mt-2 uppercase">Boletín</span></button>
-        <button onclick="switchTab('agenda')" id="btn-agenda" class="nav-btn text-slate-300 flex flex-col items-center flex-1 transition-all"><i class="fas fa-calendar-alt text-xl"></i><span class="text-[9px] font-black mt-2 uppercase">Agenda</span></button>
-    </nav>
+    let hijoActivo = null;
+    let tutorEmail = "";
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
-            authDomain: "app-academica-interna.firebaseapp.com",
-            projectId: "app-academica-interna",
-            storageBucket: "app-academica-interna.firebasestorage.app",
-            messagingSenderId: "169882587504",
-            appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+    // --- FUNCIONES CORE ---
+    async function validarAcceso() {
+        const email = document.getElementById('emailAcceso').value.trim().toLowerCase();
+        if(!email) return;
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+        try {
+            const doc = await db.collection('usuarios').doc(email).get();
+            if(doc.exists && doc.data().rol === 'familia') {
+                tutorEmail = email;
+                iniciarApp(doc.data());
+            } else { alert("Acceso denegado."); document.getElementById('loadingOverlay').classList.add('hidden'); }
+        } catch(e) { document.getElementById('loadingOverlay').classList.add('hidden'); }
+    }
 
-        let currentEmail = localStorage.getItem('parentEmail');
-        let hijoActivo = "";
-
-        window.onload = () => {
-            if (!currentEmail) {
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('app').classList.add('hidden');
-            } else {
-                iniciarSesion();
-            }
-        };
-
-        async function login() {
-            const email = document.getElementById('loginEmail').value.toLowerCase().trim();
-            const userDoc = await db.collection('usuarios').doc(email).get();
-            if (userDoc.exists && userDoc.data().rol === 'familia') {
-                localStorage.setItem('parentEmail', email);
-                location.reload();
-            } else {
-                document.getElementById('loginError').classList.remove('hidden');
+    async function iniciarApp(data) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainPanel').classList.remove('hidden');
+        document.getElementById('nombreTutor').innerText = data.nombre;
+        const ids = Array.isArray(data.hijoID) ? data.hijoID : [data.hijoID];
+        if(ids.length > 1) {
+            document.getElementById('selectorHijosContainer').classList.remove('hidden');
+            const select = document.getElementById('selectorHijos');
+            select.innerHTML = "";
+            for(let id of ids) {
+                const h = await db.collection('alumnos').doc(id).get();
+                if(h.exists) select.innerHTML += `<option value="${id}">${h.data().nombre}</option>`;
             }
         }
+        cargarDatosHijo(ids[0]);
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
 
-        async function iniciarSesion() {
-            const userDoc = await db.collection('usuarios').doc(currentEmail).get();
-            const userData = userDoc.data();
-            document.getElementById('userName').innerText = "Hola, " + userData.nombre;
+    async function cargarDatosHijo(id) {
+        const doc = await db.collection('alumnos').doc(id).get();
+        if(doc.exists) {
+            hijoActivo = { id: doc.id, ...doc.data() };
+            vincularBoletin(hijoActivo.id);
+            escucharFeed(hijoActivo.cursoID);
+        }
+    }
+async function obtenerRespuestaIosi(mensaje) {
+    const p = mensaje.toLowerCase();
+    if (!hijoActivo) return "No puedo acceder a la información sin un alumno vinculado.";
+
+    try {
+        // --- 1. LÓGICA DE NOVEDADES (MURO) ---
+        if (p.includes("novedad") || p.includes("muro") || p.includes("noticia") || p.includes("pasó") || p.includes("aviso")) {
+            const snap = await db.collection('comunicados')
+                .where('tag', 'in', ['TODOS', hijoActivo.cursoID])
+                .orderBy('creadoEn', 'desc').limit(3).get();
             
-            if (userData.hijoID && userData.hijoID.length > 0) {
-                if (userData.hijoID.length > 1) {
-                    document.getElementById('selectorContainer').classList.remove('hidden');
-                    const select = document.getElementById('selectHijo');
-                    for (let id of userData.hijoID) {
-                        const hDoc = await db.collection('alumnos').doc(id).get();
-                        select.innerHTML += `<option value="${id}">${hDoc.data().nombre}</option>`;
-                    }
-                }
-                cambiarHijo(userData.hijoID[0]);
-            }
-        }
-
-        async function cambiarHijo(id) {
-            hijoActivo = id;
-            const hDoc = await db.collection('alumnos').doc(id).get();
-            const data = hDoc.data();
-            cargarMuro(data.curso);
-            cargarAcademico(id);
-            cargarAgenda();
-        }
-
-        function cargarMuro(curso) {
-            db.collection('comunicados').orderBy('creadoEn', 'desc').onSnapshot(snap => {
-                const container = document.getElementById('section-muro');
-                container.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    if(d.tag === "TODOS" || d.tag === curso) {
-                        const postID = doc.id;
-                        container.innerHTML += `
-                            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                                <h4 class="font-black text-slate-800 text-lg mb-2">${d.titulo}</h4>
-                                <p class="text-xs text-slate-500 font-medium mb-6">${d.texto}</p>
-                                <div class="flex justify-between items-center pt-4 border-t border-slate-50">
-                                    <button onclick="reaccionar('${postID}', 'likes')" class="text-[10px] font-black text-pink-500 uppercase flex items-center gap-2">
-                                        <i class="fas fa-heart"></i> Me gusta (${d.likes || 0})
-                                    </button>
-                                    <button onclick="reaccionar('${postID}', 'visto')" class="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2">
-                                        <i class="fas fa-check-double"></i> Confirmar lectura
-                                    </button>
-                                </div>
-                            </div>`;
-                    }
-                });
-            });
-        }
-
-        async function reaccionar(id, campo) {
-            const ref = db.collection('comunicados').doc(id);
-            await ref.update({ [campo]: firebase.firestore.FieldValue.increment(1) });
-        }
-
-        function cargarAcademico(id) {
-            db.collection('calificaciones').doc(id).onSnapshot(doc => {
-                const container = document.getElementById('notasContainer');
-                if(!doc.exists) { container.innerHTML = "<p class='text-center text-xs font-bold text-slate-400 p-4'>Sin notas cargadas</p>"; return; }
+            if (snap.empty) return "No hay novedades recientes para el curso " + hijoActivo.cursoID;
+            
+            let res = `📢 **Últimas novedades para ${hijoActivo.cursoID}:**\n`;
+            snap.forEach(doc => {
                 const d = doc.data();
-                document.getElementById('countFaltas').innerText = d.fechasFaltas ? d.fechasFaltas.length : 0;
-                
-                let html = "";
-                for (const [materia, trims] of Object.entries(d.notas || {})) {
-                    html += `
-                        <div class="flex justify-between items-center p-5 bg-slate-50 rounded-2xl">
-                            <span class="text-xs font-black text-slate-700 uppercase tracking-tighter">${materia}</span>
-                            <div class="flex gap-2">
-                                <div class="flex flex-col items-center"><span class="text-[7px] text-slate-400 font-black uppercase">1T</span><span class="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-[11px] font-black shadow-sm">${trims['1Trim'] || '-'}</span></div>
-                                <div class="flex flex-col items-center"><span class="text-[7px] text-slate-400 font-black uppercase">2T</span><span class="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-[11px] font-black shadow-sm">${trims['2Trim'] || '-'}</span></div>
-                                <div class="flex flex-col items-center"><span class="text-[7px] text-pink-500 font-black uppercase">3T</span><span class="w-8 h-8 flex items-center justify-center bg-pink-500 text-white rounded-lg text-[11px] font-black shadow-sm">${trims['3Trim'] || '-'}</span></div>
-                            </div>
-                        </div>`;
-                }
-                container.innerHTML = html || "<p class='text-center text-xs font-bold text-slate-400'>No hay calificaciones aún.</p>";
+                res += `\n• **${d.titulo}**: ${d.texto.substring(0, 80)}...`;
             });
+            return res + "\n\nPodés ver los detalles completos en la pantalla de Inicio.";
         }
 
-        function cargarAgenda() {
-            db.collection('eventos').orderBy('fecha', 'asc').onSnapshot(snap => {
-                const container = document.getElementById('section-agenda');
-                container.innerHTML = snap.docs.map(doc => `
-                    <div class="flex items-center gap-5 bg-white p-5 rounded-[2.2rem] border shadow-sm">
-                        <div class="bg-slate-900 text-white p-3 rounded-2xl text-center min-w-[60px]">
-                            <span class="block text-sm font-black leading-none">${doc.data().fecha.split('-')[2]}</span>
-                            <span class="block text-[8px] uppercase font-bold opacity-50 mt-1">${doc.data().fecha.split('-')[1]}</span>
+        // --- 2. LÓGICA DE FALTAS POR DÍA (DETALLE) ---
+        if (p.includes("falta") || p.includes("asistencia") || p.includes("inasistencia") || p.includes("faltó")) {
+            const calDoc = await db.collection('calificaciones').doc(hijoActivo.id).get();
+            const data = calDoc.data();
+            const total = data?.inasistencias || 0;
+            
+            if (total === 0) return `${hijoActivo.nombre} no tiene faltas registradas. ¡Excelente asistencia!`;
+            
+            // Si tenés las fechas guardadas en un array 'fechasInasistencias' (opcional según tu db)
+            let detalle = `\n${hijoActivo.nombre} tiene un total de **${total} faltas**.`;
+            if (total > 15) detalle += "\n⚠️ Atención: Se está acercando al límite de faltas permitidas.";
+            
+            return detalle + "\n\nRecordá que podés justificar las faltas enviando el certificado por mail.";
+        }
+
+        // --- 3. LÓGICA DE RESUMEN DE MATERIAS (PROMEDIOS) ---
+        if (p.includes("materia") || p.includes("nota") || p.includes("resumen") || p.includes("boletin") || p.includes("desempeño")) {
+            const calDoc = await db.collection('calificaciones').doc(hijoActivo.id).get();
+            if (!calDoc.exists || !calDoc.data().notas) return "Aún no hay notas cargadas en el sistema.";
+            
+            const notas = Object.entries(calDoc.data().notas);
+            if (notas.length === 0) return "El boletín está vacío por ahora.";
+
+            let suma = 0;
+            let res = `📊 **Resumen Académico de ${hijoActivo.nombre}:**\n`;
+            
+            notas.forEach(([materia, nota]) => {
+                suma += Number(nota);
+                let emoji = nota >= 7 ? "✅" : "⚠️";
+                res += `\n${emoji} **${materia}**: ${nota}`;
+            });
+
+            let promedio = (suma / notas.length).toFixed(1);
+            res += `\n\n📈 **Promedio General: ${promedio}**`;
+            res += promedio >= 8 ? "\n✨ ¡Un desempeño brillante!" : "\n💡 Sigamos reforzando para el próximo periodo.";
+            
+            return res;
+        }
+
+        // --- 4. LÓGICA DE CALENDARIO / EVENTOS ---
+        if (p.includes("calendario") || p.includes("cuando") || p.includes("fecha") || p.includes("evento") || p.includes("reunion")) {
+            const hoy = new Date().toISOString().split('T')[0];
+            const snap = await db.collection('eventos')
+                .where('visibilidad', 'in', ['TODOS', hijoActivo.cursoID])
+                .where('fecha', '>=', hoy)
+                .orderBy('fecha', 'asc').limit(3).get();
+
+            if (snap.empty) return "No hay eventos o exámenes programados para las próximas fechas.";
+
+            let res = `📅 **Próximos eventos en agenda:**\n`;
+            snap.forEach(doc => {
+                const e = doc.data();
+                const [y, m, d] = e.fecha.split('-');
+                res += `\n• **${d}/${m}**: ${e.titulo}`;
+            });
+            return res;
+        }
+
+        // --- 5. HORARIOS Y CONTACTO (ESTÁTICO PRO) ---
+        if (p.includes("horario") || p.includes("hora") || p.includes("sale") || p.includes("entra")) {
+            return `⏰ **Horarios de Clase:**\n\n• **Lunes a Jueves:** 07:45 a 16:00 hs.\n• **Viernes:** 07:45 a 15:00 hs.\n\nLos retiros anticipados deben ser comunicados previamente por el cuaderno de comunicaciones o mail.`;
+        }
+
+        if (p.includes("mail") || p.includes("contacto") || p.includes("escribir") || p.includes("queja")) {
+            return `📧 **Canal Oficial de Comunicación:**\n\nPor favor, para inquietudes pedagógicas o administrativas, escribinos a **[TU-MAIL-AQUÍ]**.\n\n*Respondemos todas las consultas en un plazo de 24/48hs hábiles.*`;
+        }
+
+        // --- 6. URGENCIA DETECTADA ---
+        if (p.includes("urgente") || p.includes("emergencia") || p.includes("pasó algo")) {
+            return "🚨 **PROTOCOLO DE EMERGENCIA:**\n\nHe detectado un mensaje de urgencia. Por favor, comuníquese telefónicamente al colegio de inmediato. Si es un aviso de retiro urgente, el personal de portería ya está siendo notificado de su inquietud en el panel.";
+        }
+
+    } catch (error) {
+        console.error(error);
+        return "Lo siento, tuve un problema al consultar la base de datos. Por favor, intentá de nuevo en un momento.";
+    }
+
+    return "Hola, soy Iosi. Puedo darte un **resumen de materias**, decirte las **faltas**, mostrarte las **novedades del muro** o el **calendario** de exámenes. ¿Qué necesitás saber?";
+}
+
+    
+    async function analisisRapidoIosi() {
+        const input = document.getElementById('preguntaIosi');
+        const box = document.getElementById('iosiContent');
+        const txt = input.value.trim();
+        if(!txt) return;
+
+        box.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none shadow-md">${txt}</div></div>`;
+        input.value = "";
+        
+        const r = await obtenerRespuestaIosi(txt);
+        setTimeout(() => {
+            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border p-3 rounded-2xl rounded-tl-none text-slate-600 shadow-sm">${r}</div></div>`;
+            box.scrollTop = box.scrollHeight;
+        }, 600);
+    }
+
+    // --- FUNCIONES UI SECUNDARIAS ---
+    function vincularBoletin(id) {
+        db.collection('calificaciones').doc(id).onSnapshot(doc => {
+            if(doc.exists) {
+                const d = doc.data();
+                document.getElementById('b-inasist').innerText = d.inasistencias || 0;
+                const asis = Math.max(0, 100 - ((d.inasistencias || 0) * 100 / 180)).toFixed(1);
+                document.getElementById('b-asist').innerText = asis + "%";
+                const tabla = document.getElementById('tabla-notas');
+                tabla.innerHTML = '<h4 class="font-black text-[10px] text-slate-400 uppercase tracking-widest mb-4">Notas</h4>';
+                Object.entries(d.notas || {}).forEach(([m,v]) => {
+                    tabla.innerHTML += `<div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-50 shadow-sm mb-2"><span class="font-bold text-slate-400 text-[10px] uppercase">${m}</span><span class="font-black text-slate-800 text-lg">${v}</span></div>`;
+                });
+            }
+        });
+    }
+
+    function escucharFeed(curso) {
+        db.collection('comunicados').onSnapshot(snap => {
+            const container = document.getElementById('feedFamilias');
+            container.innerHTML = "";
+            snap.forEach(doc => {
+                const p = doc.data();
+                if(p.tag === "TODOS" || p.tag === curso) {
+                    container.innerHTML += `<div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+                        <h4 class="font-black text-slate-800 text-lg mb-2 leading-tight">${p.titulo}</h4>
+                        <p class="text-xs text-slate-500 font-medium mb-4 leading-relaxed">${p.texto}</p>
+                        <div class="flex justify-end pt-4 border-t border-slate-50">
+                            <span class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Enviado por Institución</span>
                         </div>
-                        <p class="font-bold text-slate-700 text-sm tracking-tight">${doc.data().titulo}</p>
-                    </div>`).join('');
+                    </div>`;
+                }
             });
-        }
+        });
+    }
 
-        function switchTab(id) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            document.getElementById('section-' + id).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
-            document.getElementById('btn-' + id).classList.add('nav-active');
-        }
-
-        function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
-        function cerrarSesion() { localStorage.clear(); location.reload(); }
-    </script>
+    function switchTab(id) {
+        document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+        document.getElementById('section-' + id).classList.remove('hidden');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
+        document.getElementById('btn-' + id).classList.add('nav-active');
+    }
+    function toggleIosi() { document.getElementById('window-iosi').classList.toggle('hidden'); }
+    function cerrarSesion() { localStorage.clear(); location.reload(); }
+    setTimeout(() => { document.getElementById('loadingOverlay').classList.add('hidden'); }, 1500);
+</script>
 </body>
 </html>
