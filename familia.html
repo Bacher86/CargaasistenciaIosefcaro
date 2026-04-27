@@ -189,113 +189,85 @@
     }
 async function obtenerRespuestaIosi(mensaje) {
     const p = mensaje.toLowerCase();
-    if (!hijoActivo) return "No puedo acceder a la información sin un alumno vinculado.";
+    if (!hijoActivo) return "No cargué los datos del alumno.";
 
     try {
-        // --- 1. LÓGICA DE FALTAS DETALLADAS (PUNTO 1 COMPLETADO) ---
-        if (p.includes("falta") || p.includes("asistencia") || p.includes("inasistencia") || p.includes("faltó")) {
+        // --- 1. LÓGICA DE FALTAS CON FECHAS (CORREGIDA) ---
+        if (p.includes("falta") || p.includes("inasistencia") || p.includes("faltó") || p.includes("dia")) {
             const calDoc = await db.collection('calificaciones').doc(hijoActivo.id).get();
+            
+            if (!calDoc.exists) return "No encuentro registros de inasistencias.";
+            
             const data = calDoc.data();
-            const fechas = data?.fechasFaltas || []; // Lee tu nuevo array de Firebase
-            const total = fechas.length;
+            const fechas = data.fechasFaltas || []; // AQUÍ LEE TU ARRAY DE LA CAPTURA
 
-            if (total === 0) return `${hijoActivo.nombre} no tiene faltas registradas. ¡Excelente asistencia!`;
+            console.log("Fechas detectadas por Iosi:", fechas); // Esto es para debug
 
-            // Formatear fechas de AAAA-MM-DD a DD/MM
-            const fechasFormateadas = fechas.map(f => {
-                const parts = f.split('-');
-                return `${parts[2]}/${parts[1]}`;
-            }).join(', ');
-
-            let detalle = `📋 **Reporte de Asistencia de ${hijoActivo.nombre}:**\n`;
-            detalle += `• Total: **${total} faltas**.\n`;
-            detalle += `• Días registrados: ${fechasFormateadas}.`;
-            
-            if (total > 15) detalle += "\n\n⚠️ Atención: Se está acercando al límite de faltas permitidas.";
-            return detalle;
-        }
-
-        // --- 2. LÓGICA DE NOTAS (RESPUESTA DIRECTA O RESUMEN) ---
-        if (p.includes("materia") || p.includes("nota") || p.includes("resumen") || p.includes("boletin") || p.includes("sacó")) {
-            const calDoc = await db.collection('calificaciones').doc(hijoActivo.id).get();
-            if (!calDoc.exists || !calDoc.data().notas) return "Aún no hay notas cargadas en el sistema.";
-            
-            const notas = calDoc.data().notas;
-            const nombresMaterias = Object.keys(notas);
-
-            // ¿Preguntó por una materia específica?
-            const materiaEncontrada = nombresMaterias.find(m => p.includes(m.toLowerCase()));
-
-            if (materiaEncontrada) {
-                return `📝 La nota de **${materiaEncontrada}** de ${hijoActivo.nombre} es: **${notas[materiaEncontrada]}**.`;
+            if (fechas.length === 0) {
+                return `✅ ${hijoActivo.nombre} tiene asistencia perfecta. No hay faltas grabadas.`;
             }
 
-            // Si no hay materia específica, dar el resumen pro
-            let suma = 0;
-            let res = `📊 **Resumen Académico de ${hijoActivo.nombre}:**\n`;
-            Object.entries(notas).forEach(([materia, nota]) => {
-                suma += Number(nota);
-                res += `\n• **${materia}**: ${nota}`;
-            });
+            // Convertimos el array ["2026-04-20"] en un texto "20/04"
+            const listaParaMostrar = fechas.map(f => {
+                const parts = f.split('-');
+                return `${parts[2]}/${parts[1]}`; 
+            }).join(', ');
 
-            let promedio = (suma / nombresMaterias.length).toFixed(1);
-            res += `\n\n📈 **Promedio General: ${promedio}**`;
-            return res;
+            return `📋 **Reporte de Asistencia:**\n${hijoActivo.nombre} tiene **${fechas.length} faltas**.\n\n📅 **Las fechas son:** ${listaParaMostrar}.\n\n*Recordá que podés justificar las faltas vía mail.*`;
         }
 
-        // --- 3. LÓGICA DE CALENDARIO / EVENTOS ---
-        if (p.includes("calendario") || p.includes("cuando") || p.includes("fecha") || p.includes("evento") || p.includes("examen")) {
+        // --- 2. NOTAS ESPECÍFICAS ---
+        if (p.includes("nota") || p.includes("sacó") || p.includes("cuanto tiene")) {
+            const calDoc = await db.collection('calificaciones').doc(hijoActivo.id).get();
+            const notas = calDoc.data()?.notas || {};
+            const materias = Object.keys(notas);
+
+            const materiaEncontrada = materias.find(m => p.includes(m.toLowerCase()));
+
+            if (materiaEncontrada) {
+                return `📝 La nota de **${materiaEncontrada}** es: **${notas[materiaEncontrada]}**.`;
+            } else {
+                return `¿De qué materia querés saber la nota? Tengo: ${materias.join(', ')}.`;
+            }
+        }
+
+        // --- 3. CALENDARIO ---
+        if (p.includes("cuando") || p.includes("calendario") || p.includes("examen")) {
             const hoy = new Date().toISOString().split('T')[0];
             const snap = await db.collection('eventos')
                 .where('visibilidad', 'in', ['TODOS', hijoActivo.cursoID])
                 .where('fecha', '>=', hoy)
-                .orderBy('fecha', 'asc').limit(3).get();
+                .orderBy('fecha', 'asc').get();
 
-            if (snap.empty) return "No hay eventos programados en el calendario por ahora.";
+            if (snap.empty) return "No hay eventos próximos.";
 
-            let res = `📅 **Próximos eventos en agenda:**\n`;
+            let lista = "📅 **Próximos eventos:**\n";
             snap.forEach(doc => {
                 const e = doc.data();
-                const [y, m, d] = e.fecha.split('-');
-                res += `\n• **${d}/${m}**: ${e.titulo}`;
+                const parts = e.fecha.split('-');
+                lista += `• ${parts[2]}/${parts[1]}: ${e.titulo}\n`;
             });
-            return res;
+            return lista;
         }
 
-        // --- 4. LÓGICA DE NOVEDADES (MURO) ---
-        if (p.includes("novedad") || p.includes("muro") || p.includes("noticia") || p.includes("pasó")) {
+        // --- 4. MURO ---
+        if (p.includes("novedad") || p.includes("muro")) {
             const snap = await db.collection('comunicados')
                 .where('tag', 'in', ['TODOS', hijoActivo.cursoID])
                 .orderBy('creadoEn', 'desc').limit(1).get();
             
-            if (snap.empty) return "No hay novedades nuevas para " + hijoActivo.cursoID;
-            
+            if (snap.empty) return "No hay comunicados nuevos.";
             const d = snap.docs[0].data();
-            return `📢 **Último comunicado:**\n\n**${d.titulo}**\n${d.texto}`;
+            return `📢 **Último comunicado:**\n\n"${d.titulo}"\n\n${d.texto}`;
         }
 
-        // --- 5. HORARIOS Y CONTACTO ---
-        if (p.includes("horario") || p.includes("hora") || p.includes("sale") || p.includes("entra")) {
-            return `⏰ **Horarios de Clase:**\n\n• **Lunes a Jueves:** 07:45 a 16:00 hs.\n• **Viernes:** 07:45 a 15:00 hs.`;
-        }
-
-        if (p.includes("mail") || p.includes("contacto") || p.includes("escribir")) {
-            return `📧 **Canal Oficial:** Escribinos a **[TU-MAIL-AQUÍ]** para cualquier gestión formal.`;
-        }
-
-        // --- 6. URGENCIA ---
-        if (p.includes("urgente") || p.includes("emergencia") || p.includes("pasó algo")) {
-            return "🚨 **PROTOCOLO DE EMERGENCIA:** Por favor, comuníquese telefónicamente al colegio de inmediato.";
-        }
-
-    } catch (error) {
-        console.error(error);
-        return "Tuve un problema al consultar la base de datos. Intentá de nuevo en un momento.";
+    } catch (e) {
+        console.error("Error en Iosi:", e);
+        return "Tuve un problema al leer la base de datos.";
     }
 
-    return "Soy Iosi. Puedo decirte notas de materias, fechas de faltas o novedades del muro. ¿En qué te ayudo?";
+    return "Soy Iosi. Puedo decirte qué días faltó, notas de materias o eventos del calendario.";
 }
-
     
     async function analisisRapidoIosi() {
         const input = document.getElementById('preguntaIosi');
