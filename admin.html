@@ -1,1 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin Maestro v5.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; padding-bottom: 100px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.2s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-active { color: #2563eb !important; border-top: 3px solid #2563eb; background: #eff6ff; }
+    </style>
+</head>
+<body>
 
+    <header class="bg-white p-4 border-b sticky top-0 z-50 flex justify-between items-center shadow-sm">
+        <h1 class="font-800 text-xl tracking-tighter italic">EDU<span class="text-blue-600 font-900">SYNC</span></h1>
+        <div id="online-indicator" class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+    </header>
+
+    <main class="p-4 max-w-md mx-auto">
+        
+        <section id="t-agenda" class="tab-content active">
+            <div class="bg-indigo-600 p-6 rounded-[2.5rem] shadow-xl mb-8 text-white">
+                <h3 class="font-bold text-lg mb-4 flex items-center"><i class="fa-solid fa-calendar-plus mr-2"></i> Nuevo Evento</h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[10px] font-bold opacity-70 ml-1 uppercase">Fecha</label>
+                        <input type="date" id="cal-fec" class="w-full p-4 rounded-2xl border-none text-slate-900 font-bold focus:ring-4 ring-indigo-400/50 outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="text-[10px] font-bold opacity-70 ml-1 uppercase">Nombre del Evento</label>
+                        <input type="text" id="cal-tit" placeholder="Ej: Entrega de Diplomas" class="w-full p-4 rounded-2xl border-none text-slate-900 font-bold outline-none">
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-bold opacity-70 ml-1 uppercase">¿Quién debe verlo?</label>
+                        <select id="cal-tag" class="w-full p-4 rounded-2xl border-none text-slate-900 font-bold outline-none"></select>
+                    </div>
+
+                    <button onclick="addEvento()" class="w-full bg-white text-indigo-600 py-4 rounded-2xl font-800 shadow-lg mt-2 active:scale-95 transition-transform">
+                        SINCRONIZAR AGENDA
+                    </button>
+                </div>
+            </div>
+
+            <h4 class="font-bold text-slate-400 text-xs mb-4 uppercase tracking-widest ml-2">Próximas Fechas</h4>
+            <div id="list-agenda" class="space-y-3"></div>
+        </section>
+
+        <section id="t-alumnos" class="tab-content">
+            <div class="bg-white p-6 rounded-[2.5rem] border shadow-sm mb-6">
+                <h3 class="font-bold mb-4">Alta Alumno</h3>
+                <input type="text" id="alu-nom" placeholder="Nombre completo" class="w-full p-4 bg-slate-50 rounded-2xl mb-3 outline-none font-semibold">
+                <select id="alu-cur" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-600 mb-4"></select>
+                <button onclick="addAlumno()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold">REGISTRAR</button>
+            </div>
+            <div id="list-alu" class="space-y-2"></div>
+        </section>
+
+        <section id="t-familias" class="tab-content">
+            <div class="bg-white p-6 rounded-[2.5rem] border shadow-sm mb-6">
+                <h3 class="font-bold mb-4">Conectar Familia</h3>
+                <input type="text" id="fam-nom" placeholder="Nombre Tutor" class="w-full p-4 bg-slate-50 rounded-2xl mb-3 outline-none">
+                <input type="email" id="fam-mail" placeholder="Email (Usuario App)" class="w-full p-4 bg-slate-50 rounded-2xl mb-4 outline-none">
+                <label class="text-[10px] font-bold text-slate-400 ml-1 uppercase">Seleccionar Hijos:</label>
+                <select id="fam-hijos" multiple class="w-full p-4 bg-slate-50 rounded-2xl h-44 outline-none font-bold mt-2"></select>
+                <button onclick="addFamilia()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold mt-4">VINCULAR CUENTA</button>
+            </div>
+        </section>
+
+        <section id="t-muro" class="tab-content">
+            <div class="bg-white p-6 rounded-[2.5rem] border shadow-sm mb-6 space-y-3">
+                <h3 class="font-bold">Publicar Comunicado</h3>
+                <input type="text" id="post-tit" placeholder="Título" class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-none outline-none">
+                <textarea id="post-msg" rows="4" placeholder="Mensaje..." class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none"></textarea>
+                <select id="post-tag" class="w-full p-4 bg-slate-50 rounded-2xl font-bold text-slate-500 border-none outline-none"></select>
+                <button onclick="addPost()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-bold">ENVIAR A MURO</button>
+            </div>
+            <div id="list-muro" class="space-y-3"></div>
+        </section>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 z-50 shadow-2xl">
+        <button onclick="nav('agenda')" id="b-agenda" class="flex flex-col items-center p-2 nav-active text-slate-400 w-full rounded-t-2xl">
+            <i class="fa-solid fa-calendar-day text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Agenda</span>
+        </button>
+        <button onclick="nav('alumnos')" id="b-alumnos" class="flex flex-col items-center p-2 text-slate-400 w-full rounded-t-2xl">
+            <i class="fa-solid fa-graduation-cap text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Alumnos</span>
+        </button>
+        <button onclick="nav('familias')" id="b-familias" class="flex flex-col items-center p-2 text-slate-400 w-full rounded-t-2xl">
+            <i class="fa-solid fa-users text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Familias</span>
+        </button>
+        <button onclick="nav('muro')" id="b-muro" class="flex flex-col items-center p-2 text-slate-400 w-full rounded-t-2xl">
+            <i class="fa-solid fa-message-captions text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Muro</span>
+        </button>
+    </nav>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLeGKE5NoGUQT0GRdMDIHn4zhxF3ZOp6k",
+            authDomain: "app-academica-interna.firebaseapp.com",
+            projectId: "app-academica-interna",
+            storageBucket: "app-academica-interna.firebasestorage.app",
+            messagingSenderId: "169882587504",
+            appId: "1:169882587504:web:0fcdf32efdc81ad0a0bfb5"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function nav(id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
+            document.getElementById('t-' + id).classList.add('active');
+            document.getElementById('b-' + id).classList.add('nav-active');
+            window.scrollTo(0,0);
+        }
+
+        // --- CALENDARIO (Lógica de filtrado por curso) ---
+        async function addEvento() {
+            const fec = document.getElementById('cal-fec').value;
+            const tit = document.getElementById('cal-tit').value.trim();
+            const tag = document.getElementById('cal-tag').value;
+            if(!fec || !tit) return alert("Completa fecha y título");
+
+            await db.collection('eventos').add({
+                fecha: fec,
+                titulo: tit,
+                visibilidad: tag, // "TODOS" o el ID del curso
+                creadoEn: new Date().toISOString()
+            });
+            document.getElementById('cal-tit').value = "";
+        }
+
+        db.collection('eventos').orderBy('fecha', 'asc').onSnapshot(snap => {
+            document.getElementById('list-agenda').innerHTML = snap.docs.map(doc => {
+                const d = doc.data();
+                return `<div class="bg-white p-4 rounded-3xl border border-slate-100 flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-indigo-50 text-indigo-600 font-bold p-3 rounded-2xl text-[10px] text-center leading-tight">
+                            ${d.fecha.split('-')[2]}<br>${d.fecha.split('-')[1]}
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-slate-800">${d.titulo}</p>
+                            <p class="text-[9px] font-black text-indigo-400 uppercase">${d.visibilidad === 'TODOS' ? 'Toda la Escuela' : d.visibilidad}</p>
+                        </div>
+                    </div>
+                    <button onclick="borrar('eventos','${doc.id}')" class="text-slate-200 p-2"><i class="fa-solid fa-xmark"></i></button>
+                </div>`;
+            }).join('');
+        });
+
+        // --- CARGA DINÁMICA DE CURSOS ---
+        db.collection('cursos').onSnapshot(snap => {
+            let opts = '<option value="TODOS">Toda la Escuela</option>';
+            snap.forEach(doc => opts += `<option value="${doc.id}">${doc.id}</option>`);
+            document.getElementById('alu-cur').innerHTML = opts;
+            document.getElementById('post-tag').innerHTML = opts;
+            document.getElementById('cal-tag').innerHTML = opts;
+        });
+
+        // --- ALUMNOS ---
+        async function addAlumno() {
+            const nom = document.getElementById('alu-nom').value.trim();
+            const cur = document.getElementById('alu-cur').value;
+            if(!nom) return;
+            const res = await db.collection('alumnos').add({ nombre: nom, cursoID: cur, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection('calificaciones').doc(res.id).set({ inasistencias: 0, notas: {} });
+            document.getElementById('alu-nom').value = "";
+        }
+
+        db.collection('alumnos').orderBy('nombre').onSnapshot(snap => {
+            let html = "", opts = "";
+            snap.forEach(doc => {
+                html += `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm text-xs">
+                    <div class="font-bold">${doc.data().nombre} <span class="text-blue-500 font-black ml-2 uppercase">${doc.data().cursoID}</span></div>
+                    <button onclick="borrar('alumnos','${doc.id}')" class="text-slate-200">🗑️</button>
+                </div>`;
+                opts += `<option value="${doc.id}">${doc.data().nombre} (${doc.data().cursoID})</option>`;
+            });
+            document.getElementById('list-alu').innerHTML = html;
+            document.getElementById('fam-hijos').innerHTML = opts;
+        });
+
+        // --- FAMILIAS ---
+        async function addFamilia() {
+            const mail = document.getElementById('fam-mail').value.toLowerCase().trim();
+            const nom = document.getElementById('fam-nom').value.trim();
+            const hijos = Array.from(document.getElementById('fam-hijos').selectedOptions).map(o => o.value);
+            if(!mail || hijos.length === 0) return alert("Email e hijos obligatorios");
+            await db.collection('usuarios').doc(mail).set({ nombre: nom, email: mail, rol: 'familia', hijoID: hijos });
+            alert("Familia Sincronizada");
+        }
+
+        // --- MURO ---
+        async function addPost() {
+            const tit = document.getElementById('post-tit').value;
+            const msg = document.getElementById('post-msg').value;
+            const tag = document.getElementById('post-tag').value;
+            if(!tit || !msg) return;
+            await db.collection('comunicados').add({ titulo: tit, texto: msg, tag: tag, creadoEn: new Date().toISOString() });
+            document.getElementById('post-tit').value = ""; document.getElementById('post-msg').value = "";
+        }
+
+        db.collection('comunicados').orderBy('creadoEn', 'desc').onSnapshot(snap => {
+            document.getElementById('list-muro').innerHTML = snap.docs.map(doc => `
+                <div class="bg-white p-5 rounded-3xl border shadow-sm">
+                    <span class="text-[8px] font-black bg-pink-50 text-pink-500 px-2 py-1 rounded-full uppercase">${doc.data().tag}</span>
+                    <h4 class="font-bold mt-2">${doc.data().titulo}</h4>
+                    <p class="text-[11px] text-slate-500 mt-1">${doc.data().texto}</p>
+                </div>`).join('');
+        });
+
+        async function borrar(col, id) { if(confirm("¿Borrar?")) await db.collection(col).doc(id).delete(); }
+    </script>
+</body>
+</html>
