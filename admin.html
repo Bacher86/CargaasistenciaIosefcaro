@@ -3,105 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin Maestro v5.0</title>
+    <title>Panel Administrativo Integral - Iosef Caro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; padding-bottom: 100px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; padding-bottom: 110px; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.2s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .nav-active { color: #2563eb !important; border-top: 3px solid #2563eb; background: #eff6ff; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-active { color: #4f46e5 !important; border-top: 3px solid #4f46e5; background: #f5f3ff; }
+        .card-admin { background: white; padding: 1.5rem; border-radius: 2rem; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        input, select, textarea { background: #f1f5f9 !important; border: none !important; border-radius: 1rem !important; padding: 0.75rem 1rem !important; font-size: 0.875rem !important; font-weight: 600 !important; width: 100%; outline: none; margin-bottom: 0.5rem; }
+        label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.5rem; margin-bottom: 0.25rem; display: block; }
     </style>
 </head>
 <body>
 
-    <header class="bg-white p-4 border-b sticky top-0 z-50 flex justify-between items-center shadow-sm">
-        <h1 class="font-800 text-xl tracking-tighter italic">EDU<span class="text-blue-600 font-900">SYNC</span></h1>
-        <div id="online-indicator" class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+    <header class="bg-white p-6 rounded-b-[2.5rem] shadow-sm mb-6 border-b flex justify-between items-center">
+        <div>
+            <h1 class="font-black text-2xl text-slate-800 tracking-tighter leading-none">Admin Pro</h1>
+            <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Gestión Centralizada</p>
+        </div>
+        <div class="bg-indigo-50 px-3 py-1 rounded-full"><span class="text-[9px] font-black text-indigo-600 uppercase">Iosef Caro</span></div>
     </header>
 
-    <main class="p-4 max-w-md mx-auto">
+    <main class="px-4 max-w-md mx-auto">
         
-        <section id="t-agenda" class="tab-content active">
-            <div class="bg-indigo-600 p-6 rounded-[2.5rem] shadow-xl mb-8 text-white">
-                <h3 class="font-bold text-lg mb-4 flex items-center"><i class="fa-solid fa-calendar-plus mr-2"></i> Nuevo Evento</h3>
-                
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-[10px] font-bold opacity-70 ml-1 uppercase">Fecha</label>
-                        <input type="date" id="cal-fec" class="w-full p-4 rounded-2xl border-none text-slate-900 font-bold focus:ring-4 ring-indigo-400/50 outline-none">
-                    </div>
-                    
-                    <div>
-                        <label class="text-[10px] font-bold opacity-70 ml-1 uppercase">Nombre del Evento</label>
-                        <input type="text" id="cal-tit" placeholder="Ej: Entrega de Diplomas" class="w-full p-4 rounded-2xl border-none text-slate-900 font-bold outline-none">
-                    </div>
-
-                    <div>
-                        <label class="text-[10px] font-bold opacity-70 ml-1 uppercase">¿Quién debe verlo?</label>
-                        <select id="cal-tag" class="w-full p-4 rounded-2xl border-none text-slate-900 font-bold outline-none"></select>
-                    </div>
-
-                    <button onclick="addEvento()" class="w-full bg-white text-indigo-600 py-4 rounded-2xl font-800 shadow-lg mt-2 active:scale-95 transition-transform">
-                        SINCRONIZAR AGENDA
-                    </button>
-                </div>
+        <section id="tab-sistema" class="tab-content active">
+            <h2 class="font-black text-slate-800 text-lg mb-4 ml-2">Configuración de Usuarios</h2>
+            
+            <div class="card-admin">
+                <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2"><i class="fas fa-user-graduate text-indigo-500"></i> Nuevo Alumno</h3>
+                <input type="text" id="alu-nom" placeholder="Nombre completo del alumno">
+                <label>Curso / Salita</label>
+                <select id="alu-curso">
+                    <option value="KINDER">Kinder (Jardín)</option>
+                    <option value="1A">1° Año A</option>
+                    <option value="1B">1° Año B</option>
+                    <option value="2A">2° Año A</option>
+                </select>
+                <button onclick="crearAlumno()" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold text-xs uppercase mt-2">Registrar Alumno</button>
             </div>
 
-            <h4 class="font-bold text-slate-400 text-xs mb-4 uppercase tracking-widest ml-2">Próximas Fechas</h4>
-            <div id="list-agenda" class="space-y-3"></div>
+            <div class="card-admin">
+                <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2"><i class="fas fa-home text-pink-500"></i> Vincular Padre/Madre</h3>
+                <input type="text" id="padre-nom" placeholder="Nombre de la Familia">
+                <input type="email" id="padre-mail" placeholder="Email de Acceso (Gmail)">
+                <input type="text" id="padre-hijo-id" placeholder="Pegar ID del Alumno aquí">
+                <button onclick="vincularPadre()" class="w-full bg-pink-600 text-white p-3 rounded-xl font-bold text-xs uppercase mt-2">Dar Acceso a Familia</button>
+            </div>
+
+            <div class="card-admin">
+                <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2"><i class="fas fa-chalkboard-teacher text-emerald-500"></i> Nuevo Docente</h3>
+                <input type="text" id="doc-nom" placeholder="Nombre del docente">
+                <input type="email" id="doc-mail" placeholder="Email del docente">
+                <select id="doc-materia">
+                    <option value="Matemática">Matemática</option>
+                    <option value="Lengua">Lengua</option>
+                    <option value="Inglés">Inglés</option>
+                </select>
+                <button onclick="crearDocente()" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold text-xs uppercase mt-2">Alta Docente</button>
+            </div>
+
+            <h3 class="font-black text-[10px] text-slate-400 uppercase tracking-widest mb-3 ml-2">Lista de Alumnos (Copiar ID)</h3>
+            <div id="lista-alumnos-db" class="grid gap-2 mb-10"></div>
         </section>
 
-        <section id="t-alumnos" class="tab-content">
-            <div class="bg-white p-6 rounded-[2.5rem] border shadow-sm mb-6">
-                <h3 class="font-bold mb-4">Alta Alumno</h3>
-                <input type="text" id="alu-nom" placeholder="Nombre completo" class="w-full p-4 bg-slate-50 rounded-2xl mb-3 outline-none font-semibold">
-                <select id="alu-cur" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-600 mb-4"></select>
-                <button onclick="addAlumno()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold">REGISTRAR</button>
+        <section id="tab-muro" class="tab-content">
+            <h2 class="font-black text-slate-800 text-lg mb-4 ml-2">Muro de Comunicados</h2>
+            <div class="card-admin">
+                <input type="text" id="post-tit" placeholder="Título del comunicado">
+                <textarea id="post-msg" class="h-24" placeholder="Escribí el mensaje para las familias..."></textarea>
+                <label>Visibilidad</label>
+                <select id="post-tag">
+                    <option value="TODOS">Toda la Escuela</option>
+                    <option value="KINDER">Solo Kinder</option>
+                    <option value="1A">Solo 1° Año A</option>
+                </select>
+                <button onclick="addPost()" class="w-full bg-indigo-600 text-white p-4 rounded-2xl font-black text-xs uppercase tracking-widest mt-2 shadow-lg shadow-indigo-100">Publicar Aviso</button>
             </div>
-            <div id="list-alu" class="space-y-2"></div>
+            <div id="list-muro" class="grid gap-3"></div>
         </section>
 
-        <section id="t-familias" class="tab-content">
-            <div class="bg-white p-6 rounded-[2.5rem] border shadow-sm mb-6">
-                <h3 class="font-bold mb-4">Conectar Familia</h3>
-                <input type="text" id="fam-nom" placeholder="Nombre Tutor" class="w-full p-4 bg-slate-50 rounded-2xl mb-3 outline-none">
-                <input type="email" id="fam-mail" placeholder="Email (Usuario App)" class="w-full p-4 bg-slate-50 rounded-2xl mb-4 outline-none">
-                <label class="text-[10px] font-bold text-slate-400 ml-1 uppercase">Seleccionar Hijos:</label>
-                <select id="fam-hijos" multiple class="w-full p-4 bg-slate-50 rounded-2xl h-44 outline-none font-bold mt-2"></select>
-                <button onclick="addFamilia()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold mt-4">VINCULAR CUENTA</button>
+        <section id="tab-calendario" class="tab-content">
+            <h2 class="font-black text-slate-800 text-lg mb-4 ml-2">Agenda Institucional</h2>
+            <div class="card-admin">
+                <input type="text" id="cal-tit" placeholder="Ej: Acto 25 de Mayo / Reunión">
+                <input type="date" id="cal-fec">
+                <select id="cal-tipo">
+                    <option value="Institucional">⭐ Institucional</option>
+                    <option value="Feriado">🚩 Feriado / Asueto</option>
+                </select>
+                <button onclick="addEvento()" class="w-full bg-amber-500 text-white p-4 rounded-2xl font-black text-xs uppercase mt-2">Agendar Fecha</button>
             </div>
+            <div id="list-calendario" class="grid gap-2"></div>
         </section>
 
-        <section id="t-muro" class="tab-content">
-            <div class="bg-white p-6 rounded-[2.5rem] border shadow-sm mb-6 space-y-3">
-                <h3 class="font-bold">Publicar Comunicado</h3>
-                <input type="text" id="post-tit" placeholder="Título" class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-none outline-none">
-                <textarea id="post-msg" rows="4" placeholder="Mensaje..." class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none"></textarea>
-                <select id="post-tag" class="w-full p-4 bg-slate-50 rounded-2xl font-bold text-slate-500 border-none outline-none"></select>
-                <button onclick="addPost()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-bold">ENVIAR A MURO</button>
+        <section id="tab-autoriza" class="tab-content">
+            <h2 class="font-black text-slate-800 text-lg mb-4 ml-2">Autorizaciones</h2>
+            <div class="card-admin">
+                <input type="text" id="aut-tit" placeholder="Ej: Salida Educativa al Museo">
+                <textarea id="aut-desc" class="h-20" placeholder="Descripción detallada de la salida..."></textarea>
+                <select id="aut-curso">
+                    <option value="TODOS">Todos los cursos</option>
+                    <option value="KINDER">Kinder</option>
+                    <option value="1A">1° Año A</option>
+                </select>
+                <button onclick="addAutorizacion()" class="w-full bg-rose-500 text-white p-4 rounded-2xl font-black text-xs uppercase mt-2">Pedir Firma a Padres</button>
             </div>
-            <div id="list-muro" class="space-y-3"></div>
         </section>
 
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 z-50 shadow-2xl">
-        <button onclick="nav('agenda')" id="b-agenda" class="flex flex-col items-center p-2 nav-active text-slate-400 w-full rounded-t-2xl">
-            <i class="fa-solid fa-calendar-day text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Agenda</span>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center h-20 shadow-2xl z-50">
+        <button onclick="switchTab('sistema')" id="btn-sistema" class="nav-btn nav-active flex flex-col items-center flex-1 py-2">
+            <i class="fas fa-users-cog"></i><span class="text-[8px] font-bold mt-1 uppercase">Sistema</span>
         </button>
-        <button onclick="nav('alumnos')" id="b-alumnos" class="flex flex-col items-center p-2 text-slate-400 w-full rounded-t-2xl">
-            <i class="fa-solid fa-graduation-cap text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Alumnos</span>
+        <button onclick="switchTab('muro')" id="btn-muro" class="nav-btn text-slate-300 flex flex-col items-center flex-1 py-2">
+            <i class="fas fa-newspaper"></i><span class="text-[8px] font-bold mt-1 uppercase">Muro</span>
         </button>
-        <button onclick="nav('familias')" id="b-familias" class="flex flex-col items-center p-2 text-slate-400 w-full rounded-t-2xl">
-            <i class="fa-solid fa-users text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Familias</span>
+        <button onclick="switchTab('calendario')" id="btn-calendario" class="nav-btn text-slate-300 flex flex-col items-center flex-1 py-2">
+            <i class="fas fa-calendar-day"></i><span class="text-[8px] font-bold mt-1 uppercase">Agenda</span>
         </button>
-        <button onclick="nav('muro')" id="b-muro" class="flex flex-col items-center p-2 text-slate-400 w-full rounded-t-2xl">
-            <i class="fa-solid fa-message-captions text-lg"></i><span class="text-[8px] font-bold mt-1 uppercase">Muro</span>
+        <button onclick="switchTab('autoriza')" id="btn-autoriza" class="nav-btn text-slate-300 flex flex-col items-center flex-1 py-2">
+            <i class="fas fa-signature"></i><span class="text-[8px] font-bold mt-1 uppercase">Firmas</span>
         </button>
     </nav>
 
@@ -117,110 +145,93 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        function nav(id) {
+        function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
-            document.getElementById('t-' + id).classList.add('active');
-            document.getElementById('b-' + id).classList.add('nav-active');
-            window.scrollTo(0,0);
+            document.querySelectorAll('.nav-btn').forEach(b => { b.classList.add('text-slate-300'); b.classList.remove('nav-active'); });
+            document.getElementById('tab-' + id).classList.add('active');
+            document.getElementById('btn-' + id).classList.add('nav-active');
+            document.getElementById('btn-' + id).classList.remove('text-slate-300');
         }
 
-        // --- CALENDARIO (Lógica de filtrado por curso) ---
-        async function addEvento() {
-            const fec = document.getElementById('cal-fec').value;
-            const tit = document.getElementById('cal-tit').value.trim();
-            const tag = document.getElementById('cal-tag').value;
-            if(!fec || !tit) return alert("Completa fecha y título");
-
-            await db.collection('eventos').add({
-                fecha: fec,
-                titulo: tit,
-                visibilidad: tag, // "TODOS" o el ID del curso
-                creadoEn: new Date().toISOString()
-            });
-            document.getElementById('cal-tit').value = "";
-        }
-
-        db.collection('eventos').orderBy('fecha', 'asc').onSnapshot(snap => {
-            document.getElementById('list-agenda').innerHTML = snap.docs.map(doc => {
-                const d = doc.data();
-                return `<div class="bg-white p-4 rounded-3xl border border-slate-100 flex justify-between items-center shadow-sm">
-                    <div class="flex items-center gap-4">
-                        <div class="bg-indigo-50 text-indigo-600 font-bold p-3 rounded-2xl text-[10px] text-center leading-tight">
-                            ${d.fecha.split('-')[2]}<br>${d.fecha.split('-')[1]}
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm text-slate-800">${d.titulo}</p>
-                            <p class="text-[9px] font-black text-indigo-400 uppercase">${d.visibilidad === 'TODOS' ? 'Toda la Escuela' : d.visibilidad}</p>
-                        </div>
-                    </div>
-                    <button onclick="borrar('eventos','${doc.id}')" class="text-slate-200 p-2"><i class="fa-solid fa-xmark"></i></button>
-                </div>`;
-            }).join('');
-        });
-
-        // --- CARGA DINÁMICA DE CURSOS ---
-        db.collection('cursos').onSnapshot(snap => {
-            let opts = '<option value="TODOS">Toda la Escuela</option>';
-            snap.forEach(doc => opts += `<option value="${doc.id}">${doc.id}</option>`);
-            document.getElementById('alu-cur').innerHTML = opts;
-            document.getElementById('post-tag').innerHTML = opts;
-            document.getElementById('cal-tag').innerHTML = opts;
-        });
-
-        // --- ALUMNOS ---
-        async function addAlumno() {
-            const nom = document.getElementById('alu-nom').value.trim();
-            const cur = document.getElementById('alu-cur').value;
-            if(!nom) return;
-            const res = await db.collection('alumnos').add({ nombre: nom, cursoID: cur, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-            await db.collection('calificaciones').doc(res.id).set({ inasistencias: 0, notas: {} });
+        // --- SISTEMA: ALUMNOS Y PADRES ---
+        async function crearAlumno() {
+            const nom = document.getElementById('alu-nom').value;
+            const cur = document.getElementById('alu-curso').value;
+            if(!nom) return alert("Nombre obligatorio");
+            await db.collection('alumnos').add({ nombre: nom, curso: cur, creadoEn: new Date() });
+            alert("✅ Alumno registrado");
             document.getElementById('alu-nom').value = "";
         }
 
-        db.collection('alumnos').orderBy('nombre').onSnapshot(snap => {
-            let html = "", opts = "";
-            snap.forEach(doc => {
-                html += `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm text-xs">
-                    <div class="font-bold">${doc.data().nombre} <span class="text-blue-500 font-black ml-2 uppercase">${doc.data().cursoID}</span></div>
-                    <button onclick="borrar('alumnos','${doc.id}')" class="text-slate-200">🗑️</button>
-                </div>`;
-                opts += `<option value="${doc.id}">${doc.data().nombre} (${doc.data().cursoID})</option>`;
+        async function vincularPadre() {
+            const mail = document.getElementById('padre-mail').value;
+            const nom = document.getElementById('padre-nom').value;
+            const hID = document.getElementById('padre-hijo-id').value;
+            if(!mail || !hID) return alert("Faltan datos de vínculo");
+            await db.collection('usuarios').doc(mail.toLowerCase()).set({
+                nombre: nom, email: mail.toLowerCase(), rol: 'familia', hijoID: [hID.trim()]
             });
-            document.getElementById('list-alu').innerHTML = html;
-            document.getElementById('fam-hijos').innerHTML = opts;
-        });
-
-        // --- FAMILIAS ---
-        async function addFamilia() {
-            const mail = document.getElementById('fam-mail').value.toLowerCase().trim();
-            const nom = document.getElementById('fam-nom').value.trim();
-            const hijos = Array.from(document.getElementById('fam-hijos').selectedOptions).map(o => o.value);
-            if(!mail || hijos.length === 0) return alert("Email e hijos obligatorios");
-            await db.collection('usuarios').doc(mail).set({ nombre: nom, email: mail, rol: 'familia', hijoID: hijos });
-            alert("Familia Sincronizada");
+            alert("✅ Familia vinculada correctamente");
+            document.getElementById('padre-mail').value = ""; document.getElementById('padre-hijo-id').value = "";
         }
 
-        // --- MURO ---
+        async function crearDocente() {
+            const mail = document.getElementById('doc-mail').value;
+            const nom = document.getElementById('doc-nom').value;
+            const mat = document.getElementById('doc-materia').value;
+            if(!mail || !nom) return alert("Datos de docente incompletos");
+            await db.collection('usuarios').doc(mail.toLowerCase()).set({
+                nombre: nom, email: mail.toLowerCase(), rol: 'docente', materiaBase: mat
+            });
+            alert("✅ Docente creado");
+        }
+
+        db.collection('alumnos').onSnapshot(snap => {
+            const cont = document.getElementById('lista-alumnos-db');
+            cont.innerHTML = snap.docs.map(doc => `
+                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                    <div><p class="text-xs font-bold text-slate-800">${doc.data().nombre}</p><p class="text-[8px] text-indigo-500 font-black">${doc.id}</p></div>
+                    <button onclick="navigator.clipboard.writeText('${doc.id}'); alert('ID Copiado')" class="text-slate-300 active:text-indigo-500"><i class="fas fa-copy"></i></button>
+                </div>`).join('');
+        });
+
+        // --- COMUNICACIÓN Y OTROS ---
         async function addPost() {
             const tit = document.getElementById('post-tit').value;
             const msg = document.getElementById('post-msg').value;
             const tag = document.getElementById('post-tag').value;
-            if(!tit || !msg) return;
+            if(!tit || !msg) return alert("Completá el aviso");
             await db.collection('comunicados').add({ titulo: tit, texto: msg, tag: tag, creadoEn: new Date().toISOString() });
+            alert("✅ Publicado");
             document.getElementById('post-tit').value = ""; document.getElementById('post-msg').value = "";
         }
 
+        async function addEvento() {
+            const tit = document.getElementById('cal-tit').value;
+            const fec = document.getElementById('cal-fec').value;
+            const tip = document.getElementById('cal-tipo').value;
+            if(!tit || !fec) return alert("Faltan datos del evento");
+            await db.collection('eventos').add({ titulo: tit, fecha: fec, tipo: tip, visibilidad: 'TODOS' });
+            alert("📅 Evento agendado");
+        }
+
+        async function addAutorizacion() {
+            const tit = document.getElementById('aut-tit').value;
+            const des = document.getElementById('aut-desc').value;
+            const cur = document.getElementById('aut-curso').value;
+            if(!tit || !des) return alert("Faltan datos");
+            await db.collection('autorizaciones').add({ titulo: tit, descripcion: des, curso: cur, firmadoPor: [], creadoEn: new Date().toISOString() });
+            alert("✍️ Pedido de firma enviado");
+        }
+
+        // Renderizado Muro Admin
         db.collection('comunicados').orderBy('creadoEn', 'desc').onSnapshot(snap => {
             document.getElementById('list-muro').innerHTML = snap.docs.map(doc => `
-                <div class="bg-white p-5 rounded-3xl border shadow-sm">
-                    <span class="text-[8px] font-black bg-pink-50 text-pink-500 px-2 py-1 rounded-full uppercase">${doc.data().tag}</span>
-                    <h4 class="font-bold mt-2">${doc.data().titulo}</h4>
-                    <p class="text-[11px] text-slate-500 mt-1">${doc.data().texto}</p>
+                <div class="bg-white p-4 rounded-2xl border shadow-sm">
+                    <span class="text-[7px] font-black bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full uppercase">${doc.data().tag}</span>
+                    <h4 class="font-bold text-xs mt-1 text-slate-700">${doc.data().titulo}</h4>
                 </div>`).join('');
         });
-
-        async function borrar(col, id) { if(confirm("¿Borrar?")) await db.collection(col).doc(id).delete(); }
     </script>
 </body>
 </html>
