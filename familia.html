@@ -113,25 +113,24 @@
         const userEmail = "familia@gmail.com"; // Esto vendría del login real
         let dataHijo = { id: "", nombre: "", curso: "" };
 
-        async function initApp() {
-            const userDoc = await db.collection('usuarios').doc(userEmail).get();
-            if (userDoc.exists) {
-                const userData = userDoc.data();
-                document.getElementById('userName').innerText = "Familia " + userData.nombre;
-                
-                // Buscamos al primer hijo vinculado
-                const hijoID = userData.hijoID[0];
-                const hijoDoc = await db.collection('alumnos').doc(hijoID).get();
-                if (hijoDoc.exists) {
-                    dataHijo = { id: hijoID, ...hijoDoc.data() };
-                    document.getElementById('childInfo').innerText = `${dataHijo.nombre} • ${dataHijo.curso}`;
-                    cargarDatosAcademicos();
-                    cargarMuro();
-                    cargarAgenda();
-                    cargarFirmas();
-                }
-            }
+       async function initApp() {
+    const userDoc = await db.collection('usuarios').doc(userEmail.toLowerCase()).get();
+    
+    if (userDoc.exists) {
+        const userData = userDoc.data();
+        document.getElementById('userName').innerText = "Familia " + userData.nombre;
+        
+        if(userData.hijoID && userData.hijoID.length > 0) {
+            const hijoID = userData.hijoID[0];
+            const hijoDoc = await db.collection('alumnos').doc(hijoID).get();
+            // ... resto del código igual
         }
+    } else {
+        alert("El mail " + userEmail + " no está registrado. Cargalo primero en el Panel Admin.");
+        localStorage.clear();
+        location.reload();
+    }
+}
 
         function switchView(id) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
