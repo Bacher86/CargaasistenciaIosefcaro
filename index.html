@@ -450,6 +450,24 @@
                 </div>`).join('') || '<p class="text-slate-300 italic">Sin historial</p>';
         }
 
+        async function guardarNotaRapida(alumnoID, trimestre, nota) {
+    if(!nota) return;
+    
+    // Obtenemos la materia del selector o del perfil del docente
+    const materia = document.getElementById('materiaDocente').innerText; 
+
+    const ref = db.collection('calificaciones').doc(alumnoID);
+    await ref.set({
+        notas: {
+            [materia]: {
+                [trimestre]: parseInt(nota)
+            }
+        }
+    }, { merge: true });
+    
+    console.log("Nota guardada para " + alumnoID);
+}
+
         function logout() { auth.signOut(); }
     </script>
 </body>
